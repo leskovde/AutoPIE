@@ -13,11 +13,14 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 
+#define VARIATIONS 0
+#define STMTDEMO 0
+#define SMALLFILE 1
+
 using namespace clang;
 using namespace driver;
 using namespace tooling;
 using namespace llvm;
-
 
 std::string TempName = "tempFile.cpp";
 
@@ -54,26 +57,9 @@ public:
 		                              astContext->getLangOpts());
 	}
 
-	virtual bool VisitFunctionDecl(FunctionDecl* func)
-	{
-		NumFunctions++;
+#define CALLSTMT 1
 
-		const auto funcName = func->getNameInfo().getName().getAsString();
-
-		if (funcName != "main")
-		{
-			if (func->hasBody())
-			{
-				const auto body = func->getBody();
-				const auto range = SourceRange(body->getBeginLoc(), body->getEndLoc());
-				RewriterInstance.ReplaceText(range, ";");
-				errs() << "** Removed function body: " << funcName << "\n";
-			}
-		}
-
-		return true;
-	}
-
+#ifdef RETURNSTMT
 	virtual bool VisitStmt(Stmt* st)
 	{
 		if (const auto ret = dyn_cast<ReturnStmt>(st))
@@ -82,6 +68,13 @@ public:
 			RewriterInstance.RemoveText(range);
 			errs() << "** Removed ReturnStmt\n";
 		}
+
+		return true;
+	}
+#endif
+#ifdef CALLSTMT
+	virtual bool VisitStmt(Stmt* st)
+	{
 		if (const auto call = dyn_cast<CallExpr>(st))
 		{
 			const auto range = GetSourceRange(*call);
@@ -91,6 +84,7 @@ public:
 
 		return true;
 	}
+#endif
 };
 
 // Traverses the AST and removes a selected statement set by the CurrentLine number
@@ -322,6 +316,13 @@ int main(int argc, const char** argv)
 	// parse the command-line args passed to the code
 	CommonOptionsParser op(argc, argv, MyToolCategory);
 
+#if SMALLFILE
+	const std::string fileName = R"(C:\Users\Denis\llvm\llvm-project\TestSource.cpp)";
+#else
+	// TOOL CREATION & COMPILATION OVERHEAD DEMO
+	const std::string fileName = R"(C:\Users\Denis\source\repos\Diacritics\Diacritics\Diacritics.cpp)";
+#endif
+
 #if VARIATIONS
 	SourceChanged = false;
 	Variants.push(*op.getSourcePathList().begin());
@@ -342,16 +343,19 @@ int main(int argc, const char** argv)
 			Iteration++;
 		}
 	}
-#else
-	const auto lineCount = GetStatementCount(op.getCompilations(), *op.getSourcePathList().begin());
+#elif STMTDEMO
+	const auto lineCount = GetStatementCount(op.getCompilations(), fileName);
 
 	// Remove each statement once and push a new file without that statement onto the stack (done inside the FrontEndAction)
 	for (auto i = 1; i <= lineCount; i++)
 	{
 		outs() << "\n\nIteration: " << std::to_string(Iteration) << "\n\n";
-		ReduceStatement(op.getCompilations(), *op.getSourcePathList().begin(), i);
+		ReduceStatement(op.getCompilations(), fileName, i);
 		Iteration++;
 	}
+#else
+	ClangTool tool(op.getCompilations(), fileName);
+	auto result = tool.run(newFrontendActionFactory<ReduceSourceCodeAction>().get());
 #endif
 	
 	return 0;
