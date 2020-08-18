@@ -6,16 +6,11 @@
 // Declares llvm::cl::extrahelp.
 #include "llvm/Support/CommandLine.h"
 
-#include "clang/Driver/Options.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/RecursiveASTVisitor.h"
-#include "clang/Frontend/ASTConsumers.h"
-#include "clang/Frontend/FrontendActions.h"
 #include "clang/Frontend/CompilerInstance.h"
-#include "clang/Tooling/CommonOptionsParser.h"
-#include "clang/Tooling/Tooling.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 
 using namespace clang;
@@ -41,21 +36,22 @@ cl::OptionCategory MyToolCategory("my-tool options");
 
 static SourceRange GetSourceRange(const Stmt& s)
 {
-	return SourceRange(s.getBeginLoc(), s.getEndLoc());
+	return {s.getBeginLoc(), s.getEndLoc()};
 }
 
 // Traverses the entire AST and reduces it via Visit functions
 class ReductionASTVisitor : public RecursiveASTVisitor<ReductionASTVisitor>
 {
-private:
-	ASTContext* ast_context_; // used for getting additional AST info
+	ASTContext* astContext; // used for getting additional AST info
 
 public:
-	explicit ReductionASTVisitor(CompilerInstance* CI)
-		: ast_context_(&(CI->getASTContext())) // initialize private members
+	virtual ~ReductionASTVisitor() = default;
+
+	explicit ReductionASTVisitor(CompilerInstance* ci)
+		: astContext(&ci->getASTContext()) // initialize private members
 	{
-		RewriterInstance.setSourceMgr(ast_context_->getSourceManager(),
-		                              ast_context_->getLangOpts());
+		RewriterInstance.setSourceMgr(astContext->getSourceManager(),
+		                              astContext->getLangOpts());
 	}
 
 	virtual bool VisitFunctionDecl(FunctionDecl* func)
@@ -98,38 +94,38 @@ public:
 };
 
 // Traverses the AST and removes a selected statement set by the CurrentLine number
-class LineReductionASTVisitor : public RecursiveASTVisitor<LineReductionASTVisitor>
+class StatementReductionASTVisitor : public RecursiveASTVisitor<StatementReductionASTVisitor>
 {
-private:
-	int iteration_ = 0;
-	ASTContext* ast_context_; // used for getting additional AST info
+	int iteration = 0;
+	ASTContext* astContext; // used for getting additional AST info
 
 public:
-	explicit LineReductionASTVisitor(CompilerInstance* CI)
-		: ast_context_(&(CI->getASTContext())) // initialize private members
+	virtual ~StatementReductionASTVisitor() = default;
+
+	explicit StatementReductionASTVisitor(CompilerInstance* ci)
+		: astContext(&ci->getASTContext()) // initialize private members
 	{
 		SourceChanged = false;
+#ifdef VARIATIONS
 		RewriterInstance = Rewriter();
-		RewriterInstance.setSourceMgr(ast_context_->getSourceManager(),
-		                              ast_context_->getLangOpts());
+#endif
+		RewriterInstance.setSourceMgr(astContext->getSourceManager(),
+		                              astContext->getLangOpts());
 	}
 
 	virtual bool VisitStmt(Stmt* st)
 	{
-		iteration_++;
+		iteration++;
 
-		if (iteration_ == CurrentLine)
+		if (iteration == CurrentLine)
 		{
 			// Remove non-compound statements first
-			if (!st->children().empty())
+			if (st->children().empty())
 			{
-				CurrentLine++;
-				return true;
+				const auto range = GetSourceRange(*st);
+				RewriterInstance.RemoveText(range);
+				SourceChanged = true;
 			}
-
-			const auto range = GetSourceRange(*st);
-			RewriterInstance.RemoveText(range);
-			SourceChanged = true;
 
 			return false;
 		}
@@ -141,12 +137,11 @@ public:
 // Counts the number of statements and stores it in CountVisitorCurrentLine
 class CountASTVisitor : public RecursiveASTVisitor<CountASTVisitor>
 {
-private:
-	ASTContext* ast_context_; // used for getting additional AST info
+	ASTContext* astContext; // used for getting additional AST info
 
 public:
-	explicit CountASTVisitor(CompilerInstance* CI)
-		: ast_context_(&(CI->getASTContext())) // initialize private members
+	explicit CountASTVisitor(CompilerInstance* ci)
+		: astContext(&ci->getASTContext()) // initialize private members
 	{
 	}
 
@@ -157,72 +152,69 @@ public:
 	}
 };
 
-class ReductionASTConsumer : public ASTConsumer
+class ReductionASTConsumer final : public ASTConsumer
 {
-private:
 	ReductionASTVisitor* visitor; // doesn't have to be private
 
 public:
 	// override the constructor in order to pass CI
-	explicit ReductionASTConsumer(CompilerInstance* CI)
-		: visitor(new ReductionASTVisitor(CI)) // initialize the visitor
+	explicit ReductionASTConsumer(CompilerInstance* ci)
+		: visitor(new ReductionASTVisitor(ci)) // initialize the visitor
 	{
 	}
 
 	// override this to call our ExampleVisitor on the entire source file
-	void HandleTranslationUnit(ASTContext& Context) override
+	void HandleTranslationUnit(ASTContext& context) override
 	{
 		/* we can use ASTContext to get the TranslationUnitDecl, which is
 		     a single Decl that collectively represents the entire source file */
-		visitor->TraverseDecl(Context.getTranslationUnitDecl());
+		visitor->TraverseDecl(context.getTranslationUnitDecl());
 	}
 };
 
-class LineReductionASTConsumer : public ASTConsumer
+class StatementReductionASTConsumer final : public ASTConsumer
 {
-private:
-	LineReductionASTVisitor* visitor; // doesn't have to be private
+	StatementReductionASTVisitor* visitor; // doesn't have to be private
 
 public:
 	// override the constructor in order to pass CI
-	explicit LineReductionASTConsumer(CompilerInstance* CI)
-		: visitor(new LineReductionASTVisitor(CI)) // initialize the visitor
+	explicit StatementReductionASTConsumer(CompilerInstance* ci)
+		: visitor(new StatementReductionASTVisitor(ci)) // initialize the visitor
 	{
 	}
 
 	// override this to call our ExampleVisitor on the entire source file
-	void HandleTranslationUnit(ASTContext& Context) override
+	void HandleTranslationUnit(ASTContext& context) override
 	{
 		/* we can use ASTContext to get the TranslationUnitDecl, which is
 			 a single Decl that collectively represents the entire source file */
-		visitor->TraverseDecl(Context.getTranslationUnitDecl());
+		visitor->TraverseDecl(context.getTranslationUnitDecl());
 	}
 };
 
-class CountASTConsumer : public ASTConsumer
+class CountASTConsumer final : public ASTConsumer
 {
-private:
 	CountASTVisitor* visitor; // doesn't have to be private
 
 public:
 	// override the constructor in order to pass CI
-	explicit CountASTConsumer(CompilerInstance* CI)
-		: visitor(new CountASTVisitor(CI)) // initialize the visitor
+	explicit CountASTConsumer(CompilerInstance* ci)
+		: visitor(new CountASTVisitor(ci)) // initialize the visitor
 	{
 		CountVisitorCurrentLine = 0;
 	}
 
 	// override this to call our ExampleVisitor on the entire source file
-	void HandleTranslationUnit(ASTContext& Context) override
+	void HandleTranslationUnit(ASTContext& context) override
 	{
 		/* we can use ASTContext to get the TranslationUnitDecl, which is
 			 a single Decl that collectively represents the entire source file */
-		visitor->TraverseDecl(Context.getTranslationUnitDecl());
+		visitor->TraverseDecl(context.getTranslationUnitDecl());
 	}
 };
 
 
-class ReduceSourceCodeAction : public ASTFrontendAction
+class ReduceSourceCodeAction final : public ASTFrontendAction
 {
 public:
 
@@ -230,27 +222,27 @@ public:
 	void EndSourceFileAction() override
 	{
 		outs() << "FILE REDUCTION: END OF FILE ACTION:\n";
-		auto& SM = RewriterInstance.getSourceMgr();
+		auto& sm = RewriterInstance.getSourceMgr();
 
-		RewriterInstance.getEditBuffer(SM.getMainFileID()).write(errs());
+		RewriterInstance.getEditBuffer(sm.getMainFileID()).write(errs());
 
-		std::error_code error_code;
-		raw_fd_ostream outFile(TempName, error_code, sys::fs::F_None);
+		std::error_code errorCode;
+		raw_fd_ostream outFile(TempName, errorCode, sys::fs::F_None);
 
-		RewriterInstance.getEditBuffer(SM.getMainFileID()).write(outFile); // --> this will write the result to outFile
+		RewriterInstance.getEditBuffer(sm.getMainFileID()).write(outFile); // --> this will write the result to outFile
 		outFile.close();
 
 		outs() << "\n";
 	}
 
-	std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& CI, StringRef file) override
+	std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& ci, StringRef file) override
 	{
-		return std::unique_ptr<ASTConsumer>(std::make_unique<ReductionASTConsumer>(&CI));
+		return std::unique_ptr<ASTConsumer>(std::make_unique<ReductionASTConsumer>(&ci));
 		// pass CI pointer to ASTConsumer
 	}
 };
 
-class LineReduceAction : public ASTFrontendAction
+class StatementReduceAction final : public ASTFrontendAction
 {
 public:
 
@@ -260,26 +252,30 @@ public:
 		if (!SourceChanged)
 			return;
 
-		auto& SM = RewriterInstance.getSourceMgr();
+		auto& sm = RewriterInstance.getSourceMgr();
+
+		outs() << "STMT REDUCTION: END OF FILE ACTION:\n";
+		RewriterInstance.getEditBuffer(sm.getMainFileID()).write(errs());
+
 		const auto fileName = "temp/" + std::to_string(Iteration) + TempName;
 
-		std::error_code error_code;
-		raw_fd_ostream outFile(fileName, error_code, sys::fs::F_None);
+		std::error_code errorCode;
+		raw_fd_ostream outFile(fileName, errorCode, sys::fs::F_None);
 
-		RewriterInstance.getEditBuffer(SM.getMainFileID()).write(outFile); // --> this will write the result to outFile
+		RewriterInstance.getEditBuffer(sm.getMainFileID()).write(outFile); // --> this will write the result to outFile
 		outFile.close();
 
 		Variants.push(fileName);
 	}
 
-	std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& CI, StringRef file) override
+	std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& ci, StringRef file) override
 	{
-		return std::unique_ptr<ASTConsumer>(std::make_unique<LineReductionASTConsumer>(&CI));
+		return std::unique_ptr<ASTConsumer>(std::make_unique<StatementReductionASTConsumer>(&ci));
 		// pass CI pointer to ASTConsumer
 	}
 };
 
-class CountAction : public ASTFrontendAction
+class CountAction final : public ASTFrontendAction
 {
 public:
 
@@ -291,29 +287,29 @@ public:
 		outs() << "\n\n";
 	}
 
-	std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& CI, StringRef file) override
+	std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& ci, StringRef file) override
 	{
-		return std::unique_ptr<ASTConsumer>(std::make_unique<CountASTConsumer>(&CI));
+		return std::unique_ptr<ASTConsumer>(std::make_unique<CountASTConsumer>(&ci));
 		// pass CI pointer to ASTConsumer
 	}
 };
 
 // Returns the number statements in the fileName source code file
-static int GetStatementCount(CompilationDatabase& CD, const std::string& fileName)
+static int GetStatementCount(CompilationDatabase& cd, const std::string& fileName)
 {
-	ClangTool tool(CD, fileName);
+	ClangTool tool(cd, fileName);
 	auto result = tool.run(newFrontendActionFactory<CountAction>().get());
 
 	return CountVisitorCurrentLine;
 }
 
 // Removes lineNumber-th statement in the fileName source code file
-static void ReduceStatement(CompilationDatabase& CD, const std::string& fileName, int lineNumber)
+static void ReduceStatement(CompilationDatabase& cd, const std::string& fileName, const int lineNumber)
 {
 	CurrentLine = lineNumber;
 
-	ClangTool tool(CD, fileName);
-	auto result = tool.run(newFrontendActionFactory<LineReduceAction>().get());
+	ClangTool tool(cd, fileName);
+	auto result = tool.run(newFrontendActionFactory<StatementReduceAction>().get());
 }
 
 extern cl::OptionCategory MyToolCategory;
@@ -326,6 +322,7 @@ int main(int argc, const char** argv)
 	// parse the command-line args passed to the code
 	CommonOptionsParser op(argc, argv, MyToolCategory);
 
+#if VARIATIONS
 	SourceChanged = false;
 	Variants.push(*op.getSourcePathList().begin());
 
@@ -335,7 +332,7 @@ int main(int argc, const char** argv)
 		auto currentFile = Variants.top();
 		Variants.pop();
 
-		auto lineCount = GetStatementCount(op.getCompilations(), currentFile);
+		const auto lineCount = GetStatementCount(op.getCompilations(), currentFile);
 
 		// Remove each statement once and push a new file without that statement onto the stack (done inside the FrontEndAction)
 		for (auto i = 1; i <= lineCount; i++)
@@ -345,6 +342,17 @@ int main(int argc, const char** argv)
 			Iteration++;
 		}
 	}
+#else
+	const auto lineCount = GetStatementCount(op.getCompilations(), *op.getSourcePathList().begin());
 
+	// Remove each statement once and push a new file without that statement onto the stack (done inside the FrontEndAction)
+	for (auto i = 1; i <= lineCount; i++)
+	{
+		outs() << "\n\nIteration: " << std::to_string(Iteration) << "\n\n";
+		ReduceStatement(op.getCompilations(), *op.getSourcePathList().begin(), i);
+		Iteration++;
+	}
+#endif
+	
 	return 0;
 }
