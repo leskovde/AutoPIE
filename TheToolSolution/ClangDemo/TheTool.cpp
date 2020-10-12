@@ -45,6 +45,7 @@ static SourceRange GetSourceRange(const Stmt& s)
 	return {s.getBeginLoc(), s.getEndLoc()};
 }
 
+// Returns recursively the number of children of a given statement.
 static int GetChildrenCount(Stmt* st)
 {
 	int childrenCount = 0;
@@ -62,6 +63,7 @@ static int GetChildrenCount(Stmt* st)
 	return childrenCount;
 }
 
+// Executes a given command line in the 'cmd' environment.
 std::string ExecCommand(const char* cmd)
 {
 	std::array<char, 128> buffer;
@@ -249,20 +251,20 @@ public:
 };
 
 // Returns the number statements in the fileName source code file
-static int GetStatementCount(CompilationDatabase& cd, const std::string& fileName)
+static int GetStatementCount(CompilationDatabase& cd, const std::string& filePath)
 {
-	ClangTool tool(cd, fileName);
+	ClangTool tool(cd, filePath);
 	auto result = tool.run(newFrontendActionFactory<CountAction>().get());
 
 	return CountVisitorCurrentLine;
 }
 
 // Removes lineNumber-th statement in the fileName source code file
-static void ReduceStatement(CompilationDatabase& cd, const std::string& fileName, const int expressionNumber)
+static void ReduceStatement(CompilationDatabase& cd, const std::string& filePath, const int expressionNumber)
 {
 	CurrentStatementNumber = expressionNumber;
 
-	ClangTool tool(cd, fileName);
+	ClangTool tool(cd, filePath);
 	auto result = tool.run(newFrontendActionFactory<ExpressionReduceAction>().get());
 }
 
@@ -295,6 +297,19 @@ bool Validate(const char* const userInputError, const std::filesystem::directory
 	return false;
 }
 
+std::vector<std::string> SplitIntoPartitions(CompilationDatabase& cd, const std::string& filePath, const int partitionCount)
+{
+	auto originalStatementCount = GetStatementCount(cd, filePath);
+
+	for (auto i = 0; i < partitionCount; i++)
+	{
+		for (auto j = 0; j < originalStatementCount / partitionCount; j++)
+		{
+			ReduceStatement(cd, filePath, i * (originalStatementCount / partitionCount) + j);
+		}
+	}
+}
+
 // Generates all possible variations of the supplied source code
 // Call:
 // > TheTool.exe [path to a cpp file] --
@@ -315,40 +330,56 @@ int main(int argc, const char** argv)
 	const std::string fileName = R"(C:\Users\Denis\source\repos\Diacritics\Diacritics\Diacritics.cpp)";
 #endif
 
-	const auto originalExpressionCount = GetStatementCount(op.getCompilations(), *op.getSourcePathList().begin());
-	const auto acceptableRatio = 0.85;
+	auto originalStatementCount = GetStatementCount(op.getCompilations(), *op.getSourcePathList().begin());
+	
+	auto partitionCount = 2;
+	auto currentFile = *op.getSourcePathList().begin();
 
-	SourceChanged = false;
-	Variants.push(*op.getSourcePathList().begin());
-
-	// Search all possible source code variations in a DFS manner
-	while (!Variants.empty())
+	// While able to test & reduce.
+	while (partitionCount <= originalStatementCount)
 	{
-		auto currentFile = Variants.top();
-		Variants.pop();
+		// Split the current file into partitions (i.e. a set of new files, each of which is a continuous subset of the original).
+		auto fileNames = SplitIntoPartitions(op.getCompilations(), currentFile, partitionCount);
 
-		const auto expressionCount = GetStatementCount(op.getCompilations(), currentFile);
+		auto noErrorThrown = true;
+		std::string mostRecentFailureInducingFile;
 
-		if ((static_cast<double>(expressionCount) / originalExpressionCount) < acceptableRatio)
+		// Attempt to find a file in which the desired error is thrown.
+		for (auto& file : fileNames)
 		{
-			continue;
+			// If the desired error is thrown, save the path to the currently iterated one (which is also the most recent failure inducing file).
+			if (Validate(userInputError, std::filesystem::directory_entry(file)))
+			{
+				// TODO: Possible recursive call if this was made into a function, the recursive call would guarantee that no possible minimization paths are excluded.
+				mostRecentFailureInducingFile = file;
+				noErrorThrown = false;
+				break;
+			}
 		}
 
-		// Remove each statement once and push a new file without that statement onto the stack (done inside the FrontEndAction)
-		for (auto i = 1; i <= expressionCount; i++)
+		// If no errors were thrown, increase the granularity and keep the original file.
+		if (noErrorThrown)
 		{
-			outs() << "Iteration: " << std::to_string(Iteration) << "\n\n";
-			ReduceStatement(op.getCompilations(), currentFile, i);
-			Iteration++;
+			partitionCount *= 2;
+		}
+		// If the desired error has been encountered, change the original file to the most recent failure inducing (a subset of the original) and start over.
+		else
+		{
+			partitionCount = 2;
+			currentFile = mostRecentFailureInducingFile;
+			originalStatementCount = GetStatementCount(op.getCompilations(), *op.getSourcePathList().begin());
 		}
 	}
 
 	outs() << "\n============================================================\n";
-	outs() << "VERIFICATION\n";
-	
-	for (const auto& entry : std::filesystem::directory_iterator("temp/"))
+
+	if (Validate(userInputError, std::filesystem::directory_entry(currentFile)))
 	{
-		if (Validate(userInputError, entry)) break;
+		outs() << "Minimal program variant: " << currentFile << "\n";
+	}
+	else
+	{
+		outs() << "Minimal program variant could not be found!\n";
 	}
 
 	outs() << "\n============================================================\n";
