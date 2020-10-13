@@ -31,12 +31,14 @@ auto Variants = std::stack<std::string>();
 
 int CurrentStatementNumber;
 int CountVisitorCurrentLine;
+std::string CurrentProcessedFile;
 
 int ErrorLineNumber = 2;
 
 int Iteration = 0;
 int NumFunctions = 0;
 bool SourceChanged = false;
+bool CreateNewRewriter = true;
 
 cl::OptionCategory MyToolCategory("my-tool options");
 
@@ -83,7 +85,7 @@ std::string ExecCommand(const char* cmd)
 	return result;
 }
 
-// Traverses the AST and removes a selected statement set by the CurrentLine number
+// Traverses the AST and removes a selected statement set by the CurrentLine number.
 class StatementReductionASTVisitor : public RecursiveASTVisitor<StatementReductionASTVisitor>
 {
 	int iteration = 0;
@@ -96,9 +98,19 @@ public:
 		: astContext(&ci->getASTContext()) // initialize private members
 	{
 		SourceChanged = false;
-		RewriterInstance = Rewriter();
+
+		if (CreateNewRewriter)
+		{
+			RewriterInstance = Rewriter();
+		}
+		
 		RewriterInstance.setSourceMgr(astContext->getSourceManager(),
 		                              astContext->getLangOpts());
+	}
+
+	virtual bool TraverseDecl(Decl* d)
+	{
+		return astContext->getSourceManager().isInMainFile(d->getLocation());
 	}
 
 	virtual bool VisitStmt(Stmt* st)
@@ -138,7 +150,7 @@ public:
 	}
 };
 
-// Counts the number of expressions and stores it in CountVisitorCurrentLine
+// Counts the number of expressions and stores it in CountVisitorCurrentLine.
 class CountASTVisitor : public RecursiveASTVisitor<CountASTVisitor>
 {
 	ASTContext* astContext; // used for getting additional AST info
@@ -148,7 +160,7 @@ public:
 		: astContext(&ci->getASTContext()) // initialize private members
 	{
 	}
-
+	
 	virtual bool VisitStmt(Stmt* st)
 	{
 		CountVisitorCurrentLine++;
@@ -157,13 +169,13 @@ public:
 	}
 };
 
-class ExpressionReductionASTConsumer final : public ASTConsumer
+class StatementReductionASTConsumer final : public ASTConsumer
 {
 	StatementReductionASTVisitor* visitor; // doesn't have to be private
 
 public:
 	// override the constructor in order to pass CI
-	explicit ExpressionReductionASTConsumer(CompilerInstance* ci)
+	explicit StatementReductionASTConsumer(CompilerInstance* ci)
 		: visitor(new StatementReductionASTVisitor(ci)) // initialize the visitor
 	{
 	}
@@ -198,11 +210,11 @@ public:
 	}
 };
 
-class ExpressionReduceAction final : public ASTFrontendAction
+class StatementReduceAction final : public ASTFrontendAction
 {
 public:
 
-	// Prints the updated source file to a new file specific to the current iteration
+	// Prints the updated source file to a new file specific to the current iteration.
 	void EndSourceFileAction() override
 	{
 		if (!SourceChanged)
@@ -221,12 +233,12 @@ public:
 		RewriterInstance.getEditBuffer(sm.getMainFileID()).write(outFile); // --> this will write the result to outFile
 		outFile.close();
 
-		Variants.push(fileName);
+		CurrentProcessedFile = fileName;
 	}
 
 	std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& ci, StringRef file) override
 	{
-		return std::unique_ptr<ASTConsumer>(std::make_unique<ExpressionReductionASTConsumer>(&ci));
+		return std::unique_ptr<ASTConsumer>(std::make_unique<StatementReductionASTConsumer>(&ci));
 		// pass CI pointer to ASTConsumer
 	}
 };
@@ -250,7 +262,7 @@ public:
 	}
 };
 
-// Returns the number statements in the fileName source code file
+// Returns the number statements in the fileName source code file.
 static int GetStatementCount(CompilationDatabase& cd, const std::string& filePath)
 {
 	ClangTool tool(cd, filePath);
@@ -259,13 +271,15 @@ static int GetStatementCount(CompilationDatabase& cd, const std::string& filePat
 	return CountVisitorCurrentLine;
 }
 
-// Removes lineNumber-th statement in the fileName source code file
-static void ReduceStatement(CompilationDatabase& cd, const std::string& filePath, const int expressionNumber)
+// Removes lineNumber-th statement in the fileName source code file and returns path to its new file.
+static std::string ReduceStatement(CompilationDatabase& cd, const std::string& filePath, const int expressionNumber)
 {
 	CurrentStatementNumber = expressionNumber;
 
 	ClangTool tool(cd, filePath);
-	auto result = tool.run(newFrontendActionFactory<ExpressionReduceAction>().get());
+	auto result = tool.run(newFrontendActionFactory<StatementReduceAction>().get());
+
+	return CurrentProcessedFile;
 }
 
 extern cl::OptionCategory MyToolCategory;
@@ -299,15 +313,24 @@ bool Validate(const char* const userInputError, const std::filesystem::directory
 
 std::vector<std::string> SplitIntoPartitions(CompilationDatabase& cd, const std::string& filePath, const int partitionCount)
 {
-	auto originalStatementCount = GetStatementCount(cd, filePath);
+	std::vector<std::string> filePaths{};
+	const auto originalStatementCount = GetStatementCount(cd, filePath);
 
 	for (auto i = 0; i < partitionCount; i++)
 	{
+		CreateNewRewriter = true;
+
+		// TODO: Reduce in range.
 		for (auto j = 0; j < originalStatementCount / partitionCount; j++)
 		{
-			ReduceStatement(cd, filePath, i * (originalStatementCount / partitionCount) + j);
+			auto partitionPath = ReduceStatement(cd, filePath, i * (originalStatementCount / partitionCount) + j);
+			filePaths.emplace_back(partitionPath);
+			CreateNewRewriter = false;
+			Iteration++;
 		}
 	}
+
+	return filePaths;
 }
 
 // Generates all possible variations of the supplied source code
@@ -333,7 +356,7 @@ int main(int argc, const char** argv)
 	auto originalStatementCount = GetStatementCount(op.getCompilations(), *op.getSourcePathList().begin());
 	
 	auto partitionCount = 2;
-	auto currentFile = *op.getSourcePathList().begin();
+	auto currentFile = fileName;
 
 	// While able to test & reduce.
 	while (partitionCount <= originalStatementCount)
