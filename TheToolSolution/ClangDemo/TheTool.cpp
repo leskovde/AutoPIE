@@ -103,7 +103,7 @@ public:
 		{
 			RewriterInstance = Rewriter();
 		}
-		
+
 		RewriterInstance.setSourceMgr(astContext->getSourceManager(),
 		                              astContext->getLangOpts());
 	}
@@ -160,7 +160,7 @@ public:
 		: astContext(&ci->getASTContext()) // initialize private members
 	{
 	}
-	
+
 	virtual bool VisitStmt(Stmt* st)
 	{
 		CountVisitorCurrentLine++;
@@ -311,7 +311,8 @@ bool Validate(const char* const userInputError, const std::filesystem::directory
 	return false;
 }
 
-std::vector<std::string> SplitIntoPartitions(CompilationDatabase& cd, const std::string& filePath, const int partitionCount)
+std::vector<std::string> SplitIntoPartitions(CompilationDatabase& cd, const std::string& filePath,
+                                             const int partitionCount)
 {
 	std::vector<std::string> filePaths{};
 	const auto originalStatementCount = GetStatementCount(cd, filePath);
@@ -333,7 +334,7 @@ std::vector<std::string> SplitIntoPartitions(CompilationDatabase& cd, const std:
 	return filePaths;
 }
 
-// Generates all possible variations of the supplied source code
+// Generates a minimal program variant using delta debugging.
 // Call:
 // > TheTool.exe [path to a cpp file] --
 int main(int argc, const char** argv)
@@ -354,7 +355,7 @@ int main(int argc, const char** argv)
 #endif
 
 	auto originalStatementCount = GetStatementCount(op.getCompilations(), *op.getSourcePathList().begin());
-	
+
 	auto partitionCount = 2;
 	auto currentFile = fileName;
 
@@ -385,7 +386,7 @@ int main(int argc, const char** argv)
 		{
 			partitionCount *= 2;
 		}
-		// If the desired error has been encountered, change the original file to the most recent failure inducing (a subset of the original) and start over.
+			// If the desired error has been encountered, change the original file to the most recent failure inducing (a subset of the original) and start over.
 		else
 		{
 			partitionCount = 2;
