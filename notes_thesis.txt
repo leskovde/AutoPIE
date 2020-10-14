@@ -1,0 +1,35 @@
+Vyber nastroje - clang, gcc, ..., detaily v mailech.
+
+Udelat test suite a udelat si nejaky obrazek o tom, jak ma testovani vubec probihat.
+
+Master thesis - Lukáš Krížik Bobox Runtime Optimization - info o clang, pomuze s vyberem nastroje.
+
+Chci vybrat mezi libtooling a libclang, ale nevim, co je lepsi...
+
+Testu suite - http://courses.cs.vt.edu/~cs1206/Fall00/bugs_CAS.html
+
+Naivni a systematicky pristup - https://www.csm.ornl.gov/~sheldon/bucket/Automated-Debugging.pdf
+
+Zachovat vsechny zpusoby redukce a validace - nemazat neefektivni kod - ve finale mam vice zpusobu, ktere muzu porovnat.
+
+Generovani kodu:
+Variace 
+	- pro statementy zbytecne mnoho, nejlepsi by bylo omezeni na expressions => je potreba najit idealni node v AST takovy, aby jeho odstraneni davalo smysl.
+STMTDemo
+	- moznost odstranit vybrany kus kodu, prolezt strom do urcite miry
+	- nekolik zmen pri vicero volani, moznost pouzivani cyklu
+
+*Performance:
+	- "velke" projekty trvaji prilis dlouho, overhead je budto ve vytvareni toolu nebo v prochazeni AST -> dalsi overhead je v pouziti systemovych hlavickovych souboru, je potreba se jich v AST zbavit
+	- AST lze ulozit do souboru a pote ho lze nacist primo v toolu, neni treba ho pokazde delat znovu -> potencialni uspora casu
+
+Validace kodu:
+Clang udela pro FrontEndAction kompilaci, lze videt errory, warningy, atd.
+
+Naivni validace: Nejnaivnejsi (pouzita v NaiveGDB a DeltaGDB) preklada vygenerovane soubory pomoci gcc a pokud preklad probehne spravne, tak je spusti v prostredi gdb. Po dobehnuti se chyta chybova hlaska, je potreba ale pridat i cislo radky, na kterem se chyba vyskytla. 
+
+Webova appka - hostovani toolu na github pages nebo podobne.
+
+Systematicka validace kodu:
+*Prozkoumat statickou analyzu v clangu (clang-check atd.).
+*Zkusit prekladani programu (nebo nejlepe jen jeho casti) do IL a spousteni programu takto.
