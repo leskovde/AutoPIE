@@ -25,7 +25,7 @@ using namespace llvm;
 
 std::string TempName = "tempFile.cpp";
 
-// Global state
+// Global state.
 Rewriter RewriterInstance;
 auto Variants = std::stack<std::string>();
 
@@ -81,7 +81,7 @@ std::string ExecCommand(const char* cmd)
 	return result;
 }
 
-// Traverses the AST and removes a selected statement set by the CurrentLine number
+// Traverses the AST and removes a selected statement set by the CurrentLine number.
 class StatementReductionASTVisitor : public RecursiveASTVisitor<StatementReductionASTVisitor>
 {
 	int iteration = 0;
@@ -136,7 +136,7 @@ public:
 	}
 };
 
-// Counts the number of expressions and stores it in CountVisitorCurrentLine
+// Counts the number of expressions and stores it in CountVisitorCurrentLine.
 class CountASTVisitor : public RecursiveASTVisitor<CountASTVisitor>
 {
 	ASTContext* astContext; // used for getting additional AST info
@@ -155,13 +155,13 @@ public:
 	}
 };
 
-class ExpressionReductionASTConsumer final : public ASTConsumer
+class StatementReductionASTConsumer final : public ASTConsumer
 {
 	StatementReductionASTVisitor* visitor; // doesn't have to be private
 
 public:
 	// override the constructor in order to pass CI
-	explicit ExpressionReductionASTConsumer(CompilerInstance* ci)
+	explicit StatementReductionASTConsumer(CompilerInstance* ci)
 		: visitor(new StatementReductionASTVisitor(ci)) // initialize the visitor
 	{
 	}
@@ -196,11 +196,11 @@ public:
 	}
 };
 
-class ExpressionReduceAction final : public ASTFrontendAction
+class StatementReduceAction final : public ASTFrontendAction
 {
 public:
 
-	// Prints the updated source file to a new file specific to the current iteration
+	// Prints the updated source file to a new file specific to the current iteration.
 	void EndSourceFileAction() override
 	{
 		if (!SourceChanged)
@@ -224,7 +224,7 @@ public:
 
 	std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& ci, StringRef file) override
 	{
-		return std::unique_ptr<ASTConsumer>(std::make_unique<ExpressionReductionASTConsumer>(&ci));
+		return std::unique_ptr<ASTConsumer>(std::make_unique<StatementReductionASTConsumer>(&ci));
 		// pass CI pointer to ASTConsumer
 	}
 };
@@ -248,7 +248,7 @@ public:
 	}
 };
 
-// Returns the number statements in the fileName source code file
+// Returns the number statements in the fileName source code file.
 static int GetStatementCount(CompilationDatabase& cd, const std::string& fileName)
 {
 	ClangTool tool(cd, fileName);
@@ -257,13 +257,13 @@ static int GetStatementCount(CompilationDatabase& cd, const std::string& fileNam
 	return CountVisitorCurrentLine;
 }
 
-// Removes lineNumber-th statement in the fileName source code file
+// Removes lineNumber-th statement in the fileName source code file.
 static void ReduceStatement(CompilationDatabase& cd, const std::string& fileName, const int expressionNumber)
 {
 	CurrentStatementNumber = expressionNumber;
 
 	ClangTool tool(cd, fileName);
-	auto result = tool.run(newFrontendActionFactory<ExpressionReduceAction>().get());
+	auto result = tool.run(newFrontendActionFactory<StatementReduceAction>().get());
 }
 
 extern cl::OptionCategory MyToolCategory;
@@ -301,10 +301,10 @@ bool Validate(const char* const userInputError, const std::filesystem::directory
 int main(int argc, const char** argv)
 {
 	const auto userInputError = "std::invalid_argument";
-	// parse the command-line args passed to the code
+	// Parse the command-line args passed to the code.
 	CommonOptionsParser op(argc, argv, MyToolCategory);
 
-	// clean the temp directory
+	// Clean the temp directory.
 	std::filesystem::remove_all("temp/");
 	std::filesystem::create_directory("temp");
 
@@ -321,7 +321,7 @@ int main(int argc, const char** argv)
 	SourceChanged = false;
 	Variants.push(*op.getSourcePathList().begin());
 
-	// Search all possible source code variations in a DFS manner
+	// Search all possible source code variations in a DFS manner.
 	while (!Variants.empty())
 	{
 		auto currentFile = Variants.top();
@@ -334,7 +334,7 @@ int main(int argc, const char** argv)
 			continue;
 		}
 
-		// Remove each statement once and push a new file without that statement onto the stack (done inside the FrontEndAction)
+		// Remove each statement once and push a new file without that statement onto the stack (done inside the FrontEndAction).
 		for (auto i = 1; i <= expressionCount; i++)
 		{
 			outs() << "Iteration: " << std::to_string(Iteration) << "\n\n";
@@ -345,10 +345,35 @@ int main(int argc, const char** argv)
 
 	outs() << "\n============================================================\n";
 	outs() << "VERIFICATION\n";
-	
+
+	std::vector<std::filesystem::directory_entry> files{};
+
 	for (const auto& entry : std::filesystem::directory_iterator("temp/"))
 	{
-		if (Validate(userInputError, entry)) break;
+		files.emplace_back(entry);
+	}
+
+	std::sort(files.begin(), files.end(),
+	          [](const std::filesystem::directory_entry& a, const std::filesystem::directory_entry b) -> bool
+	          {
+		          return a.file_size() < b.file_size();
+	          });
+
+	auto minimalProgramVariantFound = false;
+
+	for (const auto& entry : files)
+	{
+		if (Validate(userInputError, entry))
+		{
+			outs() << "Minimal program variant: " << entry.path().c_str() << "\n";
+			minimalProgramVariantFound = true;
+			break;
+		}
+	}
+
+	if (!minimalProgramVariantFound)
+	{
+		outs() << "Minimal program variant could not be found.";
 	}
 
 	outs() << "\n============================================================\n";
