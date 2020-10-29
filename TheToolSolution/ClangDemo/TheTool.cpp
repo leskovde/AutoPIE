@@ -336,28 +336,29 @@ std::vector<std::string> SplitIntoPartitions(CompilationDatabase& cd, const std:
 
 // Generates a minimal program variant using delta debugging.
 // Call:
-// > TheTool.exe [path to a cpp file] --
+// > TheTool.exe [path to a cpp file] -- [runtime error]
+// e.g. TheTool.exe C:\Users\User\llvm\llvm-project\TestSource.cpp -- std::invalid_argument
 int main(int argc, const char** argv)
-{
-	const auto userInputError = "std::invalid_argument";
-	// parse the command-line args passed to the code
-	CommonOptionsParser op(argc, argv, MyToolCategory);
+{	
+	const auto userInputError = argv[argc - 1];
 
-	// clean the temp directory
+	// Parse the command-line args passed to the code.
+	CommonOptionsParser op(argc, argv, MyToolCategory);
+	
+	if (op.getSourcePathList().size() > 1)
+	{
+		outs() << "Only a single source file is supported.\n";
+		return 0;
+	}
+
+	// Clean the temp directory.
 	std::filesystem::remove_all("temp/");
 	std::filesystem::create_directory("temp");
-
-#if SMALLFILE
-	const std::string fileName = R"(C:\Users\Denis\llvm\llvm-project\TestSourceException.cpp)";
-#else
-	// TOOL CREATION & COMPILATION OVERHEAD DEMO
-	const std::string fileName = R"(C:\Users\Denis\source\repos\Diacritics\Diacritics\Diacritics.cpp)";
-#endif
 
 	auto originalStatementCount = GetStatementCount(op.getCompilations(), *op.getSourcePathList().begin());
 
 	auto partitionCount = 2;
-	auto currentFile = fileName;
+	auto currentFile = *op.getSourcePathList().begin();
 
 	// While able to test & reduce.
 	while (partitionCount <= originalStatementCount)
@@ -399,7 +400,7 @@ int main(int argc, const char** argv)
 
 	if (Validate(userInputError, std::filesystem::directory_entry(currentFile)))
 	{
-		outs() << "Minimal program variant: " << currentFile << "\n";
+		outs() << "Minimal program variant: ./temp/" << currentFile << "\n";
 	}
 	else
 	{
