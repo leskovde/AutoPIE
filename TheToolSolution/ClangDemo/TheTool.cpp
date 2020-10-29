@@ -295,28 +295,31 @@ bool Validate(const char* const userInputError, const std::filesystem::directory
 	return false;
 }
 
-// Generates all possible variations of the supplied source code
+// Generates a minimal program variant using delta debugging.
 // Call:
-// > TheTool.exe [path to a cpp file] --
+// > TheTool.exe [path to a cpp file] -- [runtime error] [reduction ratio]
+// e.g. TheTool.exe C:\Users\User\llvm\llvm-project\TestSource.cpp -- std::invalid_argument
 int main(int argc, const char** argv)
 {
-	const auto userInputError = "std::invalid_argument";
+	assert(argc > 2);
+	
+	const auto acceptableRatio = std::strtol(argv[argc - 1], nullptr, 10);
+	const auto userInputError = argv[argc - 2];
+
 	// Parse the command-line args passed to the code.
 	CommonOptionsParser op(argc, argv, MyToolCategory);
+	
+	if (op.getSourcePathList().size() > 1)
+	{
+		outs() << "Only a single source file is supported.\n";
+		return 0;
+	}
 
 	// Clean the temp directory.
 	std::filesystem::remove_all("temp/");
 	std::filesystem::create_directory("temp");
 
-#if SMALLFILE
-	const std::string fileName = R"(C:\Users\Denis\llvm\llvm-project\TestSourceException.cpp)";
-#else
-	// TOOL CREATION & COMPILATION OVERHEAD DEMO
-	const std::string fileName = R"(C:\Users\Denis\source\repos\Diacritics\Diacritics\Diacritics.cpp)";
-#endif
-
 	const auto originalExpressionCount = GetStatementCount(op.getCompilations(), *op.getSourcePathList().begin());
-	const auto acceptableRatio = 0.85;
 
 	SourceChanged = false;
 	Variants.push(*op.getSourcePathList().begin());
@@ -353,6 +356,7 @@ int main(int argc, const char** argv)
 		files.emplace_back(entry);
 	}
 
+	// Sort the output by size and iterate it from the smallest to the largest file. The first valid file is the minimal version.
 	std::sort(files.begin(), files.end(),
 	          [](const std::filesystem::directory_entry& a, const std::filesystem::directory_entry b) -> bool
 	          {
@@ -365,7 +369,7 @@ int main(int argc, const char** argv)
 	{
 		if (Validate(userInputError, entry))
 		{
-			outs() << "Minimal program variant: " << entry.path().c_str() << "\n";
+			outs() << "Minimal program variant: ./temp/" << entry.path().c_str() << "\n";
 			minimalProgramVariantFound = true;
 			break;
 		}
