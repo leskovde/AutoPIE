@@ -1,0 +1,52 @@
+An algorithm for systematic reduction of a "general domain" program `P`:
+
+Prerequisites: 
+    While running, the program `P` results in a runtime error `E`. Using a stack trace analysis tool, the user can tell which line of code `L` caused the runtime error and what the nature of the runtime error was, i.e. its description `D`.
+
+Input: 
+    The source code of the program `P`, line `L` on which the error `E` was thrown, the description `D` of the error `E`, the arguments `A` with which the error `E` was produced.
+
+# Get the error line in the AST.
+1. T <- GetAST(P)
+2. STM <- T.VisitLine(L)
+3. V <- EmptyVariableList
+# Collect all variables in the error line.
+4. for each EXPR in STM:
+5.	    if EXPR is Variable:
+6.		    V <- V + EXPR
+7. S <- EmptySliceList
+# Get slices w.r.t. each collected error line variable.
+8. for each VAR in V:
+9.      S <- S + StaticSlice(P, STM, VAR)
+# Unify those slice, i.e. create a slice w.r.t. all collected error line variables.
+10. SLC <- Unify(S)
+11. P' <- Compile(SLC)
+12. T <- GetAST(P')
+# Get all variables in the new program variant and consider only those arguments that are still present in the new program variant.
+13. V' <- MatchVariables(T')
+14. A <- Intersect(A, V')
+15. S <- EmptySliceList
+# Get slices w.r.t. each collected error line variable.
+16. for each VAR in V:
+17.	    S <- S + DynamicSlice(P', STM, VAR, A)
+# Unify those slice, i.e. create a slice w.r.t. all collected error line variables.
+18. SLC <- Unify(S)
+19. P' <- Compile(SLC)
+# Launch a more precise debugging approach on the reduced program variant.
+20. P' <- Delta(P', STM, A)
+
+Output: The minimal runnable program variant `P'` that produces runtime error `E` with the description `D`.
+
+Explanation of used functions and procedures:
+    GetAST: Gets an in-memory representation of the AST of a given program using LLVM.
+    Tree.VisitLine: A custom function that recursivelly visits the statement on a given line in the AST.
+    StaticSlice: A function that produces a static slice w.r.t. a given statement and variable.
+    DynamicSlice: Same as StaticSlice, however it produces a dynamic slice provided an argument list.
+    Unify: Unifies given slices to form a single slice that contains all statements in those given slices.
+    Intersect: Returns only those variables present in both given lists.
+    Compile: Compiles a given code / AST / slice using clang.
+    Delta: Launches previously implemented delta debugging onto a given program.
+
+Limitations of the algorithm: 
+    The algorithm is not designed to work with multithreaded and interprocess programs. The support for this kind of a domain can be achieved by altering the algorithm. This would however generally result in a larger `P'`.
+    The algorithm is not guaranteed to work with non-terminating applications, although it is designed to work in this kind of a domain in some cases.
