@@ -40,8 +40,8 @@ Output: The minimal runnable program variant `P'` that produces runtime error `E
 Explanation of used functions and procedures:
     GetAST: Gets an in-memory representation of the AST of a given program using LLVM.
     Tree.VisitLine: A custom function that recursivelly visits the statement on a given line in the AST.
-    StaticSlice: A function that produces a static slice w.r.t. a given statement and variable.
-    DynamicSlice: Same as StaticSlice, however it produces a dynamic slice provided an argument list.
+    StaticSlice: A function that produces a static slice w.r.t. a given statement and variable. [F. Tip 1.1, J. Silva 2.2, 2.4]
+    DynamicSlice: Same as StaticSlice, however it produces a dynamic slice provided an argument list. [J. Silva 2.3]
     Unify: Unifies given slices to form a single slice that contains all statements in those given slices.
     Intersect: Returns only those variables present in both given lists.
     Compile: Compiles a given code / AST / slice using clang.
