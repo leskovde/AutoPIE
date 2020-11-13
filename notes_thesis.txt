@@ -33,3 +33,7 @@ Webova appka - hostovani toolu na github pages nebo podobne.
 Systematicka validace kodu:
 *Prozkoumat statickou analyzu v clangu (clang-check atd.).
 *Zkusit prekladani programu (nebo nejlepe jen jeho casti) do IL a spousteni programu takto.
+
+Dvojkombinace static a dynamic - vyhodnejsi pro obecnejsi domenu (muze odstranit kusy nedobihajciho kodu, nefunguje s vice procesy).
+Hybrid - vhodnejsi pro jednodussi programky, zavisi na dobe behu uzivatelova programu a na funkcionalite clang debuggeru.
+Pokus: zkusit dvojkombinaci a hybridni slicing na serverovou aplikaci. Podivat se, co odebral static a jestli to stacilo k zamezeni dlouheho runtime. Porovnat presnost a vykon, pokud oba dobehnou.
