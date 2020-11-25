@@ -107,12 +107,12 @@ public:
 		RewriterInstance.setSourceMgr(astContext->getSourceManager(),
 		                              astContext->getLangOpts());
 	}
-
+	/*
 	virtual bool TraverseDecl(Decl* d)
 	{
 		return astContext->getSourceManager().isInMainFile(d->getLocation());
 	}
-
+	*/
 	virtual bool VisitStmt(Stmt* st)
 	{
 		iteration++;
@@ -163,7 +163,10 @@ public:
 
 	virtual bool VisitStmt(Stmt* st)
 	{
-		CountVisitorCurrentLine++;
+		if (astContext->getSourceManager().isInMainFile(st->getBeginLoc()))
+		{
+			CountVisitorCurrentLine++;
+		}
 
 		return true;
 	}
@@ -226,6 +229,7 @@ public:
 		RewriterInstance.getEditBuffer(sm.getMainFileID()).write(errs());
 
 		const auto fileName = "temp/" + std::to_string(Iteration) + TempName;
+		CurrentProcessedFile = fileName;
 
 		std::error_code errorCode;
 		raw_fd_ostream outFile(fileName, errorCode, sys::fs::F_None);
@@ -233,7 +237,6 @@ public:
 		RewriterInstance.getEditBuffer(sm.getMainFileID()).write(outFile); // --> this will write the result to outFile
 		outFile.close();
 
-		CurrentProcessedFile = fileName;
 	}
 
 	std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& ci, StringRef file) override
@@ -322,7 +325,7 @@ std::vector<std::string> SplitIntoPartitions(CompilationDatabase& cd, const std:
 		CreateNewRewriter = true;
 
 		// TODO: Reduce in range.
-		for (auto j = 0; j < originalStatementCount / partitionCount; j++)
+		for (auto j = 1; j <= originalStatementCount / partitionCount; j++)
 		{
 			auto partitionPath = ReduceStatement(cd, filePath, i * (originalStatementCount / partitionCount) + j);
 			filePaths.emplace_back(partitionPath);
