@@ -14,6 +14,10 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 
+#include "Context.h"
+#include "Helper.h"
+#include "Actions.h"
+
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 
 #define SMALLFILE 1
@@ -23,248 +27,7 @@ using namespace driver;
 using namespace tooling;
 using namespace llvm;
 
-std::string TempName = "tempFile.cpp";
-
-// Global state.
-Rewriter RewriterInstance;
-auto Variants = std::stack<std::string>();
-
-int CurrentStatementNumber;
-int CountVisitorCurrentLine;
-
-int ErrorLineNumber = 2;
-
-int Iteration = 0;
-int NumFunctions = 0;
-bool SourceChanged = false;
-
 cl::OptionCategory MyToolCategory("my-tool options");
-
-static SourceRange GetSourceRange(const Stmt& s)
-{
-	return {s.getBeginLoc(), s.getEndLoc()};
-}
-
-static int GetChildrenCount(Stmt* st)
-{
-	int childrenCount = 0;
-
-	for (auto it = st->children().begin(); it != st->children().end(); ++it)
-	{
-		childrenCount++;
-	}
-
-	for (auto child : st->children())
-	{
-		childrenCount += GetChildrenCount(child);
-	}
-
-	return childrenCount;
-}
-
-std::string ExecCommand(const char* cmd)
-{
-	std::array<char, 128> buffer;
-	std::string result;
-	std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cmd, "r"), _pclose);
-
-	if (!pipe)
-	{
-		throw std::runtime_error("PILE ERROR: _popen() failed!");
-	}
-
-	while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
-	{
-		result += buffer.data();
-	}
-
-	return result;
-}
-
-// Traverses the AST and removes a selected statement set by the CurrentLine number.
-class StatementReductionASTVisitor : public RecursiveASTVisitor<StatementReductionASTVisitor>
-{
-	int iteration = 0;
-	ASTContext* astContext; // used for getting additional AST info
-
-public:
-	virtual ~StatementReductionASTVisitor() = default;
-
-	explicit StatementReductionASTVisitor(CompilerInstance* ci)
-		: astContext(&ci->getASTContext()) // initialize private members
-	{
-		SourceChanged = false;
-		RewriterInstance = Rewriter();
-		RewriterInstance.setSourceMgr(astContext->getSourceManager(),
-		                              astContext->getLangOpts());
-	}
-
-	virtual bool VisitStmt(Stmt* st)
-	{
-		iteration++;
-
-		if (iteration == CurrentStatementNumber)
-		{
-			auto numberOfChildren = GetChildrenCount(st);
-
-			const auto range = GetSourceRange(*st);
-			auto locStart = astContext->getSourceManager().getPresumedLoc(range.getBegin());
-			auto locEnd = astContext->getSourceManager().getPresumedLoc(range.getEnd());
-
-			Rewriter rewriter;
-			rewriter.setSourceMgr(astContext->getSourceManager(), astContext->getLangOpts());
-
-			outs() << "\n============================================================\n";
-			outs() << "STATEMENT NO. " << iteration << "\n";
-			outs() << "CODE: " << rewriter.getRewrittenText(range) << "\n";
-			outs() << range.printToString(astContext->getSourceManager()) << "\n";
-			outs() << "CHILDREN COUNT: " << numberOfChildren << "\n";
-			outs() << "\n============================================================\n";
-
-			if (locStart.getLine() != ErrorLineNumber && locEnd.getLine() != ErrorLineNumber)
-			{
-				RewriterInstance.RemoveText(range);
-				SourceChanged = true;
-			}
-
-			CurrentStatementNumber += numberOfChildren;
-
-			return false;
-		}
-
-		return true;
-	}
-};
-
-// Counts the number of expressions and stores it in CountVisitorCurrentLine.
-class CountASTVisitor : public RecursiveASTVisitor<CountASTVisitor>
-{
-	ASTContext* astContext; // used for getting additional AST info
-
-public:
-	explicit CountASTVisitor(CompilerInstance* ci)
-		: astContext(&ci->getASTContext()) // initialize private members
-	{
-	}
-
-	virtual bool VisitStmt(Stmt* st)
-	{
-		CountVisitorCurrentLine++;
-
-		return true;
-	}
-};
-
-class StatementReductionASTConsumer final : public ASTConsumer
-{
-	StatementReductionASTVisitor* visitor; // doesn't have to be private
-
-public:
-	// override the constructor in order to pass CI
-	explicit StatementReductionASTConsumer(CompilerInstance* ci)
-		: visitor(new StatementReductionASTVisitor(ci)) // initialize the visitor
-	{
-	}
-
-	// override this to call our ExampleVisitor on the entire source file
-	void HandleTranslationUnit(ASTContext& context) override
-	{
-		/* we can use ASTContext to get the TranslationUnitDecl, which is
-			 a single Decl that collectively represents the entire source file */
-		visitor->TraverseDecl(context.getTranslationUnitDecl());
-	}
-};
-
-class CountASTConsumer final : public ASTConsumer
-{
-	CountASTVisitor* visitor; // doesn't have to be private
-
-public:
-	// override the constructor in order to pass CI
-	explicit CountASTConsumer(CompilerInstance* ci)
-		: visitor(new CountASTVisitor(ci)) // initialize the visitor
-	{
-		CountVisitorCurrentLine = 0;
-	}
-
-	// override this to call our ExampleVisitor on the entire source file
-	void HandleTranslationUnit(ASTContext& context) override
-	{
-		/* we can use ASTContext to get the TranslationUnitDecl, which is
-			 a single Decl that collectively represents the entire source file */
-		visitor->TraverseDecl(context.getTranslationUnitDecl());
-	}
-};
-
-class StatementReduceAction final : public ASTFrontendAction
-{
-public:
-
-	// Prints the updated source file to a new file specific to the current iteration.
-	void EndSourceFileAction() override
-	{
-		if (!SourceChanged)
-			return;
-
-		auto& sm = RewriterInstance.getSourceMgr();
-
-		outs() << "EXPR REDUCTION: END OF FILE ACTION:\n";
-		RewriterInstance.getEditBuffer(sm.getMainFileID()).write(errs());
-
-		const auto fileName = "temp/" + std::to_string(Iteration) + TempName;
-
-		std::error_code errorCode;
-		raw_fd_ostream outFile(fileName, errorCode, sys::fs::F_None);
-
-		RewriterInstance.getEditBuffer(sm.getMainFileID()).write(outFile); // --> this will write the result to outFile
-		outFile.close();
-
-		Variants.push(fileName);
-	}
-
-	std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& ci, StringRef file) override
-	{
-		return std::unique_ptr<ASTConsumer>(std::make_unique<StatementReductionASTConsumer>(&ci));
-		// pass CI pointer to ASTConsumer
-	}
-};
-
-class CountAction final : public ASTFrontendAction
-{
-public:
-
-	// Prints the number of statements in the source code to the console
-	void EndSourceFileAction() override
-	{
-		outs() << "COUNT: END OF FILE ACTION:\n";
-		outs() << "Statement count: " << CountVisitorCurrentLine;
-		outs() << "\n\n";
-	}
-
-	std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& ci, StringRef file) override
-	{
-		return std::unique_ptr<ASTConsumer>(std::make_unique<CountASTConsumer>(&ci));
-		// pass CI pointer to ASTConsumer
-	}
-};
-
-// Returns the number statements in the fileName source code file.
-static int GetStatementCount(CompilationDatabase& cd, const std::string& fileName)
-{
-	ClangTool tool(cd, fileName);
-	auto result = tool.run(newFrontendActionFactory<CountAction>().get());
-
-	return CountVisitorCurrentLine;
-}
-
-// Removes lineNumber-th statement in the fileName source code file.
-static void ReduceStatement(CompilationDatabase& cd, const std::string& fileName, const int expressionNumber)
-{
-	CurrentStatementNumber = expressionNumber;
-
-	ClangTool tool(cd, fileName);
-	auto result = tool.run(newFrontendActionFactory<StatementReduceAction>().get());
-}
 
 extern cl::OptionCategory MyToolCategory;
 
@@ -295,16 +58,39 @@ bool Validate(const char* const userInputError, const std::filesystem::directory
 	return false;
 }
 
+// Returns the number statements in the fileName source code file.
+int GetStatementCount(GlobalContext& ctx, clang::tooling::CompilationDatabase& cd, const std::string& fileName)
+{
+	ctx.countVisitorContext.ResetStatementCount();
+
+	clang::tooling::ClangTool tool(cd, fileName);
+	auto result = tool.run(clang::tooling::newFrontendActionFactory<CountAction>().get());
+	
+	return ctx.countVisitorContext.GetTotalStatementCount();
+}
+
+// Removes statementNumber-th statement in the fileName source code file.
+void ReduceStatement(GlobalContext& ctx, clang::tooling::CompilationDatabase& cd, const std::string& fileName, const int statementNumber)
+{
+	ctx.statementReductionContext = StatementReductionContext(statementNumber);
+
+	clang::tooling::ClangTool tool(cd, fileName);
+	auto result = tool.run(clang::tooling::newFrontendActionFactory<StatementReduceAction>().get());
+
+	ctx.iteration++;
+}
+
 // Generates a minimal program variant using delta debugging.
 // Call:
-// > TheTool.exe [path to a cpp file] -- [runtime error] [reduction ratio]
+// > TheTool.exe [path to a cpp file] -- [runtime error] [error line location] [reduction ratio]
 // e.g. TheTool.exe C:\Users\User\llvm\llvm-project\TestSource.cpp -- std::invalid_argument
 int main(int argc, const char** argv)
 {
 	assert(argc > 2);
 	
 	const auto acceptableRatio = std::strtol(argv[argc - 1], nullptr, 10);
-	const auto userInputError = argv[argc - 2];
+	const auto userInputError = argv[argc - 3];
+	const auto userInputErrorLocation = std::strtol(argv[argc - 2], nullptr, 10);
 
 	// Parse the command-line args passed to the code.
 	CommonOptionsParser op(argc, argv, MyToolCategory);
@@ -319,20 +105,24 @@ int main(int argc, const char** argv)
 	std::filesystem::remove_all("temp/");
 	std::filesystem::create_directory("temp");
 
-	const auto originalExpressionCount = GetStatementCount(op.getCompilations(), *op.getSourcePathList().begin());
 
-	SourceChanged = false;
-	Variants.push(*op.getSourcePathList().begin());
+	auto context = GlobalContext::GetInstance(*op.getSourcePathList().begin(), userInputErrorLocation, userInputError);
 
+	const auto originalStatementCount = GetStatementCount(*context, op.getCompilations(), *op.getSourcePathList().begin());
+
+	// TODO: Prevent duplicate program variants during generation => both search and verification speedup.
+	
 	// Search all possible source code variations in a DFS manner.
-	while (!Variants.empty())
+	while (!context->variants.empty())
 	{
-		auto currentFile = Variants.top();
-		Variants.pop();
+		auto currentFile = context->variants.top();
+		context->variants.pop();
 
-		const auto expressionCount = GetStatementCount(op.getCompilations(), currentFile);
+		outs() << "REDUCING: " << currentFile << " with " << std::to_string(context->variants.size()) << " files remaining on the stack.\n";
 
-		if ((static_cast<double>(expressionCount) / originalExpressionCount) < acceptableRatio)
+		const auto expressionCount = GetStatementCount(*context, op.getCompilations(), currentFile);
+
+		if ((static_cast<double>(expressionCount) / originalStatementCount) < acceptableRatio)
 		{
 			continue;
 		}
@@ -340,9 +130,8 @@ int main(int argc, const char** argv)
 		// Remove each statement once and push a new file without that statement onto the stack (done inside the FrontEndAction).
 		for (auto i = 1; i <= expressionCount; i++)
 		{
-			outs() << "Iteration: " << std::to_string(Iteration) << "\n\n";
-			ReduceStatement(op.getCompilations(), currentFile, i);
-			Iteration++;
+			outs() << "\tIteration: " << std::to_string(context->iteration) << " (targeting statement no. " << i << " )\n\n";
+			ReduceStatement(*context, op.getCompilations(), currentFile, i);
 		}
 	}
 
