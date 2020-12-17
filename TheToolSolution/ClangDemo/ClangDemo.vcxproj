@@ -149,7 +149,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Context.cpp" />
+    <ClCompile Include="Helper.cpp" />
     <ClCompile Include="TheTool.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Actions.h" />
+    <ClInclude Include="Consumers.h" />
+    <ClInclude Include="Context.h" />
+    <ClInclude Include="Helper.h" />
+    <ClInclude Include="Visitors.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
