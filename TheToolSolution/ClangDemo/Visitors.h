@@ -33,6 +33,8 @@ public:
 
 	virtual bool VisitStmt(clang::Stmt* st)
 	{
+		// TODO: Possible change - change the the number of children from 0 to something more sensible.
+
 		if (!st->children().empty())
 		{
 			// Non-leaf statement, continue.
@@ -90,6 +92,8 @@ public:
 
 	virtual bool VisitStmt(clang::Stmt* st)
 	{
+		// TODO: Possible change - change the the number of children from 0 to something more sensible.
+		
 		//st->viewAST();
 		
 		if (st->children().empty())
