@@ -56,3 +56,8 @@ Expr class
 	- potomek ValueStmt, dalsi potomci ValueStmt jsou nezajimavi - napr. [asdasd] atributy
 	- porad ma pod sebou dalsi Stmt a Expr...
 	- zajimave metody - Expr jde evaluatnout, zjistit, jestli jde evaluatnout, jestli je RValue, jestli ma side effecty, jestli je temporary
+
+------------------------
+
+Uprava AST (vkladani instrumentacniho kodu): https://www.youtube.com/watch?v=_rUwW8Awc5s
+
