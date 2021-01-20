@@ -35,38 +35,6 @@ public:
 	}
 };
 
-class StatementReductionContext
-{
-	int targetStatementNumber;
-	bool sourceChanged = false;
-
-public:
-	StatementReductionContext()
-	{
-		targetStatementNumber = 1;
-	}
-
-	explicit StatementReductionContext(const int target)
-	{
-		targetStatementNumber = target;
-	}
-
-	void ChangeSourceStatus()
-	{
-		sourceChanged = true;
-	}
-
-	bool GetSourceStatus() const
-	{
-		return sourceChanged;
-	}
-
-	int GetTargetStatementNumber() const
-	{
-		return targetStatementNumber;
-	}
-};
-
 class GlobalContext
 {
 	static GlobalContext* instance;
@@ -76,7 +44,6 @@ class GlobalContext
 		lines = std::vector<int>();
 		
 		countVisitorContext = CountVisitorContext();
-		statementReductionContext = StatementReductionContext();
 
 		globalRewriter = clang::Rewriter();
 
@@ -85,7 +52,7 @@ class GlobalContext
 		std::cout << "New non-default constructor call.\n";
 	}
 
-	GlobalContext() : errorLineNumber(0)
+	GlobalContext()
 	{
 		std::cout << "New default constructor call.\n";
 	}
@@ -94,17 +61,12 @@ public:
 	std::vector<int> lines;
 	
 	CountVisitorContext countVisitorContext;
-	StatementReductionContext statementReductionContext;
 
 	bool createNewRewriter{};
 	clang::Rewriter globalRewriter;
 
-	int errorLineNumber{};
-	std::string errorLineMessage;
 	std::string currentFileName;
 	std::string lastGeneratedFileName;
-
-	int iteration = 0;
 
 	GlobalContext(GlobalContext& other) = delete;
 
