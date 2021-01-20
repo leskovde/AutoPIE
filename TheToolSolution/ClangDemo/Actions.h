@@ -18,11 +18,6 @@ public:
 	// Prints the updated source file to a new file specific to the current iteration.
 	void EndSourceFileAction() override
 	{
-		if (!globalContext->statementReductionContext.GetSourceStatus())
-		{
-			return;
-		}
-
 		auto& sm = globalContext->globalRewriter.getSourceMgr();
 
 		llvm::outs() << "\t\STMT REDUCTION ACTION: END OF FILE ACTION:\n";

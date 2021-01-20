@@ -1,5 +1,6 @@
 #include <iostream>
 #include <filesystem>
+#include <fstream>
 // Declares clang::SyntaxOnlyAction.
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
@@ -13,6 +14,8 @@
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Rewrite/Core/Rewriter.h"
+#include "clang/ASTMatchers/ASTMatchers.h"
+#include "clang/ASTMatchers/ASTMatchFinder.h"
 
 #include "Context.h"
 #include "Helper.h"
@@ -23,55 +26,14 @@
 #define SMALLFILE 1
 
 using namespace clang;
+using namespace clang::ast_matchers;
 using namespace driver;
 using namespace tooling;
 using namespace llvm;
 
-// Global state
-Rewriter RewriterInstance;
-auto Variants = std::stack<std::string>();
-
-int CurrentStatementNumber;
-int CountVisitorCurrentLine;
-std::string CurrentProcessedFile;
-
-int ErrorLineNumber = 2;
-
-int Iteration = 0;
-int NumFunctions = 0;
-bool SourceChanged = false;
-bool CreateNewRewriter = true;
-
 cl::OptionCategory MyToolCategory("my-tool options");
 
 extern cl::OptionCategory MyToolCategory;
-
-bool Validate(const char* const userInputError, const std::filesystem::directory_entry& entry)
-{
-	outs() << "ENTRY: " << entry.path().string() << "\n";
-	std::string compileCommand = "g++ -o temp\\" + entry.path().filename().replace_extension(".exe").string() + " " +
-		entry.path().string() + " 2>&1";
-
-	auto compilationResult = ExecCommand(compileCommand.c_str());
-	outs() << "COMPILATION: " << compilationResult << "\n";
-
-	if (compilationResult.find("error") == std::string::npos)
-	{
-		std::string debugCommand = "gdb --batch -ex run temp\\" + entry
-			.path().filename().replace_extension(".exe").string()
-			+ " 2>&1";
-
-		auto debugResult = ExecCommand(debugCommand.c_str());
-		outs() << "DEBUG: " << debugResult << "\n";
-
-		if (debugResult.find(userInputError) != std::string::npos)
-		{
-			copy_file(entry, "result.cpp");
-			return true;
-		}
-	}
-	return false;
-}
 
 // Returns the number statements in the fileName source code file.
 int GetLeafStatementCount(GlobalContext& ctx, clang::tooling::CompilationDatabase& cd)
@@ -85,9 +47,9 @@ int GetLeafStatementCount(GlobalContext& ctx, clang::tooling::CompilationDatabas
 }
 
 // Removes statementNumber-th statement in the fileName source code file.
-std::string ReduceStatement(GlobalContext& ctx, clang::tooling::CompilationDatabase& cd, const int statementNumber)
+std::string ReduceStatement(GlobalContext& ctx, clang::tooling::CompilationDatabase& cd, std::vector<int>& lines)
 {
-	ctx.statementReductionContext = StatementReductionContext(statementNumber);
+	ctx.lines = lines;
 
 	clang::tooling::ClangTool tool(cd, ctx.currentFileName);
 	auto result = tool.run(clang::tooling::newFrontendActionFactory<StatementReduceAction>().get());
@@ -95,41 +57,86 @@ std::string ReduceStatement(GlobalContext& ctx, clang::tooling::CompilationDatab
 	return ctx.lastGeneratedFileName;
 }
 
-std::vector<std::string> SplitIntoPartitions(GlobalContext& ctx, CompilationDatabase& cd, const int partitionCount)
+class FuncDeclHandler : public MatchFinder::MatchCallback
 {
-	std::vector<std::string> filePaths{};
-	const auto originalStatementCount = GetLeafStatementCount(ctx, cd);
+public:
+	std::tuple<int, int> lineRange;
 
-	for (auto i = 0; i < partitionCount; i++)
+	explicit FuncDeclHandler() {}
+
+	virtual void run(const MatchFinder::MatchResult &Result)
 	{
-		ctx.createNewRewriter = true;
-
-		std::string partitionPath;
-		
-		// TODO: Reduce in range.
-		for (auto j = 1; j <= originalStatementCount / partitionCount; j++)
+		if (const FunctionDecl *FD = Result.Nodes.getNodeAs<clang::FunctionDecl>("mainFunction"))
 		{
-			partitionPath = ReduceStatement(ctx, cd, i * (originalStatementCount / partitionCount) + j);
-			ctx.createNewRewriter = false;
-			ctx.iteration++;
+			//FD->dump();
+
+			auto bodyRange = FD->getBody()->getSourceRange();
+			
+			const auto startLineNumber = Result.Context->getSourceManager().getSpellingLineNumber(bodyRange.getBegin());
+			const auto endLineNumber = Result.Context->getSourceManager().getSpellingLineNumber(bodyRange.getEnd());
+
+			const auto endTokenLoc = Result.Context->getSourceManager().getSpellingLoc(bodyRange.getEnd());
+
+			const auto startLoc = Result.Context->getSourceManager().getSpellingLoc(bodyRange.getBegin());
+			const auto endLoc = clang::Lexer::getLocForEndOfToken(endTokenLoc, 0, Result.Context->getSourceManager(), clang::LangOptions());
+
+			bodyRange = clang::SourceRange(startLoc, endLoc);
+			lineRange = std::make_tuple(startLineNumber, endLineNumber);
+			
+			outs() << "Range: " << bodyRange.printToString(Result.Context->getSourceManager()) << " (lines " << startLineNumber << " - " << endLineNumber << ")\n";
 		}
-		
-		filePaths.emplace_back(partitionPath);
+	}
+};
+
+std::vector<int> GetAllLineNumbersOfMain(clang::tooling::CompilationDatabase& cd, const std::string& fileName)
+{
+	FuncDeclHandler handlerForMain;
+
+	MatchFinder finder;
+	finder.addMatcher(functionDecl(hasName("main")).bind("mainFunction"), &handlerForMain);
+	
+	clang::tooling::ClangTool tool(cd, fileName);
+	auto result = tool.run(newFrontendActionFactory(&finder).get());
+
+	if (result)
+	{
+		throw std::invalid_argument("Could not compile the given file!");
+	}
+	
+	auto lineRange = handlerForMain.lineRange;
+
+	auto retval = std::vector<int>();
+
+	for (auto i = std::get<0>(lineRange) + 1; i < std::get<1>(lineRange); i++)
+	{
+		retval.push_back(i);
 	}
 
-	return filePaths;
+	return retval;
+}
+
+std::vector<int> GetLineNumbersComplement(const std::vector<int> allLines, const std::vector<int>& sliceLines)
+{
+	auto retval = std::vector<int>();
+
+	for (auto line : allLines)
+	{
+		if (std::find(sliceLines.cbegin(), sliceLines.cend(), line) == sliceLines.cend())
+		{
+			retval.push_back(line);
+		}
+	}
+
+	return retval;
 }
 
 // Generates a minimal program variant using delta debugging.
 // Call:
-// > TheTool.exe [path to a cpp file] -- [runtime error] [error line location]
+// > TheTool.exe [path to a cpp file] -- [slice line number sequence]
 // e.g. TheTool.exe C:\Users\User\llvm\llvm-project\TestSource.cpp -- std::invalid_argument 15
 int main(int argc, const char** argv)
 {
 	assert(argc > 2);
-
-	const auto userInputError = argv[argc - 2];
-	const auto userInputErrorLocation = std::strtol(argv[argc - 1], nullptr, 10);
 
 	// Parse the command-line args passed to the code.
 	CommonOptionsParser op(argc, argv, MyToolCategory);
@@ -140,64 +147,25 @@ int main(int argc, const char** argv)
 		return 0;
 	}
 
+	std::string line;
+	std::ifstream ifs(argv[3]);
+	std::vector<int> sliceLines;
+	
+	while (std::getline(ifs, line))
+	{
+		sliceLines.push_back(std::stoi(line, nullptr, 10));
+	}
+
 	// Clean the temp directory.
 	std::filesystem::remove_all("temp/");
 	std::filesystem::create_directory("temp");
 
-	auto context = GlobalContext::GetInstance(*op.getSourcePathList().begin(), userInputErrorLocation, userInputError);
+	auto context = GlobalContext::GetInstance(*op.getSourcePathList().begin());
 
-	auto originalStatementCount = GetLeafStatementCount(*context, op.getCompilations());
-
-	auto partitionCount = 2;
+	auto allLines = GetAllLineNumbersOfMain(op.getCompilations(), context->currentFileName);
+	auto lines = GetLineNumbersComplement(allLines, sliceLines);
 	
-	// While able to test & reduce.
-	while (partitionCount <= originalStatementCount)
-	{
-		// Split the current file into partitions (i.e. a set of new files, each of which is a continuous subset of the original).
-		auto fileNames = SplitIntoPartitions(*context, op.getCompilations(), partitionCount);
-
-		auto noErrorThrown = true;
-		std::string mostRecentFailureInducingFile;
-
-		// Attempt to find a file in which the desired error is thrown.
-		for (auto& file : fileNames)
-		{
-			// If the desired error is thrown, save the path to the currently iterated one (which is also the most recent failure inducing file).
-			if (Validate(userInputError, std::filesystem::directory_entry(file)))
-			{
-				// TODO: Possible recursive call if this was made into a function, the recursive call would guarantee that no possible minimization paths are excluded.
-				mostRecentFailureInducingFile = file;
-				noErrorThrown = false;
-				break;
-			}
-		}
-
-		// If no errors were thrown, increase the granularity and keep the original file.
-		if (noErrorThrown)
-		{
-			partitionCount *= 2;
-		}
-		// If the desired error has been encountered, change the original file to the most recent failure inducing (a subset of the original) and start over.
-		else
-		{
-			partitionCount = 2;
-			context->currentFileName = mostRecentFailureInducingFile;
-			originalStatementCount = GetLeafStatementCount(*context, op.getCompilations());
-		}
-	}
-
-	outs() << "\n============================================================\n";
-
-	if (Validate(userInputError, std::filesystem::directory_entry(context->currentFileName)))
-	{
-		outs() << "Minimal program variant: ./temp/" << context->currentFileName << "\n";
-	}
-	else
-	{
-		outs() << "Minimal program variant could not be found!\n";
-	}
-
-	outs() << "\n============================================================\n";
+	auto newFile = ReduceStatement(*context, op.getCompilations(), lines);
 
 	return 0;
 }
