@@ -71,15 +71,15 @@ class GlobalContext
 {
 	static GlobalContext* instance;
 
-	GlobalContext(const std::string& file, const int errorLine, const std::string& errorMessage)
+	explicit GlobalContext(const std::string& file)
 	{
+		lines = std::vector<int>();
+		
 		countVisitorContext = CountVisitorContext();
 		statementReductionContext = StatementReductionContext();
 
 		globalRewriter = clang::Rewriter();
 
-		errorLineNumber = errorLine;
-		errorLineMessage = errorMessage;
 		currentFileName = file;
 
 		std::cout << "New non-default constructor call.\n";
@@ -91,14 +91,15 @@ class GlobalContext
 	}
 
 public:
-
+	std::vector<int> lines;
+	
 	CountVisitorContext countVisitorContext;
 	StatementReductionContext statementReductionContext;
 
-	bool createNewRewriter;
+	bool createNewRewriter{};
 	clang::Rewriter globalRewriter;
 
-	int errorLineNumber;
+	int errorLineNumber{};
 	std::string errorLineMessage;
 	std::string currentFileName;
 	std::string lastGeneratedFileName;
@@ -119,9 +120,9 @@ public:
 		return instance;
 	}
 
-	static GlobalContext* GetInstance(const std::string& file, const int errorLine, const std::string& errorMessage)
+	static GlobalContext* GetInstance(const std::string& file)
 	{
-		instance = new GlobalContext(file, errorLine, errorMessage);
+		instance = new GlobalContext(file);
 
 		return instance;
 	}
