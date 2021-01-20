@@ -10,7 +10,6 @@
 
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Rewrite/Core/Rewriter.h"
@@ -18,15 +17,12 @@
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 
 #include "Context.h"
-#include "Helper.h"
 #include "Actions.h"
 
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 
-#define SMALLFILE 1
-
 using namespace clang;
-using namespace clang::ast_matchers;
+using namespace ast_matchers;
 using namespace driver;
 using namespace tooling;
 using namespace llvm;

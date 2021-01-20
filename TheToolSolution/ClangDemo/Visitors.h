@@ -131,7 +131,6 @@ public:
 			llvm::outs() << "============================================================\n\n";
 
 			globalContext->globalRewriter.RemoveText(range);
-			globalContext->statementReductionContext.ChangeSourceStatus();
 
 			InvalidateChildren(st);
 		}
@@ -167,34 +166,6 @@ public:
 			const auto range = GetSourceRange(*st);
 			const auto locStart = astContext->getSourceManager().getPresumedLoc(range.getBegin());
 			const auto locEnd = astContext->getSourceManager().getPresumedLoc(range.getEnd());
-			/*
-			clang::Rewriter localRewriter;
-			localRewriter.setSourceMgr(astContext->getSourceManager(), astContext->getLangOpts());
-
-			llvm::outs() << "============================================================\n";
-			llvm::outs() << "LEAF STATEMENT:\n";
-			llvm::outs() << "CODE:\n" << localRewriter.getRewrittenText(range) << "\n";
-			llvm::outs() << range.printToString(astContext->getSourceManager()) << "\n";
-			llvm::outs() << "============================================================\n\n";
-			*/
-		}
-		else
-		{
-			// The statement is an inner node.
-			/*
-			const auto range = GetSourceRange(*st);
-			const auto locStart = astContext->getSourceManager().getPresumedLoc(range.getBegin());
-			const auto locEnd = astContext->getSourceManager().getPresumedLoc(range.getEnd());
-
-			clang::Rewriter localRewriter;
-			localRewriter.setSourceMgr(astContext->getSourceManager(), astContext->getLangOpts());
-
-			llvm::outs() << "============================================================\n";
-			llvm::outs() << "NON-LEAF STATEMENT:\n";
-			llvm::outs() << "CODE:\n" << localRewriter.getRewrittenText(range) << "\n";
-			llvm::outs() << range.printToString(astContext->getSourceManager()) << "\n";
-			llvm::outs() << "============================================================\n\n";
-			*/
 		}
 
 		return true;

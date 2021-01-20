@@ -20,10 +20,11 @@ public:
 	{
 		auto& sm = globalContext->globalRewriter.getSourceMgr();
 
-		llvm::outs() << "\t\STMT REDUCTION ACTION: END OF FILE ACTION:\n";
+		llvm::outs() << "STMT REDUCTION ACTION: END OF FILE ACTION:\n";
 		globalContext->globalRewriter.getEditBuffer(sm.getMainFileID()).write(llvm::errs());
+		llvm::outs() << "\n\n";
 
-		const auto fileName = "temp/" + std::to_string(globalContext->iteration) + TempName;
+		const auto fileName = "temp/" + TempName;
 
 		std::error_code errorCode;
 		llvm::raw_fd_ostream outFile(fileName, errorCode, llvm::sys::fs::F_None);
@@ -50,8 +51,8 @@ public:
 	// Prints the number of statements in the source code to the console
 	void EndSourceFileAction() override
 	{
-		llvm::outs() << "\t\tCOUNT ACTION: END OF FILE ACTION:\n";
-		llvm::outs() << "\t\t\tStatement count: " << globalContext->countVisitorContext.GetTotalStatementCount();
+		llvm::outs() << "COUNT ACTION: END OF FILE ACTION:\n";
+		llvm::outs() << "\tStatement count: " << globalContext->countVisitorContext.GetTotalStatementCount();
 		llvm::outs() << "\n\n";
 	}
 
