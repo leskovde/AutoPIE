@@ -1,4 +1,4 @@
-- extensions psany v javascript / typescript
+- Extensions psany v javascript / typescript
 
 - Registering commands, configurations, keybindings, or context menu items.
 - Storing workspace or global data.
