@@ -9,13 +9,15 @@ Contains the most up-to-date outline and a summary of what's being worked on.
    - short introduction and a high level overview of the problem at hand (minimising programs), including the used approaches
    - should point at different chapters and summarize their content
 
-2. Program minimisation (the order could be switched with 3)
+2. Program minimization (the order could be switched with 3)
 
    - in depth explanation of the problem and its goals
    - setting the domain (what kinds of programs the solution should work on)
    - explain the naive solution and its limitation (exponential complexity, potentially many useless verifications)
    - explain the solution based on delta debugging (purely delta debugging based solution) and its disadvantage of needing to run verifications during reduction
    - explain the solution based on slicing, what other approaches are used together with slicing and why they were chosen (TBD), explain why some reduction can be done correctly without needing verification
+   - explain how the verification is done naively (running a debugger and checking its output)
+   - TBD: Explain how the verification is done in a more sophisticated manner
 
 3. Automated debugging techniques
 
@@ -39,15 +41,35 @@ Contains the most up-to-date outline and a summary of what's being worked on.
       - overview of AST related features
    2. Clang
       - overview of clang and llvm
-      - overview of clanglib and why it was not used for this project
+      - overview of libclang and why it was not used for this project
       - overview of libtooling and its advantages
 
    - summary of the tools and highlighting of the favourite (libtooling) 
 
-5. Clang and LLVM
+5. Clang libtooling
+
+   1. AST visitor
+      - the basic premise of the clang AST visitor and its implementation
+      - explain the ability to override visit functions, returning true or false to continue
+      - explain limitations (when traversing subtrees, etc.)
+   2. Matchers
+      - the usage, give examples
+      - explain how they might be useful (fetching all functions, etc.)
+   3. Source to source transformation
+      - the link between the source code and the AST
+      - SourceManager and Rewriter
+      - TreeDiff, TreeTransform, ...
+
 6. Implementation
+
+   - TBD: The text depends on how the programming part goes, mention all the obstacles and challenges, mention the requirements (HW and SW, e.g. Docker), mention used work (DG, giri) and how it was used in this project
 
 7. Experiments
 
+   - run the project on tailored tests (i.e. programs from the target domain that are expected to "work well" with the minimization) and plot some results (reduction rate, speed, compare different approaches and highlight their strengths)
+   - run the project on the SV-COMP competition benchmark and show the results
+
 8. Conclusion
+
+   - summarize the experiment results and the performance of the most sophisticated approach
 
