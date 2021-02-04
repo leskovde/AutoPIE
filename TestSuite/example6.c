@@ -13,20 +13,43 @@
  *
  */
 
+int different_narrative(int n) 
+{ 
+    if (n == 0) 
+        return 0; 
+  
+    if (n == 1) 
+        return 1; 
+  
+    return different_narrative(n - 1) + 2 * different_narrative(n - 2); 
+} 
+
 int i = 5;
 int j;
 
+void do_nothing(int i)
+{
+	return (void)i;
+}
+
 int foo(int j) {
-  for (i=0; i<j; i++) do_nothing();
+  for (i=0; i<j; i++) do_nothing(i);
   return j;
 }
 
-void ineedj(void) {
-  cout << "j is " << j << "\n";
+int ineedj(void) {
+  return j;
 }
 
 main() {
-  int j;
-  j = foo(i);
-  ineedj();
+	int different_narrative1 = 5;
+
+	int j;
+	j = foo(i);
+	
+	int different_narrative2 = different_narrative(different_narrative1);
+
+	int k = ineedj();  
+	
+	return (0);
 }

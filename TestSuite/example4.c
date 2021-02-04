@@ -7,11 +7,13 @@
  * form of code copying has its dangers!
  *
  */
+ 
+int global_i = 0;
 
 void
 do_something(int i)
 {
-	printf("%d\n", i);
+	global_i = i;
 }
 
 int
@@ -31,6 +33,8 @@ main()
   	default:
     		break;
 	}
+	
+	assert(global_i == i);
 	
 	return (0);
 }
