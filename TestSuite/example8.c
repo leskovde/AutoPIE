@@ -10,21 +10,26 @@
  * can do. 
  */
 
-void
-do_something()
-{
-	printf("asdf\n");
-}
+int different_narrative(int n) 
+{ 
+    if (n == 1) 
+        return 1; 
+  
+    return 1 + different_narrative(n -  
+               different_narrative(different_narrative(n - 1))); 
+} 
 
 int
 main()
 {
+	int different_narrative1 = 6;
+
+	char* string1 = "Hello World";
+	char* string2 = "Hello World";
 	
+	int different_narrative2 = different_narrative(different_narrative1);
 
-char* string1 = "Hello";
-char* string2 = "World";
-
-if (string1 == string2)
-  do_something();
+	assert(string1 == string2);
+	
 	return (0);
 }

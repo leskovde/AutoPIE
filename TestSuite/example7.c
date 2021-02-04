@@ -13,16 +13,30 @@
  *
  */
 
+int different_narrative(int n) 
+{ 
+    if (n == 1 || n == 2) 
+        return 1; 
+    else
+        return different_narrative(different_narrative(n - 1))  
+                + different_narrative(n - different_narrative(n - 1)); 
+} 
+
 int
 main()
 {
-	
+	int different_narrative1 = 5;
 
 // random returns a random (positive) integer.
 // Random returns a random integer in the range 0 to n-1.
 
 #define Random(n)  random()%n
 
-val = Random(j-i+1);
+	int different_narrative2 = different_narrative(different_narrative1);
+
+	val = Random(j-i+1);
+	
+	assert(val >= 0)
+	
 	return (0);
 }

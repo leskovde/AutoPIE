@@ -1,9 +1,6 @@
 - [ ] Eventualne migrovat gitlab na github pro release.
-
 - [ ] Zkusit propojit slicery s mym kodem prvne pres script, pak pres zdrojaky.
-
 - [ ] Udelat test pipeline - nejlineji az na linux, nejlepe nejak univerzalne pro unix i windows (mozna pomoci CMake)
-
 - [x] zkusit static slicer vsechna slicing kriteria
 - [x] zkusit prevod z bitcode do source code (zachovani jmen promennych atd.)
 - [x] precist si oba clanky o DG
@@ -29,4 +26,4 @@
 - [ ] zkusit formulovat a dokazat vetu "program je konecny prave tehdy, kdyz je kazdy jeho podprogram konecny"
 - [ ] vymyslet, jak minimalizovat cely program a ne jen main
 - [ ] udelat experimenty na soutezi SV-COMP
-
+- [ ] nechavat v redukovanem kodu relevantni konstanty (QoL, protoze slicing konstanty ignoruje)
