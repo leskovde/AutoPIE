@@ -9,16 +9,6 @@ Contains the most up-to-date outline and a summary of what's being worked on.
    - short introduction and a high level overview of the problem at hand (minimising programs), including the used approaches
    - should point at different chapters and summarize their content
 
-2. Program minimization (the order could be switched with 3)
-
-   - in depth explanation of the problem and its goals
-   - setting the domain (what kinds of programs the solution should work on)
-   - explain the naive solution and its limitation (exponential complexity, potentially many useless verifications)
-   - explain the solution based on delta debugging (purely delta debugging based solution) and its disadvantage of needing to run verifications during reduction
-   - explain the solution based on slicing, what other approaches are used together with slicing and why they were chosen (TBD), explain why some reduction can be done correctly without needing verification
-   - explain how the verification is done naively (running a debugger and checking its output)
-   - TBD: Explain how the verification is done in a more sophisticated manner
-
 3. Automated debugging techniques
 
    - give a short explanation to why existing techniques are useful when reducing the size of the program
@@ -59,6 +49,15 @@ Contains the most up-to-date outline and a summary of what's being worked on.
       - the link between the source code and the AST
       - SourceManager and Rewriter
       - TreeDiff, TreeTransform, ...
+2. Program minimization
+
+   - in depth explanation of the problem and its goals
+   - setting the domain (what kinds of programs the solution should work on)
+   - explain the naive solution and its limitation (exponential complexity, potentially many useless verifications)
+   - explain the solution based on delta debugging (purely delta debugging based solution) and its disadvantage of needing to run verifications during reduction
+   - explain the solution based on slicing, what other approaches are used together with slicing and why they were chosen (TBD), explain why some reduction can be done correctly without needing verification
+   - explain how the verification is done naively (running a debugger and checking its output)
+   - TBD: Explain how the verification is done in a more sophisticated manner
 
 6. Implementation
 
