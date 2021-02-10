@@ -16,7 +16,7 @@
 - [ ] migrovat projekt na linux
 - [ ] napsat shell script na propojeni sliceru s projektem
 - [ ] udelat vizualizaci delta debuggingu, abych se ujistil, ze vse funguje spravne - pro kusy kodu udelat nodes, z nich sestrojit strom a ten pak vykreslit tak, aby slo videt, ktere nodes odstranuji
-- [ ] zvyraznit chybu v obou slicerech - v example.c neni ve slice promenna k, i presto, ze by tam byt mela
+- [x] ~~zvyraznit chybu v obou slicerech - v example.c neni ve slice promenna k, i presto, ze by tam byt mela~~
 - [ ] zkusit Holy Build Box / migrovat Giri na llvm 11
 - [x] **do priste: test suite, osnova k textu (napr. ke kazde sekci mit 5 odrazek, co tam bude)** 
 - [ ] odebirat krome statementu i decl a expr
