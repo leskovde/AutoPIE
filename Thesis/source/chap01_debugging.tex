@@ -1,14 +1,15 @@
 \chapter{Automated debugging techniques}
 
-\lipsum[11]\change{TODO: Link relevant literature from Slicing of LLVM bitcode (muni.cz) and
-Bobox Runtime Optimization (cuni.cz)}
+\change[inline]{TODO: Link relevant literature from Slicing of LLVM bitcode (muni.cz) and Bobox Runtime Optimization (cuni.cz)}
 
 Debugging can be described as the process of analyzing erroneous code to find 
 the cause of those errors.
 While most developers see debugging as a manual chore, there were numerous 
 attempts~ at automating at least some parts of it during the last few decades. 
 The rise in popularity of program analysis resulted in automated error checks 
-for popular programming languages. While these checks mostly cover only specific 
+for popular programming languages. 
+
+While these checks mostly cover only specific 
 cases~of potential bugs, such as out-of-range array indexing, they have proven 
 themselves as a useful tool for the developer. In the context of this work, 
 such checks provide a helping hand at a low cost when minimizing a program. 
@@ -20,7 +21,9 @@ and how they deal with automated debugging.
 
 Delta debugging is an iterative approach described by Zeller in 1999. 
 It does not perform any static analysis of the debugged program, as it 
-is~not meant to find failures in the code. Delta debugging instead intends to 
+is~not meant to find failures in the code. 
+
+Delta debugging instead intends to 
 minimize the debugged program's incorrect input to isolate the input's 
 failure-inducing part. 
 Therefore, it requires the program in question and the specific input 
@@ -28,18 +31,18 @@ and the expected output.
 In other words, Delta debugging requires a set of test cases, which attempts to 
 minimize and isolate the failure-inducing input. Minimality is defined as follows.
 
-\lipsum[11]\change{TODO: Add minimality from Lecture-9.pdf (purdue.edu) or Simplifying and isolating 
-failure-inducing input - Software Engineering, IEEE Transactions on (columbia.edu)}
+\change[inline]{TODO: Add minimality from Lecture-9.pdf (purdue.edu) or Simplifying and isolating failure-inducing input - Software Engineering, IEEE Transactions on (columbia.edu)}
 
 Delta debugging seems to bet on the premise that large-scale applications are written
 with automated testing in mind. On the same note, it is the recommended practice to
 develop programs while at the same time dedicating resources to write tests for that
 program.
+
 The defined minimality can be used to construct the minimizing algorithm. 
 However, the delta debugging algorithm can be easily and more comprehensively explained 
 without the definition as well.
 
-\lipsum[11]\change{TODO: Add the algorithm from Lecture-9.pdf (purdue.edu)}
+\change[inline]{TODO: Add the algorithm from Lecture-9.pdf (purdue.edu)}
 
 Additionally, minimizing is not the only approach Delta debugging suggests.
 A more sophisticated one is isolation. Minimization can be described as removing parts
@@ -56,7 +59,8 @@ Second, it is required to set the expected
 output to either 'compiled' or 'failed to compile'. 
 Finally, the input is fed into a compiler, for example, GCC, which produces
 one of the two set outputs. 
-The runtime variant only differs in two points—first, the changing the expected outputs. 
+
+The runtime variant only differs in two points—first, changing the expected outputs. 
 Second, changing the compiler to a compiler-debugger pipeline so that the source 
 can be compiled and run.
 
@@ -66,13 +70,13 @@ The first introduced slicing method was static backward slicing.
 In 1984, Weiser defined a slice with respect to criterion C 
 as a part of a program that potentially affects given variables in a given point. 
 
-\lipsum[11]\change{TODO: Give definitions for the criterion and the slice.}
+\change[inline]{TODO: Give definitions for the criterion and the slice.}
 
 Slicing is the process of finding such a part of a program. 
 Suggested approaches neglected any execution information and 
 focused solely on observations made by analyzing the code.
 
-\lipsum[11]\change{TODO: Illustrate static slicing on a SLIGHTLY branching code.}
+\change[inline]{TODO: Illustrate static slicing on a SLIGHTLY branching code.}
 
 Later that year, Ottenstein and Ottenstein restated the problem as a reachability
 search in the program dependence graph (PDG).
@@ -80,16 +84,19 @@ PDG represents statements in the code as vertices and data and control
 dependencies as oriented edges. 
 Additionally, edges induce a partial ordering on the vertices. 
 In order to preserve the semantics of the program, statements must be executed 
-according to this ordering. Edges are, therefore, of two types. 
+according to this ordering. 
+
+Edges are, therefore, of two types. 
 First, the control dependency edge specifies that an incoming vertex's 
 execution depends on the outgoing one's execution. 
 Second, the data flow dependence edge suggests that a variable appearing
 in both the outgoing and incoming edge share a variable,
 the value of which depends on the order of the vertices execution.
+
 Once the PDG is built, slices can be extracted in linear time 
 with respect to the number of vertices.
 
-\lipsum[11]\change{TODO: Show how PDG is sliced, from 2.2 Slicing of LLVM bitcode (muni.cz)}
+\change[inline]{TODO: Show how PDG is sliced, from 2.2 Slicing of LLVM bitcode (muni.cz)}
 
 However, one can find many potential issues and obstacles when performing 
 data flow analysis. 
@@ -97,6 +104,7 @@ Omitting the interprocedural slicing, as it is not relevant in this paper's
 context, one is left with pointers and unstructured control flow.
 While the latter is seldomly used in single-threaded modern programming, 
 the same cannot be said about the former. 
+
 Pointers require us to extend the syntactic data flow analysis 
 into a pointer or points-to analysis, which should be performed first. 
 It is necessary to keep track of where pointers may point to (or must point to,
@@ -104,16 +112,19 @@ in case their address is not reassigned) during the execution.
 From this knowledge, other data flow edges must be created or
 changed to accommodate the fact when the outgoing vertex mayhap writes
 into a memory location possibly used by the incoming vertex. 
+
 The analogical approach is then used for control dependency analysis since 
 pointers might alter control flow as well. 
 This change to control flow happens, namely when functions are called using 
 function pointers.
+
 The main advantage of static slicing is that it does not require
 any runtime information. 
-As program execution can be expensive both time and resource-wise, 
+As program execution can be expensive both time-wise and resource-wise, 
 static slicing offers program comprehension at a low cost. 
 Because static slicing discovers program statements that can affect 
 certain variables, it can remove dead code and be used for program segmentation. 
+
 Furthermore, static slicing is used for testing software quality, maintenance, 
 and test, all of which are relevant to this project.
 
@@ -122,6 +133,7 @@ and test, all of which are relevant to this project.
 While the idea of building a program slice prevails, dynamic slicing 
 drastically differs from static slicing in terms of input and the way
 it is processed. 
+
 In 1988, Korel and Laski described a slicing approach that took into 
 consideration information regarding a program's concrete execution. 
 As opposed to static slicing, which builds a slice for any execution, 
@@ -129,7 +141,7 @@ dynamic slicing builds a slice for a given execution of a program.
 Using information available during a run of the program 
 results in a typically much smaller slice.
 
-\lipsum[11]\change{TODO: Illustrate dynamic slicing on a branching code.}
+\change[inline]{TODO: Illustrate dynamic slicing on a branching code.}
 
 This decrease in size is mainly due to removing unnecessary 
 branching of control statements and unexecuted statements in general. 
@@ -137,9 +149,10 @@ The slicing criterion now contains a set of the program's
 arguments in addition to the previous information. 
 The location of the criterion's statement is also specified to avoid 
 vagueness in the execution history. 
+
 The criterion is therefore defined as... 
 
-\lipsum[11]\change{TODO: Add the criterion definition from Silva}
+\change[inline]{TODO: Add the criterion definition from Silva}
 
 Since dynamic slicing requires the user to run the program, 
 it is typically used in cases where the execution with a fixed 
@@ -152,6 +165,7 @@ a program and its slices must follow the same execution paths.
 While the described program minimizing and debugging approaches have been 
 formulated more than two decades ago, there have not been nearly enough 
 successful attempts at implementing them. 
+
 With each approach having its clear positives and negatives, 
 it would be interesting to see how they handle program minimization. 
 When cleverly used, a combination of these methods might 
