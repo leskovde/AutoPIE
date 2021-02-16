@@ -31,7 +31,38 @@ and the expected output.
 In other words, Delta debugging requires a set of test cases, which attempts to 
 minimize and isolate the failure-inducing input. Minimality is defined as follows.
 
-\change[inline]{TODO: Add minimality from Lecture-9.pdf (purdue.edu) or Simplifying and isolating failure-inducing input - Software Engineering, IEEE Transactions on (columbia.edu)}
+\begin{defn}[Test case]\label{def02:1}
+  Let $c_\mathcal{F}$ be a set of all changes $\delta_1,\dots,\delta_n$ 
+  between a passing program run $r_\mathcal{P}$ and a failing program run
+  $r_\mathcal{F}$ such that 
+  \begin{align}
+	r_\mathcal{F} = (\delta_1(\delta_2(\dots(\delta_n(r_\mathcal{P}))))). \nonumber 
+  \end{align}
+  We call a subset $c \subseteq c_\mathcal{F}$ a \emph{test case}.
+\end{defn}
+
+\begin{defn}[Global minimum]\label{def02:2}
+  A test case $c \subset c_\mathcal{F}$ is called a \emph{global minimum}
+  of $c_\mathcal{F}$ if $\forall c_i \subseteq c_\mathcal{F}:
+  (|c_i| < |c| \implies c_i$ does not cause the program to fail.$)$
+\end{defn}
+
+Global minimum can be interpreted as the smallest set of changes able to
+make the program fail.
+
+\begin{defn}[Local minimum]\label{def02:3}
+  A test case $c \subset c_\mathcal{F}$ is called a \emph{local minimum}
+  of $c_\mathcal{F}$ if $\forall c_i \subseteq c:
+  (c_i$ does not cause the program to fail.$)$
+\end{defn}
+
+\begin{defn}[$n$-minimality]\label{def02:4}
+  A test case $c \subset c_\mathcal{F}$ is \emph{$n$-minimal}
+  if $\forall c_i \subseteq c:
+  (|c| - |c_i| \leq n \implies c_i$ does not cause the program to fail.$)$
+\end{defn}
+
+The minimizing Delta debugging algorithm attempts to find a 1-minimal test case.
 
 Delta debugging seems to bet on the premise that large-scale applications are written
 with automated testing in mind. On the same note, it is the recommended practice to
@@ -42,7 +73,36 @@ The defined minimality can be used to construct the minimizing algorithm.
 However, the delta debugging algorithm can be easily and more comprehensively explained 
 without the definition as well.
 
-\change[inline]{TODO: Add the algorithm from Lecture-9.pdf (purdue.edu)}
+\begin{algorithm}
+	\caption{Minimizing Delta Debugging Algorithm} 
+	\begin{algorithmic}[1]
+		\State $n \leftarrow 2$
+		\State Split a string $S$ into $\alpha_1,\dots,\alpha_n$ of equal size.
+		\State For each $\alpha_i$, calculate its complement $\beta_i$.
+		\State Run tests on $\alpha_1,\dots,\alpha_n,\beta_1,\dots,\beta_n$.
+		\If{all tests passed}
+			\State $n \leftarrow 2*n$
+			\If{$n > |\sigma|$}
+				\Return the most recent failure causing substring.
+			\Else
+				\State goto (2).
+			\EndIf
+		\ElsIf{$\alpha_i failed$}
+			\State $n \leftarrow 2$.
+			\State $\sigma \leftarrow \alpha_i$.
+			\If{$|\sigma| == 1$}
+				\Return $\sigma$.
+			\Else
+				\State goto (2).
+			\EndIf
+		\Else
+			\Comment $\beta_i$ failed.
+			\State $\sigma \leftarrow \beta_i$.
+			\State $n \leftarrow n - 1$.
+			\State goto (2).
+		\EndIf
+	\end{algorithmic} 
+\end{algorithm}
 
 Additionally, minimizing is not the only approach Delta debugging suggests.
 A more sophisticated one is isolation. Minimization can be described as removing parts
@@ -70,7 +130,13 @@ The first introduced slicing method was static backward slicing.
 In 1984, Weiser defined a slice with respect to criterion C 
 as a part of a program that potentially affects given variables in a given point. 
 
-\change[inline]{TODO: Give definitions for the criterion and the slice.}
+\begin{defn}[Static slicing criterion]\label{def02:5}
+  Let $\mathcal{P}$ be a program consisting of program points 
+  $P = p_1,\dots,p_n$ and variables $V = v_1,\dots,v_m$.
+  Any pair $C = (p_i, V')$, such that $p_i \in P$, $V' \subseteq V$, and 
+  $\forall v_i \in V': v_i$ is present in $p_i$, 
+  is called a \emph{slicing criterion}.
+\end{defn}
 
 Slicing is the process of finding such a part of a program. 
 Suggested approaches neglected any execution information and 
@@ -150,9 +216,17 @@ arguments in addition to the previous information.
 The location of the criterion's statement is also specified to avoid 
 vagueness in the execution history. 
 
-The criterion is therefore defined as... 
+The criterion is therefore defined as follows.
 
-\change[inline]{TODO: Add the criterion definition from Silva}
+\begin{defn}[Dynamic slicing criterion]\label{def02:5}
+  Let $\mathcal{H} = (s_{x1},\dots,s_{xn})$ be an execution history of a program 
+  $\mathcal{P} = (\{s_1,\dots,s_m\}, V)$, where $s_i$ denotes a statement
+  and V is a set of variables $v_1,\dots,v_k$.
+  Any triple $C = (h_i, V', \{a_1,\dots,a_j\})$, such that $h_i \in \mathcal{H}$,
+  $V' \subseteq V$, $\forall v_i \in V': v_i$ is present in $h_i$,
+  and $\{a_1,\dots,a_j\}$ is the input of the program,
+  is called a \emph{slicing criterion}.
+\end{defn}
 
 Since dynamic slicing requires the user to run the program, 
 it is typically used in cases where the execution with a fixed 
