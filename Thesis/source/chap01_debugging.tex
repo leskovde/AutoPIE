@@ -138,6 +138,8 @@ as a part of a program that potentially affects given variables in a given point
   is called a \emph{slicing criterion}.
 \end{defn}
 
+\change[inline]{TODO: Mention forward and backward slicing.}
+
 Slicing is the process of finding such a part of a program. 
 Suggested approaches neglected any execution information and 
 focused solely on observations made by analyzing the code.
@@ -202,7 +204,15 @@ the value of which depends on the order of the vertices execution.
 Once the PDG is built, slices can be extracted in linear time 
 with respect to the number of vertices.
 
-\change[inline]{TODO: Show how PDG is sliced, from 2.2 Slicing of LLVM bitcode (muni.cz)}
+\change[inline]{TODO: Correct the PDG slicing figure and add a footnote.}
+
+\begin{figure}[t]
+\includegraphics[scale=0.35]{pdg_sliced}
+\centering
+\caption{Sliced PDG}
+This figure showcases the PDG of the program mentioned above.
+Red edges indicate the sliced part of the program w.r.t. the variable $x$.
+\end{figure}
 
 However, one can find many potential issues and obstacles when performing 
 data flow analysis. 
