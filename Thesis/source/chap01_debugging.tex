@@ -142,7 +142,47 @@ Slicing is the process of finding such a part of a program.
 Suggested approaches neglected any execution information and 
 focused solely on observations made by analyzing the code.
 
-\change[inline]{TODO: Illustrate static slicing on a SLIGHTLY branching code.}
+\change[inline]{TODO: Convert the pseudocode to an easily readable
+version (i.e. comparison with the non-sliced program).}
+
+\begin{algorithm}
+	\caption{Simple Branching Program} 
+	\begin{algorithmic}[1]
+		\State $x \leftarrow 1$
+		\State $a \leftarrow$ read($a$)
+		\For{$i = 1,2,\dots,C$}
+			\State write($i$)
+		\EndFor
+		\If{$a$ mod $2 == 0$}
+			\If{$a \neq 0$}
+				\State $x \leftarrow -1 * x$
+			\Else
+				\State $x \leftarrow 0$
+			\EndIf
+		\Else
+			\State $x \leftarrow x + 1$.
+		\EndIf
+		\State write($x$)
+	\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+	\caption{Static Slice of the Simple Branching Program} 
+	\begin{algorithmic}[1]
+		\State $x \leftarrow 1$
+		\State $a \leftarrow$ read($a$)
+		\If{$a$ mod $2 == 0$}
+			\If{$a \neq 0$}
+				\State $x \leftarrow -1 * x$
+			\Else
+				\State $x \leftarrow 0$
+			\EndIf
+		\Else
+			\State $x \leftarrow x + 1$.
+		\EndIf
+		\State write($x$)
+	\end{algorithmic}
+\end{algorithm}
 
 Later that year, Ottenstein and Ottenstein restated the problem as a reachability
 search in the program dependence graph (PDG).
@@ -207,7 +247,18 @@ dynamic slicing builds a slice for a given execution of a program.
 Using information available during a run of the program 
 results in a typically much smaller slice.
 
-\change[inline]{TODO: Illustrate dynamic slicing on a branching code.}
+\change[inline]{TODO: Convert the pseudocode to an easily readable
+version (i.e. comparison with the non-sliced program).}
+
+\begin{algorithm}
+	\caption{Dynamic Slice of the Simple Branching Program (for $a = 2$)} 
+	\begin{algorithmic}[1]
+		\State $x \leftarrow 1$
+		\State $a \leftarrow$ read($a$)
+		\State $x \leftarrow 0$
+		\State write($x$)
+	\end{algorithmic}
+\end{algorithm}
 
 This decrease in size is mainly due to removing unnecessary 
 branching of control statements and unexecuted statements in general. 
