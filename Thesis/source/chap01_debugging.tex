@@ -3,19 +3,46 @@
 \change[inline]{TODO: Link relevant literature from Slicing of LLVM bitcode (muni.cz) and Bobox Runtime Optimization (cuni.cz)}
 
 Debugging can be described as the process of analyzing erroneous code to find 
-the cause of those errors.
+the cause of those errors. 
+Errors can also be of different natures.
+It can for example stem from poor design of the application.
+If that is not the case, then perhaps it comes from a rarely
+encountered input or a corner-case. 
+The flaw might also be present
+in external code such as libraries or inappropriate usage of
+existing technologies.
+
+It can be said with confidence that debugging is rarely an algorithmic
+approach.
+While the goal is clear, the process of debugging depends entirely 
+on the programmer.
+It is typical that developers try to look for a root cause
+of an error by feeling what might be wrong.
+This works rather well in code the programmer is familiar with.
+However, in larger projects the developer did not create by himself,
+more sophisticated and reliable approaches are required.
+For example, one might add logging to the code being debugged,
+or perhaps create more tests that can narrow down the errorneous code.
+
+All of the mentioned techniques require either the knowledge of the code 
+or enough time to write supporting code. Additional time might be spent
+looking through the logs and executing tests. Therefore, it is rather
+hard to tell beforehand how much time and resources debugging will take.
+
 While most developers see debugging as a manual chore, there were numerous 
-attempts~ at automating at least some parts of it during the last few decades. 
+attempts~at automating at least some parts of it during the last few decades. 
 The rise in popularity of program analysis resulted in automated error checks 
 for popular programming languages. 
 
-While these checks mostly cover only specific 
+Although these checks mostly cover only specific 
 cases~of potential bugs, such as out-of-range array indexing, they have proven 
 themselves as a useful tool for the developer. In the context of this work, 
 such checks provide a helping hand at a low cost when minimizing a program. 
 
-The following sub-chapters will talk about the techniques behind such checks 
-and how they deal with automated debugging.
+The following sections will talk about the techniques behind such checkers 
+and how they deal with automated debugging. Notably, they describe
+the motivation and notation of Delta debugging and static and dynamic
+slicing.
 
 \section{Delta debugging}
 
@@ -29,7 +56,10 @@ failure-inducing part.
 Therefore, it requires the program in question and the specific input 
 and the expected output. 
 In other words, Delta debugging requires a set of test cases, which attempts to 
-minimize and isolate the failure-inducing input. Minimality is defined as follows.
+minimize and isolate the failure-inducing input. 
+In order to understand where
+this app\-roach came from, we need to define several important properties of 
+programs and test cases.
 
 \begin{defn}[Test case]\label{def02:1}
   Let $c_\mathcal{F}$ be a set of all changes $\delta_1,\dots,\delta_n$ 
@@ -40,6 +70,12 @@ minimize and isolate the failure-inducing input. Minimality is defined as follow
   \end{align}
   We call a subset $c \subseteq c_\mathcal{F}$ a \emph{test case}.
 \end{defn}
+
+Test runs should differ based on program's code. 
+The definition states that making changes to the program,
+i.e. applying a function that alters the code, enough times
+and well enough to transform a passing program to a failing one,
+results in a test case.
 
 \begin{defn}[Global minimum]\label{def02:2}
   A test case $c \subset c_\mathcal{F}$ is called a \emph{global minimum}
@@ -55,6 +91,8 @@ make the program fail.
   of $c_\mathcal{F}$ if $\forall c_i \subseteq c:
   (c_i$ does not cause the program to fail.$)$
 \end{defn}
+
+The aforementioned minimality is defined as follows.
 
 \begin{defn}[$n$-minimality]\label{def02:4}
   A test case $c \subset c_\mathcal{F}$ is \emph{$n$-minimal}
@@ -73,11 +111,14 @@ The defined minimality can be used to construct the minimizing algorithm.
 However, the delta debugging algorithm can be easily and more comprehensively explained 
 without the definition as well.
 
+\change[inline]{TODO: Add a reference to the algorithm in text, so that reader knows what it is.}
+
 \begin{algorithm}
 	\caption{Minimizing Delta Debugging Algorithm} 
 	\begin{algorithmic}[1]
 		\State $n \leftarrow 2$
 		\State Split a string $S$ into $\alpha_1,\dots,\alpha_n$ of equal size.
+		\Comment Where $S$ is test's input.
 		\State For each $\alpha_i$, calculate its complement $\beta_i$.
 		\State Run tests on $\alpha_1,\dots,\alpha_n,\beta_1,\dots,\beta_n$.
 		\If{all tests passed}
@@ -144,11 +185,14 @@ Slicing is the process of finding such a part of a program.
 Suggested approaches neglected any execution information and 
 focused solely on observations made by analyzing the code.
 
-\change[inline]{TODO: Convert the pseudocode to an easily readable
-version (i.e. comparison with the non-sliced program).}
+\change[inline]{TODO: Rename code snippets to "listings", use different package.}
+\change[inline]{TODO: Fix the vertical centering.}
 
-\begin{algorithm}
-	\caption{Simple Branching Program} 
+\begin{minipage}{0.46\textwidth}
+\begin{algorithm}[H]
+	\centering
+	\caption{Simple Branching Program}
+	\label{alg:simple}
 	\begin{algorithmic}[1]
 		\State $x \leftarrow 1$
 		\State $a \leftarrow$ read($a$)
@@ -167,8 +211,11 @@ version (i.e. comparison with the non-sliced program).}
 		\State write($x$)
 	\end{algorithmic}
 \end{algorithm}
-
-\begin{algorithm}
+\end{minipage}
+\hfill
+\begin{minipage}{0.46\textwidth}
+\begin{algorithm}[H]
+	\centering
 	\caption{Static Slice of the Simple Branching Program} 
 	\begin{algorithmic}[1]
 		\State $x \leftarrow 1$
@@ -185,6 +232,7 @@ version (i.e. comparison with the non-sliced program).}
 		\State write($x$)
 	\end{algorithmic}
 \end{algorithm}
+\end{minipage}
 
 Later that year, Ottenstein and Ottenstein restated the problem as a reachability
 search in the program dependence graph (PDG).
@@ -210,15 +258,16 @@ with respect to the number of vertices.
 \includegraphics[scale=0.35]{pdg_sliced}
 \centering
 \caption{Sliced PDG}
-This figure showcases the PDG of the program mentioned above.
-Red edges indicate the sliced part of the program w.r.t. the variable $x$.
+This figure showcases the PDG of Algorithm~\ref{alg:simple}.
+Red edges indicate the sliced part of the program w.r.t.
+$C = (write(x)_{15}, \{x\})$.
 \end{figure}
 
 However, one can find many potential issues and obstacles when performing 
 data flow analysis. 
 Omitting the interprocedural slicing, as it is not relevant in this paper's
 context, one is left with pointers and unstructured control flow.
-While the latter is seldomly used in single-threaded modern programming, 
+While the latter is rarely used in single-threaded modern programming, 
 the same cannot be said about the former. 
 
 Pointers require us to extend the syntactic data flow analysis 
