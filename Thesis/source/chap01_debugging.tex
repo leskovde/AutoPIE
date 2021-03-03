@@ -113,7 +113,6 @@ The defined minimality can be used to construct the minimizing algorithm.
 However, the delta debugging algorithm can be easily and more comprehensively explained 
 without the definition as well.
 
-\change[inline]{TODO: Add a reference to the algorithm in text, so that reader knows what it is.}
 \change[inline]{TODO: Move comments more towards the center.}
 
 \begin{algorithm}
@@ -188,6 +187,14 @@ can be compiled and run.
 
 \section{Static slicing}
 
+Program slicing, formalized more than three decades ago,
+is a branch of program analysis that studies program semantics.
+It systematically observes and alters both the control-flow 
+and data-flow of a program.  
+The goal of slicing is to create a slice of a program,
+i.e., a series of parts of the program that could potentially
+impact the control and data flow at some given point in that program. 
+
 The first introduced slicing method was static backward slicing. 
 \citet{Weiser84}\change{TODO: Link the reference number in brackets, i.e. Zeller [X]}
 defined a slice with respect to criterion C 
@@ -201,60 +208,111 @@ as a part of a program that potentially affects given variables in a given point
   is called a \emph{slicing criterion}.
 \end{defn}
 
-\change[inline]{TODO: Mention forward and backward slicing.}
-
 Slicing is the process of finding such a part of a program. 
 Suggested approaches neglected any execution information and 
 focused solely on observations made by analyzing the code.
 
-\change[inline]{TODO: Rename code snippets to "listings", use different package.}
-\change[inline]{TODO: Fix the vertical centering.}
-
 \begin{minipage}{0.46\textwidth}
-\begin{algorithm}[H]
-	\centering
-	\caption{Simple Branching Program}
-	\label{alg:simple}
-	\begin{algorithmic}[1]
-		\State $x \leftarrow 1$
-		\State $a \leftarrow$ read($a$)
-		\For{$i = 1,2,\dots,C$}
-			\State write($i$)
-		\EndFor
-		\If{$a$ mod $2 == 0$}
-			\If{$a \neq 0$}
-				\State $x \leftarrow -1 * x$
-			\Else
-				\State $x \leftarrow 0$
-			\EndIf
-		\Else
-			\State $x \leftarrow x + 1$.
-		\EndIf
-		\State write($x$)
-	\end{algorithmic}
-\end{algorithm}
+\begin{lstlisting}[basicstyle=\tiny, caption=Simple branching pro\-gram,
+  frame=tlrb, language=C++, label={lst:simpleexample}]
+#include<iostream>
+
+void write(int x)
+{
+	std::cout << x << "\n";
+}
+
+int read()
+{
+	int x;
+	std::cin >> x;
+	
+	return x;
+}
+
+int main(void)
+{
+	int x = 1;
+	int a = read();
+	
+	for (int i = 0; i < 0xffff; i++)
+	{
+		write(i);
+	}
+	
+	if ((a % 2) == 0)
+	{
+		if (a != 0)
+		{
+			x *= -1;
+		}
+		else
+		{
+			x = 0;
+		}
+	}
+	else
+	{
+		x++;
+	}
+
+	write(x);
+
+	return 0;
+}
+\end{lstlisting}
 \end{minipage}
 \hfill
-\begin{minipage}{0.46\textwidth}
-\begin{algorithm}[H]
-	\centering
-	\caption{Static Slice of the Simple Branching Program} 
-	\label{alg:slice}
-	\begin{algorithmic}[1]
-		\State $x \leftarrow 1$
-		\State $a \leftarrow$ read($a$)
-		\If{$a$ mod $2 == 0$}
-			\If{$a \neq 0$}
-				\State $x \leftarrow -1 * x$
-			\Else
-				\State $x \leftarrow 0$
-			\EndIf
-		\Else
-			\State $x \leftarrow x + 1$.
-		\EndIf
-		\State write($x$)
-	\end{algorithmic}
-\end{algorithm}
+\begin{minipage}{.45\textwidth}
+\begin{lstlisting}[basicstyle=\tiny, caption=Static slice of the simple 
+  branching program, frame=tlrb, language=C++,
+  label={lst:staticslice}]
+#include<iostream>
+
+void write(int x)
+{
+	std::cout << x << "\n";
+}
+
+int read()
+{
+	int x;
+	std::cin >> x;
+	
+	return x;
+}
+
+int main(void)
+{
+	int x = 1;
+	int a = read();
+		
+	
+	
+	
+
+	
+	if ((a % 2) == 0)
+	{
+		if (a != 0)
+		{
+			x *= -1;
+		}
+		else
+		{
+			x = 0;
+		}
+	}
+	else
+	{
+		x++;
+	}
+
+	write(x);
+
+	return 0;
+}
+\end{lstlisting}
 \end{minipage}
 
 Later that year, K. J. Ottenstein and L. M. Ottenstein \citep*{Ottenstein84}
@@ -277,15 +335,13 @@ the value of which depends on the order of the vertices execution.
 Once the PDG is built, slices can be extracted in linear time 
 with respect to the number of vertices.
 
-\change[inline]{TODO: Correct the PDG slicing figure and add a footnote.}
-
-\begin{figure}[t]
+\begin{figure}[h]\centering
 \includegraphics[scale=0.35]{pdg_sliced}
-\centering
-\caption{Sliced PDG}
-This figure showcases the PDG of Algorithm~\ref{alg:simple}.
+\caption{Sliced PDG. This figure showcases 
+the PDG of~\ref{lst:simpleexample}.
 Red edges indicate the sliced part of the program w.r.t.
-$C = (write(x)_{15}, \{x\})$.
+$C = (write(x)_{15}, \{x\})$.}
+\label{img:pdg}
 \end{figure}
 
 However, one can find many potential issues and obstacles when performing 
@@ -331,18 +387,36 @@ dynamic slicing builds a slice for a given execution of a program.
 Using information available during a run of the program 
 results in a typically much smaller slice.
 
-\change[inline]{TODO: Convert the pseudocode to an easily readable
-version (i.e. comparison with the non-sliced program).}
+\begin{lstlisting}[basicstyle=\tiny, caption=Dynamic slice of the simple
+  branching program, frame=tlrb,
+  language=C++, label={lst:dynamicslice}]
+#include<iostream>
 
-\begin{algorithm}
-	\caption{Dynamic Slice of the Simple Branching Program (for $a = 2$)} 
-	\begin{algorithmic}[1]
-		\State $x \leftarrow 1$
-		\State $a \leftarrow$ read($a$)
-		\State $x \leftarrow 0$
-		\State write($x$)
-	\end{algorithmic}
-\end{algorithm}
+void write(int x)
+{
+	std::cout << x << "\n";
+}
+
+int read()
+{
+	int x;
+	std::cin >> x;
+	
+	return x;
+}
+
+int main(void)
+{
+	int x = 1;
+	int a = read();
+		
+	x = 0;
+
+	write(x);
+
+	return 0;
+}  
+\end{lstlisting}
 
 This decrease in size is mainly due to removing unnecessary 
 branching of control statements and unexecuted statements in general. 

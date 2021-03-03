@@ -50,15 +50,12 @@ As far as AST manipulation is concerned, the compiler allows the user to dump
 the structure into a text representation. 
 However, due to the difficulties mentioned above, it can hardly be used.
 
-\change[inline]{TODO: Add GCC AST text dump.}
-
-\begin{figure}[t]
-\includegraphics[scale=0.35]{gcc_ast}
-\centering
-\caption{GCC AST Dump}
-This figure showcases the AST representation of Algorithm~\ref{alg:simple}
-as dumped by GCC.
-Note that it is not easily comprehendable.
+\begin{figure}[p]\centering
+\includegraphics[scale=0.55]{gcc_ast}
+\caption{GCC AST Dump. This figure showcases 
+the AST representation of~\ref{lst:simpleexample}
+as dumped by GCC. Note that it is not easily comprehendable.}
+\label{img:gcc}
 \end{figure}
 
 These issues result in a seldom-used variant that offers nearly 
