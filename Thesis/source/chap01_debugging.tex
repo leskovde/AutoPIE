@@ -46,7 +46,8 @@ slicing.
 
 \section{Delta debugging}
 
-Delta debugging is an iterative approach described by Zeller in 1999. 
+Delta debugging is an iterative approach described by \citet{Zeller99}.
+\change{TODO: Link the reference number in brackets, i.e. Zeller [X]}
 It does not perform any static analysis of the debugged program, as it 
 is~not meant to find failures in the code. 
 
@@ -59,7 +60,8 @@ In other words, Delta debugging requires a set of test cases, which attempts to
 minimize and isolate the failure-inducing input. 
 In order to understand where
 this app\-roach came from, we need to define several important properties of 
-programs and test cases.
+programs and test cases presented by \citet{Zeller02}.
+\change{TODO: Link the reference number in brackets, i.e. Zeller [X]}
 
 \begin{defn}[Test case]\label{def02:1}
   Let $c_\mathcal{F}$ be a set of all changes $\delta_1,\dots,\delta_n$ 
@@ -112,13 +114,15 @@ However, the delta debugging algorithm can be easily and more comprehensively ex
 without the definition as well.
 
 \change[inline]{TODO: Add a reference to the algorithm in text, so that reader knows what it is.}
+\change[inline]{TODO: Move comments more towards the center.}
 
 \begin{algorithm}
+	\label{alg:dd}
 	\caption{Minimizing Delta Debugging Algorithm} 
 	\begin{algorithmic}[1]
 		\State $n \leftarrow 2$
-		\State Split a string $S$ into $\alpha_1,\dots,\alpha_n$ of equal size.
-		\Comment Where $S$ is test's input.
+		\State Split a string $\sigma$ into $\alpha_1,\dots,\alpha_n$ of equal size.
+		\Comment Where $\sigma$ is test's input.
 		\State For each $\alpha_i$, calculate its complement $\beta_i$.
 		\State Run tests on $\alpha_1,\dots,\alpha_n,\beta_1,\dots,\beta_n$.
 		\If{all tests passed}
@@ -145,6 +149,23 @@ without the definition as well.
 	\end{algorithmic} 
 \end{algorithm}
 
+The simplified algorithm seen in~\ref{alg:dd} splits the input into $n$ even-sized
+parts and their respective complements. 
+Tests are then applied to these snippets, which can result in three different outcomes. 
+If all tests pass correctly, the granularity, i.e., $n$, is doubled, and the input is split
+into more even-sized parts. 
+On the other hand, if a snippet fails a test, the granularity is reset to its initial value.
+Furthermore, the snippet now becomes the input. 
+If neither of the two mentioned scenarios happens, 
+then a snippet's complement must have failed to pass a test. 
+This case results in the granularity being decreased, 
+and the input is set to the failure causing complement.
+These three actions repeat iteratively, updating the input and 
+splitting it systematically with different granularities. 
+Once the granularity is greater than the input's size, 
+the most recent failure-inducing snippet is returned. 
+The same case holds when the input is of size $1$, i.e., it cannot be further divided.
+
 Additionally, minimizing is not the only approach Delta debugging suggests.
 A more sophisticated one is isolation. Minimization can be described as removing parts
 while the failure persists, which means that the output changes are only made in failing
@@ -168,7 +189,8 @@ can be compiled and run.
 \section{Static slicing}
 
 The first introduced slicing method was static backward slicing. 
-In 1984, Weiser defined a slice with respect to criterion C 
+\citet{Weiser84}\change{TODO: Link the reference number in brackets, i.e. Zeller [X]}
+defined a slice with respect to criterion C 
 as a part of a program that potentially affects given variables in a given point. 
 
 \begin{defn}[Static slicing criterion]\label{def02:5}
@@ -217,6 +239,7 @@ focused solely on observations made by analyzing the code.
 \begin{algorithm}[H]
 	\centering
 	\caption{Static Slice of the Simple Branching Program} 
+	\label{alg:slice}
 	\begin{algorithmic}[1]
 		\State $x \leftarrow 1$
 		\State $a \leftarrow$ read($a$)
@@ -234,7 +257,9 @@ focused solely on observations made by analyzing the code.
 \end{algorithm}
 \end{minipage}
 
-Later that year, Ottenstein and Ottenstein restated the problem as a reachability
+Later that year, K. J. Ottenstein and L. M. Ottenstein \citep*{Ottenstein84}
+\change{TODO: Link the reference number in brackets, i.e. Zeller [X]}
+restated the problem as a reachability
 search in the program dependence graph (PDG).
 PDG represents statements in the code as vertices and data and control
 dependencies as oriented edges. 
@@ -299,7 +324,7 @@ While the idea of building a program slice prevails, dynamic slicing
 drastically differs from static slicing in terms of input and the way
 it is processed. 
 
-In 1988, Korel and Laski described a slicing approach that took into 
+\citet{Korel88} described a slicing approach that took into 
 consideration information regarding a program's concrete execution. 
 As opposed to static slicing, which builds a slice for any execution, 
 dynamic slicing builds a slice for a given execution of a program. 
@@ -328,7 +353,7 @@ vagueness in the execution history.
 
 The criterion is therefore defined as follows.
 
-\begin{defn}[Dynamic slicing criterion]\label{def02:5}
+\begin{defn}[Dynamic slicing criterion]\label{def02:6}
   Let $\mathcal{H} = (s_{x1},\dots,s_{xn})$ be an execution history of a program 
   $\mathcal{P} = (\{s_1,\dots,s_m\}, V)$, where $s_i$ denotes a statement
   and V is a set of variables $v_1,\dots,v_k$.
