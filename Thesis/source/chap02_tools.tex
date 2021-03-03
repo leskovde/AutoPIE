@@ -45,6 +45,10 @@ Therefore, the AST has to be treated as an entirely different object rather than
 an abstraction of the code. 
 Most of the compiler's source code representation is unintuitive and 
 hard to pick up for anyone not actively contributing to GCC. 
+Figure~\ref{img:gcc} showcases the unfriendliness rather well.
+Compared to figure~\ref{img:pdg}, which is an output of a tool built using
+LLVM and Clang, GCC's mapping between the source code and the internal
+representation does not hold up.
 
 As far as AST manipulation is concerned, the compiler allows the user to dump 
 the structure into a text representation. 

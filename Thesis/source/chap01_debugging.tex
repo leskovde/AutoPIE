@@ -189,13 +189,22 @@ can be compiled and run.
 
 Program slicing, formalized more than three decades ago,
 is a branch of program analysis that studies program semantics.
-It systematically observes and alters both the control-flow 
-and data-flow of a program.  
+It systematically observes and alters the program's control-flow
+and data-flow for a given statement and variable in the code.  
 The goal of slicing is to create a slice of a program,
 i.e., a series of parts of the program that could potentially
 impact the control and data flow at some given point in that program. 
+The direction from which the target statement is approached divides 
+slicing methods into two groups. 
+Firstly, forward slicing uncovers parts of the code that 
+might be affected by the targeted statement and variable. 
+Secondly, and much more common, backward slicing computes 
+parts of the program that impacts the targeted statement.
 
-The first introduced slicing method was static backward slicing. 
+The first introduced slicing method was static backward slicing.
+And with it came brand new formalism concerning program analysis. 
+Specifically for static slicing methods, definitions for the target 4
+statement and variable needed to be written.
 \citet{Weiser84}\change{TODO: Link the reference number in brackets, i.e. Zeller [X]}
 defined a slice with respect to criterion C 
 as a part of a program that potentially affects given variables in a given point. 
@@ -214,7 +223,7 @@ focused solely on observations made by analyzing the code.
 
 \begin{minipage}{0.46\textwidth}
 \begin{lstlisting}[basicstyle=\tiny, caption=Simple branching pro\-gram,
-  frame=tlrb, language=C++, label={lst:simpleexample}]
+  language=C++, label={lst:simpleexample}]
 #include<iostream>
 
 void write(int x)
@@ -265,7 +274,7 @@ int main(void)
 \hfill
 \begin{minipage}{.45\textwidth}
 \begin{lstlisting}[basicstyle=\tiny, caption=Static slice of the simple 
-  branching program, frame=tlrb, language=C++,
+  branching program, language=C++, numbers=right,
   label={lst:staticslice}]
 #include<iostream>
 
@@ -315,6 +324,30 @@ int main(void)
 \end{lstlisting}
 \end{minipage}
 
+One can imagine that the size of a static slice would be much smaller
+than the original program. 
+That would be the case in modular code that rarely interacts between
+its components. 
+An example of such code would be heavy parallel applications and 
+computational tasks. 
+However, in programs with aggressive use of branching, it is not so. 
+Since static slicing considers statements that \textbf{might} 
+impact the criterion, it leaves otherwise useless branches in the slice,
+thus negating the potential decrease in size. 
+
+In listing~\ref{lst:simpleexample}, we can see the code of a simple program.
+It loads a value $a$, which then alters the control-flow of the code.
+Meanwhile, it iterates through a printing loop. 
+The intriguing part, however, is the output of the $write(x)$ 
+command on line $42$. 
+Let the criterion be $C = (write(x)_{42}, \{x\})$. 
+The value of $x$ on that line is changed in the branching 
+part of the program, which entirely depends on the value of $a$.
+Since $a$ is unknown, no significant code reduction can be made. 
+The static slice with respect to $C$, seen on~\ref{lst:staticslice}, 
+still contains all of the branching statements. 
+Note that the independent printing loop is gone.
+
 Later that year, K. J. Ottenstein and L. M. Ottenstein \citep*{Ottenstein84}
 \change{TODO: Link the reference number in brackets, i.e. Zeller [X]}
 restated the problem as a reachability
@@ -338,11 +371,20 @@ with respect to the number of vertices.
 \begin{figure}[h]\centering
 \includegraphics[scale=0.35]{pdg_sliced}
 \caption{Sliced PDG. This figure showcases 
-the PDG of~\ref{lst:simpleexample}.
+the PDG of the listing~\ref{lst:simpleexample}.
 Red edges indicate the sliced part of the program w.r.t.
-$C = (write(x)_{15}, \{x\})$.}
+$C = (write(x)_{42}, \{x\})$.}
 \label{img:pdg}
 \end{figure}
+
+Figure~\ref{img:pdg} shows a PDG that was extracted using an AST Slicer.
+Nodes of the graph contain the same statements as seen in the code.
+Frameworks that achieve such mapping between the code and the internal
+control and data flows allow developers to create slicing tools much 
+more easily.
+One such framework is the LLVM/Clang Tooling library, which will be
+talked about later.
+The tool is available at \url{https://github.com/dwat3r/slicer}.
 
 However, one can find many potential issues and obstacles when performing 
 data flow analysis. 
@@ -387,9 +429,8 @@ dynamic slicing builds a slice for a given execution of a program.
 Using information available during a run of the program 
 results in a typically much smaller slice.
 
-\begin{lstlisting}[basicstyle=\tiny, caption=Dynamic slice of the simple
-  branching program, frame=tlrb,
-  language=C++, label={lst:dynamicslice}]
+\begin{lstlisting}[caption=Dynamic slice of the simple
+  branching program, language=C++, label={lst:dynamicslice}]
 #include<iostream>
 
 void write(int x)
@@ -436,6 +477,15 @@ The criterion is therefore defined as follows.
   and $\{a_1,\dots,a_j\}$ is the input of the program,
   is called a \emph{slicing criterion}.
 \end{defn}
+
+The example listing~\ref{lst:dynamicslice} was computed from the original
+listing~\ref{lst:simpleexample}. 
+The criterion was set to $C = (write(x)_{42}, \{x\}, \{2\})$.
+Since the dynamic slicer witnessed the program's execution,
+it could precisely reduce the code to only those statements
+that were executed. The result is a significantly smaller slice
+than in the case of~\ref{lst:staticslice}.
+Note that branching statements are gone.
 
 Since dynamic slicing requires the user to run the program, 
 it is typically used in cases where the execution with a fixed 
