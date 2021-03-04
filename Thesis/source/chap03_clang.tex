@@ -1,9 +1,11 @@
 \chapter{Clang LibTooling}
+
 \change[inline]{TODO: Convert links into references (https://llvm.org/ 
-and https://clang.llvm.org/ 
-and https://clang.llvm.org/docs/LibTooling.html
-and https://clang.llvm.org/docs/IntroductionToTheClangAST.html
-and https://eli.thegreenplace.net/2014/05/01/modern-source-to-source-transformation-with-clang-and-libtooling
+and \urlhttps://clang.llvm.org/ 
+and \urlhttps://clang.llvm.org/docs/LibTooling.html
+and \urlhttps://clang.llvm.org/docs/IntroductionToTheClangAST.html
+and \urlhttps://eli.thegreenplace.net/2014/05/01/modern-source-to-source-transformation-with-clang-and-libtooling
+and \url{https://clang.llvm.org/doxygen/classclang_1_1RecursiveASTVisitor.html}
 )}
 
 The previous chapter described tools and environments that were taken
@@ -65,13 +67,16 @@ code modifications, AST traversals, and access to the compiler's internals.
 
 \section{Clang AST}
 
+\change[inline]{TODO: Add AST dump.}
+
 The abstract syntax tree used in the Clang front-end is different 
 from the typical AST. 
 It saves and carries more data, namely context.  
 For example, it contains additional information to map source 
 code to nodes and capture semantics.
-Nodes are of four different types: statements, declarations, 
-declaration context, and types. 
+Nodes are of four different types: statements \(\icode{Stmt}\), 
+declarations \(\icode{Decl}\), declaration context \(\icode{DeclContext}\),
+and types \(\icode{Type}\). 
 However, in the APIs mentioned above, the nodes do not share
 a common ancestor. 
 The topmost node, the root, of Clang AST is called the translation
@@ -81,8 +86,8 @@ a container of its children.
 
 Extracting Clang AST comes at the cost of compiling the program's
 source code. 
-Usually, this is done using a FrontEndAction, which specifies what 
-and how should be compiled. 
+Usually, this is done using an instance of \icode{FrontEndAction}, 
+which specifies what and how should be compiled. 
 The front-end compilation is essential to note because it can affect 
 LibTooling's performance on large projects. 
 In comparison, clang-format does not execute any compilations. 
@@ -96,26 +101,30 @@ The same can be said for programs that contain compile-time errors.
 
 LibTooling offers a built-in curiously recurring template pattern 
 (CRTP) visitor. 
-The class RecursiveASTVisitor offers Visit methods that 
+The class \icode{RecursiveASTVisitor} offers \icode{Visit} methods that 
 can be overridden to the programmer's liking. 
 Each override specifies the type of node on which the method 
 triggers and the actions that should be performed.
-//TODO: Add example Visit method override.
+
+\change[inline]{TODO: Add example Visit method override.}
+
 Visiting statements, expressions, declarations, 
 and types is straightforward. 
 The same applies to children of these classes. 
 However, it is challenging to visit more complicated entities 
-such as nested types, e.g., int * const * x. 
+such as nested types, e.g., \icode{int* const* x}. 
 Such cases require fetching additional semantical context, 
-utilizing ASTMatchers and nodes of type declaration context.
-//TODO: Show how complicated cases are handled.
-The RecursiveASTVisitor is launched by visiting the root node using 
-a TraverseDecl method. 
+utilizing \icode{ASTMatchers} and nodes of type declaration context.
+
+\change[inline]{TODO: Show how complicated cases are handled.}
+
+The \icode{RecursiveASTVisitor} is launched by visiting the root node using 
+a \icode{TraverseDecl} method. 
 It then dispatches to other nodes and their children. 
 For each node, the visitor searches the class hierarchy from 
 the node's dynamic type up. 
 Once the type is determined, the visitor calls the appropriate 
-overridden Visit method. 
+overridden \icode{Visit} method. 
 Traversing the class hierarchy from the bottom up 
 translates to calling specific visit functions for specific types 
 rather than visit functions of their abstract types.
@@ -124,6 +133,8 @@ The tree traversal can be done in a preorder or postorder fashion.
 Preorder traversal is the default.
 
 \section{Matchers}
+
+\change[inline]{TODO: Finish matchers, add code examples.}
 
 \section{Source-to-source transformation}
 
@@ -143,33 +154,37 @@ break them.
 Although it is not encouraged, the methods to change the AST 
 are available.
 
-Given an ASTContext, it is possible to create specific nodes using 
-their Create method. 
+Given an \icode{ASTContext}, it is possible to create specific nodes
+using their \icode{Create} method. 
 Likewise, nodes with public constructors and destructors can combine 
-keywords *placement new/delete* and the ASTContext to add or remove 
-nodes. 
-The job of ASTContext is then to manage the memory internally.
+keywords \icode{placement new}, \icode{delete} and the ASTContext 
+to add or remove nodes. 
+The job of \icode{ASTContext} is then to manage the memory internally.
 
-A more sophisticated approach is the one offered by the TreeTransform class. 
-Although it is rarely used and no real examples can be found, the premise 
-is simple. 
-The TreeTransform class needs to be inherited from, and its Rebuild methods 
-need to be overridden. 
+A more sophisticated approach is the one offered 
+by the \icode{TreeTransform} class. 
+Although it is rarely used and no real examples can be found, 
+the premise is simple. 
+The \icode{TreeTransform} class needs to be inherited from, 
+and its \icode{Rebuild} methods need to be overridden. 
 The overrides then transform specified nodes of an input AST 
 into a modified AST.
 
-One additional dirty way of replacing nodes is by utilizing *std::replace*. 
+One additional dirty way of replacing nodes is by utilizing 
+\icode{std::replace}. 
 The child container of the replaced node's immediate parent must be 
-specified in parameters of *std::replace*, together with the node itself 
-and the new node.
+specified in parameters of \icode{std::replace}, together with 
+the node itself and the new node.
+
+\change[inline]{TODO: Talk about adding intrumentation code.}
 
 When attempting to modify the AST indirectly, which is how LibTooling 
 intends it to, the developer can run into a couple of issues. 
 First of all, the AST does not reference the source code entirely. 
-The programmer has access to SourceManager, Lexer, Rewriter, and 
-Replacement classes. 
+The programmer has access to \icode{SourceManager}, \icode{Lexer},
+\icode{Rewriter}, and \icode{Replacement} classes. 
 When used individually or in combinations, they can map to and alter 
-a given node's source code. 
+a given node's source code.
 It is then possible to add, remove, or replace the AST's underlying 
 code with node-level precision.
 
