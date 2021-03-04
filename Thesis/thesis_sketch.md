@@ -11,7 +11,7 @@ Contains the most up-to-date outline and a summary of what's being worked on.
 
 3. Automated debugging techniques
 
-   - give a short explanation to why existing techniques are useful when reducing the size of the program
+   - give a short explanation to why existing techniques are useful when reducing the size of the program, explain why debugging is difficult, talk about selected analysis tools
 
    1. Delta debugging
       - explain the idea, show the algorithm and show the link between tests in DD and verification in this work
