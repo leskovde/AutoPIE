@@ -1,12 +1,15 @@
 \chapter{Clang LibTooling}
 
-\change[inline]{TODO: Convert links into references (https://llvm.org/ 
-and \urlhttps://clang.llvm.org/ 
-and \urlhttps://clang.llvm.org/docs/LibTooling.html
-and \urlhttps://clang.llvm.org/docs/IntroductionToTheClangAST.html
-and \urlhttps://eli.thegreenplace.net/2014/05/01/modern-source-to-source-transformation-with-clang-and-libtooling
+\change[inline]{TODO: Convert links into references (
+\url{https://llvm.org/} 
+and \url{https://clang.llvm.org/} 
+and \url{https://clang.llvm.org/docs/LibTooling.html}
+and \url{https://clang.llvm.org/docs/IntroductionToTheClangAST.html}
+and \url{https://eli.thegreenplace.net/2014/05/01/modern-source-to-source-transformation-with-clang-and-libtooling}
 and \url{https://clang.llvm.org/doxygen/classclang_1_1RecursiveASTVisitor.html}
 )}
+
+\change[inline]{TODO: Add a paragraph (or a subsection) about compilation databases.}
 
 The previous chapter described tools and environments that were taken
 into consideration for this project. 
@@ -67,8 +70,6 @@ code modifications, AST traversals, and access to the compiler's internals.
 
 \section{Clang AST}
 
-\change[inline]{TODO: Add AST dump.}
-
 The abstract syntax tree used in the Clang front-end is different 
 from the typical AST. 
 It saves and carries more data, namely context.  
@@ -80,9 +81,52 @@ and types \(\icode{Type}\).
 However, in the APIs mentioned above, the nodes do not share
 a common ancestor. 
 The topmost node, the root, of Clang AST is called the translation
-unit declaration. 
+unit declaration \(\icode{TranslationUnitDecl}\). 
 Edges between nodes are simplified, as each node stores 
 a container of its children.
+
+\begin{lstlisting}[caption=Clang AST Dump, language=bash, 
+label={lst:astdump}, basicstyle=\tiny, numbers=none]
+$ cat -n simple.cpp
+     1  #include<iostream>
+     2
+     3  int main()
+     4  {
+     5          int x;
+     6          std::cin >> x;
+     7
+     8          return (x / 42);
+     9  } 
+$ clang-check -ast-dump -ast-dump-filter=main simple.cpp --
+Dumping main:
+FunctionDecl 0x556041ab67e0 <./simple.cpp:3:1, line:9:1> line:3:5 main 'int ()'
+`-CompoundStmt 0x556041ab84a0 <line:4:1, line:9:1>
+  |-DeclStmt 0x556041ab6900 <line:5:2, col:7>
+  | `-VarDecl 0x556041ab6898 <col:2, col:6> col:6 used x 'int'
+  |-CXXOperatorCallExpr 0x556041ab83b8 <line:6:2, col:14> 'std::basic...'
+  | |-ImplicitCastExpr 0x556041ab83a0 <col:11> 'std::basic...'
+  | | `-DeclRefExpr 0x556041ab8318 <col:11> 'std::basic...'
+  | |-DeclRefExpr 0x556041ab6980 <col:2, col:7> 'std::istream...'
+  | `-DeclRefExpr 0x556041ab69b0 <col:14> 'int' lvalue Var 0x556041ab6898 'x' 'int'
+  `-ReturnStmt 0x556041ab8490 <line:8:2, col:16>
+    `-ParenExpr 0x556041ab8470 <col:9, col:16> 'int'
+      `-BinaryOperator 0x556041ab8450 <col:10, col:14> 'int' '/'
+        |-ImplicitCastExpr 0x556041ab8438 <col:10> 'int' <LValueToRValue>
+        | `-DeclRefExpr 0x556041ab83f8 <col:10> 'int' lvalue Var 0x556041ab6898 'x' 'int'
+        `-IntegerLiteral 0x556041ab8418 <col:14> 'int' 42
+\end{lstlisting}
+
+Listing~\ref{lst:astdump} contains a short program written in C++.
+The source code was provided to a Clang tool clang-check, which
+dumped the abstract syntax subtree of a given function.
+In this case, the filter was set to the \icode{main} function.
+The AST dump visualizes the the subtree using ASCII characters
+and node informations.
+Nodes entries start with their type names. 
+Each node also carries its address, source location, and description.
+Note that the root of the subtree is of type \icode{FunctionDecl}.
+The usual root \icode{TranslationUnitDecl} is absent due to the function
+filter being applied.
 
 Extracting Clang AST comes at the cost of compiling the program's
 source code. 
@@ -99,14 +143,59 @@ The same can be said for programs that contain compile-time errors.
 
 \section{ASTVisitor}
 
+\change[inline]{TODO: Talk about the visitor pipeline (Action
+to Consumer to Visitor).}
+
 LibTooling offers a built-in curiously recurring template pattern 
 (CRTP) visitor. 
 The class \icode{RecursiveASTVisitor} offers \icode{Visit} methods that 
 can be overridden to the programmer's liking. 
 Each override specifies the type of node on which the method 
 triggers and the actions that should be performed.
+The implementation seen on listing~\ref{lst:countvisitor} illustrates
+the idea. A custom class with a strict dedication, i.e., counting
+program's statements, has two visit functions.
+Firstly, a \icode{VisitStmt} method, which is triggered upon
+encountering a node of type \icode{Stmt}, as seen in its
+parameters. 
+Furthermore, since no additional visit functions for children 
+of \icode{Stmt} have been overridden, \icode{VisitStmt}
+will trigger on every node type inheriting from \icode{Stmt} as well.
+Secondly, the method \icode{VisitVarDecl} only accepts \icode{VarDecl}
+and its inheriting types.
+Because \icode{VarDecl} is a child of \icode{Decl}, not the other way
+around, \icode{Decl} will not trigger this visit function.
 
-\change[inline]{TODO: Add example Visit method override.}
+\begin{lstlisting}[caption=CountASTVisitor, language=C++, 
+label={lst:countvisitor}]
+/**
+ * Counts the number of statements.
+ */
+class CountASTVisitor : public clang::RecursiveASTVisitor<CountASTVisitor>
+{
+        clang::ASTContext* astContext;
+        int statementCount;
+
+public:
+        explicit CountASTVisitor(clang::CompilerInstance* ci)
+                : astContext(&ci->getASTContext()), statementCount(0) { }
+
+        virtual bool VisitStmt(clang::Stmt* st)
+        {
+                outs() << "Found a statement.\n";
+				statementCount++;
+				
+                return true;
+        }
+		
+		virtual bool VisitVarDecl(clang::VarDecl* decl)
+        {
+                outs() << "Found a variable declaration.\n";
+				
+                return true;
+        }
+};
+\end{lstlisting}
 
 Visiting statements, expressions, declarations, 
 and types is straightforward. 
@@ -130,7 +219,9 @@ translates to calling specific visit functions for specific types
 rather than visit functions of their abstract types.
 
 The tree traversal can be done in a preorder or postorder fashion. 
-Preorder traversal is the default.
+Preorder traversal is the default. The developer can also stop
+the traversal at any point by returning \icode{false} from
+the visit function as opposed to \icode{true}.
 
 \section{Matchers}
 
@@ -176,7 +267,7 @@ The child container of the replaced node's immediate parent must be
 specified in parameters of \icode{std::replace}, together with 
 the node itself and the new node.
 
-\change[inline]{TODO: Talk about adding intrumentation code.}
+\change[inline]{TODO: Talk about cross-checking.}
 
 When attempting to modify the AST indirectly, which is how LibTooling 
 intends it to, the developer can run into a couple of issues. 
