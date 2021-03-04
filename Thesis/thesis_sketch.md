@@ -38,18 +38,21 @@ Contains the most up-to-date outline and a summary of what's being worked on.
 
 5. Clang libtooling
 
-   1. AST visitor
+   1. AST
+      - describe the Clang AST, how it differs from the usual AST and how its represented in memory
+   2. AST visitor
       - the basic premise of the clang AST visitor and its implementation
       - explain the ability to override visit functions, returning true or false to continue
       - explain limitations (when traversing subtrees, etc.)
-   2. Matchers
+   3. Matchers
       - the usage, give examples
       - explain how they might be useful (fetching all functions, etc.)
-   3. Source to source transformation
+   4. Source to source transformation
       - the link between the source code and the AST
       - SourceManager and Rewriter
       - TreeDiff, TreeTransform, ...
-2. Program minimization
+   
+5. Program minimization
 
    - in depth explanation of the problem and its goals
    - setting the domain (what kinds of programs the solution should work on)

@@ -43,6 +43,8 @@
 
 - Pokus: zkusit dvojkombinaci a hybridni slicing na serverovou aplikaci. Podivat se, co odebral static a jestli to stacilo k zamezeni dlouheho runtime. Porovnat presnost a vykon, pokud oba dobehnou.
 
+- **Super napad: dosadit si hodnoty argumentu do jednotlivych promennych pomoci AST a spustit static slicing.**
+
 - V BP popsat externi kod, high level overview. Pokud je potreba zmenit kod, popsat to do BP.
 
 - Manual pro spusteni musi zahrnout systemove pozadavky.
