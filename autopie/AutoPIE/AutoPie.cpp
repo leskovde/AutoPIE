@@ -78,15 +78,17 @@ void ReduceStatement(GlobalContext& ctx, clang::tooling::CompilationDatabase& cd
 	ctx.iteration++;
 }
 
-// Generates a minimal program variant using delta debugging.
+// Generates a minimal program variant by naively removing statements.
 // Call:
 // > TheTool.exe [path to a cpp file] -- [runtime error] [error line location] [reduction ratio]
-// e.g. TheTool.exe C:\Users\User\llvm\llvm-project\TestSource.cpp -- std::invalid_argument
+// e.g. TheTool.exe C:\Users\User\llvm\llvm-project\TestSource.cpp -- std::invalid_argument 12 0.5
 int main(int argc, const char** argv)
 {
 	assert(argc > 2);
 	
+	// TODO: Change strtol to something that parses `double`.
 	const auto acceptableRatio = std::strtol(argv[argc - 1], nullptr, 10);
+	
 	const auto userInputError = argv[argc - 3];
 	const auto userInputErrorLocation = std::strtol(argv[argc - 2], nullptr, 10);
 
