@@ -1,8 +1,8 @@
-- pouzivani nekterych funkcionalit clang nekdy potrebuje soubor prelozit! velke projekty muzou trvat hodne dlouho
+- ~~pouzivani nekterych funkcionalit clang nekdy potrebuje soubor prelozit! velke projekty muzou trvat hodne dlouho~~
 
-- napr clang-format funguje bez compile, funguje i na nefunkcni kod (ktery nejde prelozit)
+- ~~napr clang-format funguje bez compile, funguje i na nefunkcni kod (ktery nejde prelozit)~~
 
-- source for source transformation je komplikovane, protoze v AST nejsou reference na stredniky
+- ~~source for source transformation je komplikovane, protoze v AST nejsou reference na stredniky~~
 
 - prochazet typy v AST je snadne, tezke jsou ale vnorene typy, napr int * const * x
 
@@ -36,6 +36,7 @@
 - Manuel Klimek - we do source to source transformation by producing replacements in the callback (generate a list of replacements) - go through all the places where things are happening, collect all the edits we are trying to make, duplicate them or go back to the user and say "no you cannot do that" and apply them
 - nice doxygen documentation
 - 4 cases when using clang AST:
+  
   - statements
   - declarations
   - expression (derived from statements)
@@ -64,5 +65,4 @@
 ------------------------
 
 - Uprava AST (vkladani instrumentacniho kodu): https://www.youtube.com/watch?v=_rUwW8Awc5s
-
-
+- EXISTUJE ClangSharp ! https://github.com/SimonRichards/clang-sharp
