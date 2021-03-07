@@ -1,0 +1,298 @@
+\chapter{Clang LibTooling}
+
+\change[inline]{TODO: Convert links into references (
+\url{https://llvm.org/} 
+and \url{https://clang.llvm.org/} 
+and \url{https://clang.llvm.org/docs/LibTooling.html}
+and \url{https://clang.llvm.org/docs/IntroductionToTheClangAST.html}
+and \url{https://eli.thegreenplace.net/2014/05/01/modern-source-to-source-transformation-with-clang-and-libtooling}
+and \url{https://clang.llvm.org/doxygen/classclang_1_1RecursiveASTVisitor.html}
+)}
+
+\change[inline]{TODO: Add a paragraph (or a subsection) about compilation databases.}
+
+The previous chapter described tools and environments that were taken
+into consideration for this project. 
+The utmost importance was given to the ease of use, availability, and 
+active community. 
+As the reader might have guessed from the summary, the LLVM/Clang 
+suite stood out as the best candidate.
+Clang is a language front-end. With high compilation performance, 
+low memory footprint, and modifiable code base, it quickly and flexibly 
+converts source code to LLVM intermediate code representation. 
+The front-end supports languages and frameworks such as C/C++, 
+Objective C/C++, CUDA, OpenCL, OpenMP, RenderScript, and HIP. 
+This support is crucial for this thesis since the project 
+aims to support both C and C++. 
+The LLVM Core then handles the optimization and IR synthesis, 
+supporting a plethora of popular CPUs.
+
+Clang is widely used for its warnings and error checks, both very 
+helpful and outstanding compared to competing compilers. 
+Furthermore, Clang offers an extensive tooling infrastructure 
+through which tools such as clang-tidy were developed. 
+A relatively well-documented tooling API written in C++ helps 
+programmers create their tools easily. 
+However, not all developers share the same skill floor and skill ceiling. 
+Some programmers require complicated additional features, while others 
+prefer an easy-to-use interface. 
+The tooling API has been split into multiple libraries and frameworks. 
+
+For plugin development, a library intuitively called Plugins is used. 
+The library is linked dynamically, resulting in relatively small tools. 
+Plugins are launched at compilation and offer compilation control 
+as well as access to the AST. 
+
+Another framework, LibClang, offers a simple C and Python API for quick 
+tool writing. 
+Unlike Plugins and LibTooling, which will be mentioned later, the code 
+base of LibClang is stable. 
+This stability implies that tools written using LibClang do not require
+upkeep with every new LLVM/Clang release. 
+Overall, the framework and tools written using it are high-level and 
+are easily readable.
+
+The most feature woven set of libraries is LibTooling. 
+Unlike Plugins, LibTooling allows the developer to build standalone 
+Clang tools. 
+This robust framework is written in C++ and has an active 
+community of contributors. 
+One can find many manuals and tutorials online. 
+However, with each contribution to LibTooling and each release of Clang, 
+there is a chance that older tools will not support the newer LibTooling 
+API. 
+That is the reason why countless tools written using this framework do not
+run in modern environments. 
+Programmers who use LibTooling cannot expect compatibility in upcoming 
+releases. 
+On the bright side, the libraries of LibTooling allow a plethora of source
+code modifications, AST traversals, and access to the compiler's internals.
+
+\section{Clang AST}
+
+The abstract syntax tree used in the Clang front-end is different 
+from the typical AST. 
+It saves and carries more data, namely context.  
+For example, it contains additional information to map source 
+code to nodes and capture semantics.
+Nodes are of four different types: statements \(\icode{Stmt}\), 
+declarations \(\icode{Decl}\), declaration context \(\icode{DeclContext}\),
+and types \(\icode{Type}\). 
+However, in the APIs mentioned above, the nodes do not share
+a common ancestor. 
+The topmost node, the root, of Clang AST is called the translation
+unit declaration \(\icode{TranslationUnitDecl}\). 
+Edges between nodes are simplified, as each node stores 
+a container of its children.
+
+\begin{lstlisting}[caption=Clang AST Dump, language=bash, 
+label={lst:astdump}, basicstyle=\tiny, numbers=none]
+$ cat -n simple.cpp
+     1  #include<iostream>
+     2
+     3  int main()
+     4  {
+     5          int x;
+     6          std::cin >> x;
+     7
+     8          return (x / 42);
+     9  } 
+$ clang-check -ast-dump -ast-dump-filter=main simple.cpp --
+Dumping main:
+FunctionDecl 0x556041ab67e0 <./simple.cpp:3:1, line:9:1> line:3:5 main 'int ()'
+`-CompoundStmt 0x556041ab84a0 <line:4:1, line:9:1>
+  |-DeclStmt 0x556041ab6900 <line:5:2, col:7>
+  | `-VarDecl 0x556041ab6898 <col:2, col:6> col:6 used x 'int'
+  |-CXXOperatorCallExpr 0x556041ab83b8 <line:6:2, col:14> 'std::basic...'
+  | |-ImplicitCastExpr 0x556041ab83a0 <col:11> 'std::basic...'
+  | | `-DeclRefExpr 0x556041ab8318 <col:11> 'std::basic...'
+  | |-DeclRefExpr 0x556041ab6980 <col:2, col:7> 'std::istream...'
+  | `-DeclRefExpr 0x556041ab69b0 <col:14> 'int' lvalue Var 0x556041ab6898 'x' 'int'
+  `-ReturnStmt 0x556041ab8490 <line:8:2, col:16>
+    `-ParenExpr 0x556041ab8470 <col:9, col:16> 'int'
+      `-BinaryOperator 0x556041ab8450 <col:10, col:14> 'int' '/'
+        |-ImplicitCastExpr 0x556041ab8438 <col:10> 'int' <LValueToRValue>
+        | `-DeclRefExpr 0x556041ab83f8 <col:10> 'int' lvalue Var 0x556041ab6898 'x' 'int'
+        `-IntegerLiteral 0x556041ab8418 <col:14> 'int' 42
+\end{lstlisting}
+
+Listing~\ref{lst:astdump} contains a short program written in C++.
+The source code was provided to a Clang tool clang-check, which
+dumped the abstract syntax subtree of a given function.
+In this case, the filter was set to the \icode{main} function.
+The AST dump visualizes the the subtree using ASCII characters
+and node informations.
+Nodes entries start with their type names. 
+Each node also carries its address, source location, and description.
+Note that the root of the subtree is of type \icode{FunctionDecl}.
+The usual root \icode{TranslationUnitDecl} is absent due to the function
+filter being applied.
+
+Extracting Clang AST comes at the cost of compiling the program's
+source code. 
+Usually, this is done using an instance of \icode{FrontEndAction}, 
+which specifies what and how should be compiled. 
+The front-end compilation is essential to note because it can affect 
+LibTooling's performance on large projects. 
+In comparison, clang-format does not execute any compilations. 
+Therefore, clang-format runs efficiently on large projects 
+and correctly on incomplete ones. 
+The compilation action also implies that LibTooling tools often 
+do not support incomplete source codes. 
+The same can be said for programs that contain compile-time errors.
+
+\section{ASTVisitor}
+
+\change[inline]{TODO: Talk about the visitor pipeline (Action
+to Consumer to Visitor).}
+
+LibTooling offers a built-in curiously recurring template pattern 
+(CRTP) visitor. 
+The class \icode{RecursiveASTVisitor} offers \icode{Visit} methods that 
+can be overridden to the programmer's liking. 
+Each override specifies the type of node on which the method 
+triggers and the actions that should be performed.
+The implementation seen on listing~\ref{lst:countvisitor} illustrates
+the idea. A custom class with a strict dedication, i.e., counting
+program's statements, has two visit functions.
+Firstly, a \icode{VisitStmt} method, which is triggered upon
+encountering a node of type \icode{Stmt}, as seen in its
+parameters. 
+Furthermore, since no additional visit functions for children 
+of \icode{Stmt} have been overridden, \icode{VisitStmt}
+will trigger on every node type inheriting from \icode{Stmt} as well.
+Secondly, the method \icode{VisitVarDecl} only accepts \icode{VarDecl}
+and its inheriting types.
+Because \icode{VarDecl} is a child of \icode{Decl}, not the other way
+around, \icode{Decl} will not trigger this visit function.
+
+\begin{lstlisting}[caption=CountASTVisitor, language=C++, 
+label={lst:countvisitor}]
+/**
+ * Counts the number of statements.
+ */
+class CountASTVisitor : public clang::RecursiveASTVisitor<CountASTVisitor>
+{
+        clang::ASTContext* astContext;
+        int statementCount;
+
+public:
+        explicit CountASTVisitor(clang::CompilerInstance* ci)
+                : astContext(&ci->getASTContext()), statementCount(0) { }
+
+        virtual bool VisitStmt(clang::Stmt* st)
+        {
+                outs() << "Found a statement.\n";
+				statementCount++;
+				
+                return true;
+        }
+		
+		virtual bool VisitVarDecl(clang::VarDecl* decl)
+        {
+                outs() << "Found a variable declaration.\n";
+				
+                return true;
+        }
+};
+\end{lstlisting}
+
+Visiting statements, expressions, declarations, 
+and types is straightforward. 
+The same applies to children of these classes. 
+However, it is challenging to visit more complicated entities 
+such as nested types, e.g., \icode{int* const* x}. 
+Such cases require fetching additional semantical context, 
+utilizing \icode{ASTMatchers} and nodes of type declaration context.
+
+\change[inline]{TODO: Show how complicated cases are handled.}
+
+The \icode{RecursiveASTVisitor} is launched by visiting the root node using 
+a \icode{TraverseDecl} method. 
+It then dispatches to other nodes and their children. 
+For each node, the visitor searches the class hierarchy from 
+the node's dynamic type up. 
+Once the type is determined, the visitor calls the appropriate 
+overridden \icode{Visit} method. 
+Traversing the class hierarchy from the bottom up 
+translates to calling specific visit functions for specific types 
+rather than visit functions of their abstract types.
+
+The tree traversal can be done in a preorder or postorder fashion. 
+Preorder traversal is the default. The developer can also stop
+the traversal at any point by returning \icode{false} from
+the visit function as opposed to \icode{true}.
+
+\section{Matchers}
+
+\change[inline]{TODO: Finish matchers, add code examples.}
+
+\section{Source-to-source transformation}
+
+To transform source code based on its AST, it must extract the AST 
+from the code, alter the AST, and then translate it back to valid 
+source code. 
+LibTooling allows the programmer to extract the AST and examine it. 
+Additional functionality also allows modifying the AST both directly 
+and indirectly. 
+However, there are obstacles and limitations to both approaches. 
+
+Let us examine the pitfalls of direct AST transformation first. 
+Before explaining the possibilities of direct modifications, it 
+should be noted that these transformations are not recommended. 
+Clang has powerful invariants about its AST, and changes might 
+break them. 
+Although it is not encouraged, the methods to change the AST 
+are available.
+
+Given an \icode{ASTContext}, it is possible to create specific nodes
+using their \icode{Create} method. 
+Likewise, nodes with public constructors and destructors can combine 
+keywords \icode{placement new}, \icode{delete} and the ASTContext 
+to add or remove nodes. 
+The job of \icode{ASTContext} is then to manage the memory internally.
+
+A more sophisticated approach is the one offered 
+by the \icode{TreeTransform} class. 
+Although it is rarely used and no real examples can be found, 
+the premise is simple. 
+The \icode{TreeTransform} class needs to be inherited from, 
+and its \icode{Rebuild} methods need to be overridden. 
+The overrides then transform specified nodes of an input AST 
+into a modified AST.
+
+One additional dirty way of replacing nodes is by utilizing 
+\icode{std::replace}. 
+The child container of the replaced node's immediate parent must be 
+specified in parameters of \icode{std::replace}, together with 
+the node itself and the new node.
+
+\change[inline]{TODO: Talk about cross-checking.}
+
+When attempting to modify the AST indirectly, which is how LibTooling 
+intends it to, the developer can run into a couple of issues. 
+First of all, the AST does not reference the source code entirely. 
+The programmer has access to \icode{SourceManager}, \icode{Lexer},
+\icode{Rewriter}, and \icode{Replacement} classes. 
+When used individually or in combinations, they can map to and alter 
+a given node's source code.
+It is then possible to add, remove, or replace the AST's underlying 
+code with node-level precision.
+
+Accessing this information through these classes can result in 
+node-to-code mapping issues. 
+Compound statements might mismatch parentheses and curly brackets. 
+Similarly, declarations and statements might miss a reference to 
+a semicolon. 
+These and more obstacles could surface anytime a programmer attempts 
+to debug their source-to-source transformation tool. 
+
+While LibTooling intends most of the issues mentioned earlier, 
+they are not as quickly comprehendible as the rest of the framework. 
+Templates, the language feature of C++, further complicate the matter. 
+In Clang AST, multiple types derived from a template might share some nodes. 
+Having multiple parent nodes is also not uncommon for template types. 
+Thankfully, templates are rarely used. 
+A more common threat, macros, has a similar effect. 
+Modifying a source code containing macros and comments results in 
+losing both.
