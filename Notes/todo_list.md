@@ -1,0 +1,30 @@
+- [ ] Eventualne migrovat gitlab na github pro release.
+- [ ] Zkusit propojit slicery s mym kodem prvne pres script, pak pres zdrojaky.
+- [ ] Udelat test pipeline - nejlineji az na linux, nejlepe nejak univerzalne pro unix i windows (mozna pomoci CMake)
+- [x] zkusit static slicer vsechna slicing kriteria
+- [x] zkusit prevod z bitcode do source code (zachovani jmen promennych atd.)
+- [x] precist si oba clanky o DG
+- [x] zkusit dynamic slicer, zjistit jaky vstup potrebuje a jaky vystup dava
+- [x] podivat se na AST slicer
+- [x] zaridit, aby slicer dockery fungovaly - oba slicery v odlisnych kontejnerech, jednomu predavam data z hostu, druhemu davam data z predchoziho dockeru a pak vracim data zpatky na host
+- [x] doplnit algoritmus - slicing a jak spolupracuje s ostatnimi programy, co by se muselo menit, aby to dohromady fungovalo - viz. poznamka mobil
+- [x] doplnit notes
+- [x] napsat shell script na propojeni obou sliceru
+- [ ] **rework zpusobu, kterym se odebira source code z AST - rewriter momentalne nedela to, co bych chtel, pridat decl a expr visitory, opravit include**
+- [ ] podivat se na bezne veci v AST sliceru (help, option handling, ...) a zkusit neco ukrast
+- [ ] zjistit, jak udelat pomoci CMake crossplatform cpp projekt
+- [x] migrovat projekt na linux
+- [ ] napsat shell script na propojeni sliceru s projektem
+- [ ] udelat vizualizaci delta debuggingu, abych se ujistil, ze vse funguje spravne - pro kusy kodu udelat nodes, z nich sestrojit strom a ten pak vykreslit tak, aby slo videt, ktere nodes odstranuji
+- [x] ~~zvyraznit chybu v obou slicerech - v example.c neni ve slice promenna k, i presto, ze by tam byt mela~~
+- [ ] zkusit Holy Build Box / migrovat Giri na llvm 11
+- [x] pripravit test suite, osnova k textu (napr. ke kazde sekci mit 5 odrazek, co tam bude)
+- [ ] **zkontrolovat implementaci Delta Debuggingu podle pseudokodu v textu**
+- [ ] odebirat krome statementu i decl a expr
+- [ ] pouzit static slicer v naivnim zpusobu pro urychleni
+- [ ] zkusit portnout giri na novejsi LLVM
+- [ ] zkusit heuristiku - urcit, zda je vyhodne pouzivat dynamicky slicer podle toho, jak moc se kod branchuje
+- [ ] zkusit formulovat a dokazat vetu "program je konecny prave tehdy, kdyz je kazdy jeho podprogram konecny"
+- [ ] vymyslet, jak minimalizovat cely program a ne jen main
+- [ ] udelat experimenty na soutezi SV-COMP
+- [ ] nechavat v redukovanem kodu relevantni konstanty (QoL, protoze slicing konstanty ignoruje)
