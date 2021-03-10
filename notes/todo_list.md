@@ -28,3 +28,4 @@
 - [ ] vymyslet, jak minimalizovat cely program a ne jen main
 - [ ] udelat experimenty na soutezi SV-COMP
 - [ ] nechavat v redukovanem kodu relevantni konstanty (QoL, protoze slicing konstanty ignoruje)
+- [ ] pridat testy specificky pro c++ (zatim mam jen .c files)
