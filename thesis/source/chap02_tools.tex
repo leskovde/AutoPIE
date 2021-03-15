@@ -93,14 +93,91 @@ This description of Clang foreshadows its friendliness to analysis tool develope
 The fact that the front end runs on a common intermediate language also indicates 
 that openly working with abstract code representations is supported.
 
+There are three most notable interfaces for customizing Clang. 
+Firstly, the LibClang interface allows the users to write 
+comprehend-able high-level code with limited functionality. 
+On the other hand, LibTooling gives the user much more control 
+at the cost of a steep learning curve. 
+Lastly, the Plugins interface features similar difficulty 
+as LibTooling with a more specific goal. 
+Plugins are used with the Clang compiler and can be run 
+as a front-end action when called during compilation.
+
 \change[inline]{TODO: Add more general text based on what I write in the Clang chapter.}
+
+\section{ANTLR}
+
+A less typical way of extracting an AST from a source file is by using grammar
+recognition.
+ANTLR, which stands for Another Tool for Language Recognition, is a free 
+parser generator that generates both a lexer and a parser based on 
+a given grammar.
+Additionally, ANTLR can also generate a tree parser.
+Tree parsers are helpful in processing ASTs.
+
+The tool is generally used to read data formats, process expressions 
+of various query languages, and even parse programming languages.
+It can be used to generate a syntax tree and walk through it using a visitor.
+ANTLR is based on the LL parser, which parses the input from left to right, 
+performing its leftmost derivation.
+
+To create a parser or a syntax tree of a programming language, ANTLR requires 
+the complete grammar of that language.
+Some programming languages, namely C and C++, have an ambiguous syntax that 
+is hard to parse based solely on its grammar.
+Due to ANTLR's high popularity, many grammars have already been written 
+for it.
+As far as C++ is concerned, its C++14 standard's grammar is the most recent 
+one available.
+
+Writing grammar for newer standards or creating a custom one for both C and 
+C++ would be unnecessarily burdensome for this project.
+This statement holds, especially when considering other tools mentioned above.
+
+The most recent release, ANTLR 4, added more options for grammar rules.
+Most notably, it supports direct left recursion.
+However, that still might not be enough to choose it over other tools.
+
+
+\section{DMS}
+
+Similar to ANTLR, the DMS Software Reengineering Toolkit features 
+a parser generator.
+The tool is proprietary software created by Semantic Designs.
+Besides the mentioned parser generator, it features an entire toolkit for 
+creating custom software analysis.
+This toolkit is used mainly for reliable refactoring, duplicate code 
+detection, and language migration.
+
+The parser generator part takes a grammar and produces a parser.
+This parser then constructs abstract syntax trees for provided source code.
+Additionally, created ASTs can be converted back to source code using 
+prettyprinters.
+The parser saves additional information about provided source files, such as 
+comments and formatting.
+It can then recreate the file accurately.
+
+DMS provides a grammar for a large number of languages, including C and C++.
+The language support, however, is not always up-to-date.
+The newest supported C++ standard is still the older C++17.
+These complicated grammars' ambiguity is avoided using a generalized 
+left-to-right parser, which performs the rightmost derivation (GLR).
+Since DMS provides refactoring ability as well, it allows for transformation 
+rules in the grammar.
+
+Another helpful feature of the toolkit is control flow and data flow analysis.
+Analyzing control flow and data flow, generating their graphs, and performing 
+the points-to analysis (also supported by DMS) is practical when considering 
+section 1.2.
+
+It should be noted that some of the free, open-source tools mentioned above 
+do a better job of being a so-called 'software analysis toolkit' than 
+DMS does.
 
 \section{Summary}
 
-While the chapter only highlighted two significant candidates, the analysis 
-looked at a plethora of tools. 
-Those, however, were not able to compete feature-wise due to the sheer size 
-and extent of GCC and Clang. 
+The chapter highlighted a spectrum of tools, ranging from language
+recognizers to compilers.
 
 It would seem that parsing multiple programming languages into an abstract 
 representation requires a common intermediate language, in which 

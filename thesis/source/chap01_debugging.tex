@@ -42,6 +42,54 @@ attempts~at automating at least some parts of it during the last few decades.
 The rise in popularity of program analysis resulted in automated error checks 
 for popular programming languages. 
 
+SpotBugs, formerly known as FindBugs, is a free and platform-independent 
+application for, as the name suggests, finding bugs.
+It works with the bytecode of JDK8 and newer, which indicates that source 
+code is not required.
+SpotBugs uses static analysis to discover bug patterns.
+These patterns are sequences of code that might contain errors.
+They include misused language features, misused API methods, and changes to 
+source code invariants created during code maintenance.
+Java developers can use SpotBugs's static analysis in its GUI form or 
+as a plugin for build tools.
+
+Clang static analyzer provides similar functionality to C, C++, and 
+Objective-C programmers.
+The code written in these languages is parsed by the analyzer.
+A collection of code analyzing techniques is then applied to it.
+This process results in an automatic bug finding, similar to compiler 
+warnings.
+These warnings, however, include runtime bugs as well.
+The analyzer can uncover many bugs, from simple faulty array 
+indexing to guarding the stack address scope.
+Due to its extensibility and integration in tools and IDEs alike, 
+the Clang static analyzer is popular amongst developers working 
+with the C family of languages.
+
+The functionality of the previous tool was extended in CodeChecker.
+CodeChecker serves as a wrapper for the Clang static analyzer and 
+Clang-Tidy.
+Wrapping these two tools into a more sophisticated application helps 
+with user-friendliness tremendously.
+Additionally, the wrapper also deals with false positives.
+Furthermore, it allows the user to visualize the result as HTML or 
+save time by analyzing only relevant files.
+
+Facebook's Infer translates both the C family of languages and Java 
+into a common intermediate language.
+It also utilizes compilation information for additional accuracy.
+The intermediate code is then analyzed one function at a time.
+During the analysis, Infer can uncover tedious bugs such as invalid 
+memory address access and thread-safety violation.
+
+While the tools mentioned above mainly cover only specific cases 
+of potential bugs, such as out-of-range array indexing, they 
+have proven themselves valuable for the developer.
+In the context of this work, such checks provide a helping hand 
+at a low cost when minimizing a program.
+The following sub-chapters will talk about the techniques behind 
+such checks and how they deal with automated debugging.
+
 Although these checks mostly cover only specific 
 cases~of potential bugs, such as out-of-range array indexing, they have proven 
 themselves as a useful tool for the developer.
