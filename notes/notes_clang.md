@@ -76,7 +76,7 @@
   - libraries with plugins must be loaded with the -load command when running clang
   - all arguments given to the plugin are specified in the command that calls the compiler as well, they are prefixed with -Xclang
   - another option is to use -fplugin=`plugin`, in which case the plugin runs automatically (-load is set to `plugin`)
-  - plugins can generally use the same AST functionality as LibClang with some exceptions - internal stuff is hidden (e.g. TreeTransform)
+  - plugins can generally use the same AST functionality as LibTooling with some exceptions - internal stuff is hidden (e.g. TreeTransform)
   - plugins are not stand-alone tools
 - Source-to-source
 
@@ -87,11 +87,11 @@
   - contains namely macro definitions (`-D`) and include paths (`-I`)
   - CD is in json format with the name `compile_commands.json`
   - the json is searched for in the current directory or its parent directories
-  - the json file contains an entries for source files, each entry contains a directory, file, and a compilation command
+  - the json file contains entries for source files, each entry contains a directory, file, and a compilation command
   - multiple entries for a single source file are also possible (in repeated compilation, etc.)
   - build tools such as CMake and Ninja can generate these CDs
   - if the project is not using any of the compatible build tools, the user can either make a CD manually or use tools such as Build EAR https://github.com/rizsotto/Bear
-  - tools created via libtooling don't always need compilation databases, they can instead use the `--` argument that separates the tool arguments from the compilation arguments
+  - tools created via libtooling don't always need compilation databases, they can instead use the `--` argument that separates the tool's arguments from the compilation arguments
   - arguments after `--` are used as a ad-hoc version of a compilation database
 - Clang AST
 

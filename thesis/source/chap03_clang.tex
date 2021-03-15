@@ -44,10 +44,30 @@ Some programmers require complicated additional features, while others
 prefer an easy-to-use interface. 
 The tooling API has been split into multiple libraries and frameworks. 
 
-For plugin development, a library intuitively called Plugins is used. 
-The library is linked dynamically, resulting in relatively small tools. 
-Plugins are launched at compilation and offer compilation control 
-as well as access to the AST. 
+For plugin development, a library intuitively called Plugins is used.
+The library is linked dynamically, resulting in relatively small tools.
+Plugins are launched at compilation and offer compilation control as well 
+as access to the AST.
+
+More specifically, Plugins allow performing an extra custom front-end action 
+during compilation.
+The functionality is generally similar to that of LibTooling, which will be 
+talked about later.
+However, unlike a standalone tool, Plugins cannot do any tasks before and after 
+the analysis (and compilation).
+When creating a plugin, one can choose from a selection of 
+\icode{FrontendAction} classes to inherit.
+If, for example, the plugin should work with the AST, 
+the \icode{ASTFrontendAction} can be inherited.
+Doing so also allows overriding the \icode{ParseArgs} method, in which 
+the plugin's command line handling is specified.
+
+Due to dynamic loading, the wanted plugin must be added to a plugin registry 
+inside the code.
+The plugin is then loaded from the registry by specifying the \icode{-load} 
+command or \icode{-fplugin} on the command line when running clang.
+The plugin takes those arguments from the command line that are prefixed 
+by \icode{-Xclang}.
 
 Another framework, LibClang, offers a simple C and Python API for quick 
 tool writing. 
@@ -73,6 +93,45 @@ Programmers who use LibTooling cannot expect compatibility in upcoming
 releases. 
 On the bright side, the libraries of LibTooling allow a plethora of source
 code modifications, AST traversals, and access to the compiler's internals.
+
+\section{Compilation databases}
+
+To accurately and faithfully recreate a compilation, tools created using 
+LibTooling require a compilation database (CD) for a given input project.
+
+The motivation behind a CD is simple.
+If a source file uses unusual include paths that need to be provided 
+using the \icode{-I} compiler command, it cannot be reliably compiled.
+Similarly, if the file contains macros and lacks definitions, its content 
+can drastically change when the definitions are present.
+In the latter case, definitions are provided to the compiler 
+with the \icode{-D} command.
+Such compiler commands, options, and flags are usually defined in a build 
+system.
+At least, that is the recommended practice for larger projects.
+Having a build system is similar to having a CD.
+It is clear which file is compiled with which options.
+
+Clang expects a CD in the JSON format and looks for the file specifically
+named  \icode{compile\_commands.json} in the current or parent 
+directories.
+The JSON file contains entries for source files.
+Each entry contains a directory, a file name, and a compilation command.
+Multiple entries for a single source file are also valid.
+Such a case can arise when performing repeated compilation.
+
+As previously mentioned, having a build system helps.
+Build tools such as CMake and Ninja can be used to generate a CD.
+If the project is not using any of the compatible build tools, 
+the user can either make a CD manually or use an external tool.
+One such tool is Build EAR available at \url{https://github.com/rizsotto/Bear}.
+
+Tools created using LibTooling do not always require compilation databases 
+to run.
+For simple projects, they can take the \icode{-{}-} argument that separates 
+the tool's arguments from the project's compilation arguments.
+One can interpret the arguments following \icode{-{}-} as a temporary
+compilation database.
 
 \section{Clang AST}
 
@@ -273,8 +332,6 @@ The child container of the replaced node's immediate parent must be
 specified in parameters of \icode{std::replace}, together with 
 the node itself and the new node.
 
-\change[inline]{TODO: Talk about cross-checking.}
-
 When attempting to modify the AST indirectly, which is how LibTooling 
 intends it to, the developer can run into a couple of issues. 
 First of all, the AST does not reference the source code entirely. 
@@ -293,6 +350,11 @@ a semicolon.
 These and more obstacles could surface anytime a programmer attempts 
 to debug their source-to-source transformation tool. 
 
+The programmer must be careful in managing object instances when 
+transforming multiple files. 
+Each source file creates a new FrontendAction, and with it, 
+the developer needs a new instance of Rewriter.
+
 While LibTooling intends most of the issues mentioned earlier, 
 they are not as quickly comprehendible as the rest of the framework. 
 Templates, the language feature of C++, further complicate the matter. 
@@ -302,3 +364,21 @@ Thankfully, templates are rarely used.
 A more common threat, macros, has a similar effect. 
 Modifying a source code containing macros and comments results in 
 losing both.
+
+Doing source-to-source transformation is often accompanied by 
+inserting instrumentation code. 
+By performing so-called cross-checking, one can make sure that 
+the transformation behaves as intended. 
+Cross-checking works by inserting code with the same behavior 
+into the original and the transformed source code.  
+This insertion can be done in a sophisticated manner using the AST. 
+If, for example, the transformation alters calls to functions 
+in the code, the instrumentation code should be inserted inside the 
+function's body—that way, the developer can check whether 
+the transformation had its intended result.
+Cross-checking is a safe way of ensuring source-to-source 
+transformations work as intended. 
+While they might be excessive for small refactorings, 
+they are beneficial when debugging source-to-source 
+transformations of larger scales, such as translating 
+one language's source code to another's.
