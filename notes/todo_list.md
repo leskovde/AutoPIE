@@ -1,4 +1,8 @@
-- [ ] Eventualne migrovat gitlab na github pro release.
+- [ ] **!!!** https://stackoverflow.com/questions/52220534/how-to-use-ast-for-both-custom-front-end-action-and-clang-static-analysis
+- [ ] HandleTopLevelDecl v ASTConsumer mozna muze pomoct s include fily, vice tady: https://eli.thegreenplace.net/2014/05/01/modern-source-to-source-transformation-with-clang-and-libtooling
+- [ ] FrontendActionFactory udajne poskytuje moznost predat data nove FrontendAction, viz: https://eli.thegreenplace.net/2014/05/01/modern-source-to-source-transformation-with-clang-and-libtooling
+- [ ] `--` se do argv uz nepocita! muzu to teda z komentaru a z kodu smazat a upravit argc a argv checky
+- [x] Eventualne migrovat gitlab na github pro release.
 - [ ] Zkusit propojit slicery s mym kodem prvne pres script, pak pres zdrojaky.
 - [ ] Udelat test pipeline - nejlineji az na linux, nejlepe nejak univerzalne pro unix i windows (mozna pomoci CMake)
 - [x] zkusit static slicer vsechna slicing kriteria

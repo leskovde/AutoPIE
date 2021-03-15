@@ -80,3 +80,63 @@
 - Staticka analyza si neporadi s templaty v c++ - jak moje BP resi templaty? pokud resi, napsat jak, pokud neresi, napsat proc je to tezky problem.
 
 - Kompilacni model c/c++ ma header fily, coz dela analyzu tezsi (vyzaduje vicero preparsovani) - vysvetlit, jak header fily stezuji praci mne.
+
+- SpotBugs
+
+  - formerly FindBugs
+  - Java, works with bytecode of JDK8 and newer, doesn't require source code
+  - portable (platform independent) and free, under the GNU Lesser General Public Licence
+  - uses static analysis to discover bug patterns - sequence of code that might contain errors
+  - looks for misused language features, misused API methods, changes created during code maintenance, over 400 bug patterns
+  - can be used with a GUI or as a plugin for Ant, Eclipse, Maven or Gradle
+
+- Clang static analyzer
+
+  - open source
+  - collection of code analysis techniques
+  - automatic bug finding, similar to compiler warnings but for runtime bugs as well
+  - supports C, C++ and Objective C
+  - extensible
+  - command-line tool, can be integrated in other tools
+  - checks from array indexing to stack address scope guarding
+
+- CodeChecker
+
+  - wraps the clang static analyzer into a more sophisticated tool
+  - includes refactoring via Clang-Tidy
+  - deals with false positives
+  - visualizes the result to HTML
+  - analyses only relevant files (recently changed)
+
+- Infer
+
+  - translates C, C++, Objective C, and Java to an intermediate language
+  - uses compilation information
+  - IL is then analyzed method by method, function by function
+  - supports checks for invalid address access, thread safety violation
+
+- ANTLR
+
+  - available on Linux and OSX
+  - grammar recognition
+  - generates a lexer and a parser based on given grammar
+  - used for data formats, query languages, and programming languages
+  - can be used to generate a syntax tree and walk through it using a visitor
+  - requires the complete grammar of the given language
+  - parsing C or C++ would be difficult due to ambiguous syntax
+  - due to high popularity, many grammars have already been written
+  - for C++ its only the c++14 standard => limited support
+
+- DMS
+
+  - toolkit for creating custom analysis
+  - proprietary SW from Semantic Designs
+  - mainly used for reliable refactoring, duplicate code detection, and language migration
+  - takes a grammar and produces a parser that constructs ASTs
+  - created ASTs can be converted back to source code via prettyprinters
+  - saves info about the original code such as comments and formatting to recreate the file
+  - avoid ambiguity of complicated grammars by using a GLR parser (generalized left-to-right rightmost derivation)
+  - allows for transformation rules in the grammar
+  - control flow and data flow analysis and graph generation - talked about earlier
+  - points-to analysis - talked about earlier
+  - supports many languages including C and C++ (ending with c++17)

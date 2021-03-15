@@ -2,6 +2,14 @@
 
 \change[inline]{TODO: Link relevant literature from Slicing of LLVM bitcode (muni.cz) and Bobox Runtime Optimization (cuni.cz)}
 
+\change[inline]{TODO: Convert links into references (
+\url{http://findbugs.sourceforge.net/} 
+and \url{https://spotbugs.github.io/index.html} 
+and \url{https://clang-analyzer.llvm.org/}
+and \url{https://codechecker.readthedocs.io/en/latest/}
+and \url{https://fbinfer.com/}
+)}
+
 Debugging can be described as the process of analyzing erroneous code to find 
 the cause of those errors. 
 Errors can also be of different natures.
@@ -36,8 +44,11 @@ for popular programming languages.
 
 Although these checks mostly cover only specific 
 cases~of potential bugs, such as out-of-range array indexing, they have proven 
-themselves as a useful tool for the developer. In the context of this work, 
-such checks provide a helping hand at a low cost when minimizing a program. 
+themselves as a useful tool for the developer.
+Upon further developement, static analysis shifted from purely syntactic
+checks to analyzing the semantics code.
+In the context of this work, such checks provide a helping hand 
+at a low cost when minimizing a program. 
 
 The following sections will talk about the techniques behind such checkers 
 and how they deal with automated debugging. Notably, they describe
