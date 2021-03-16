@@ -23,6 +23,7 @@ The utmost importance was given to the ease of use, availability, and
 active community. 
 As the reader might have guessed from the summary, the LLVM/Clang 
 suite stood out as the best candidate.
+
 Clang is a language front-end. With high compilation performance, 
 low memory footprint, and modifiable code base, it quickly and flexibly 
 converts source code to LLVM intermediate code representation. 
@@ -139,14 +140,18 @@ The abstract syntax tree used in the Clang front-end is different
 from the typical AST. 
 It saves and carries more data, namely context.  
 For example, it contains additional information to map source 
-code to nodes and capture semantics.
-Nodes are of four different types: statements \(\icode{Stmt}\), 
-declarations \(\icode{Decl}\), declaration context \(\icode{DeclContext}\),
-and types \(\icode{Type}\). 
+code to nodes and capture semantics. 
+
+Its nodes belong to a vast class hierarchy. 
+This hierarchy contains classes that represent every supported 
+source code construct.
+Nodes are of four different types: statements (\icode{Stmt}), 
+declarations (\icode{Decl}), declaration context (\icode{DeclContext}),
+and types (\icode{Type}). 
 However, in the APIs mentioned above, the nodes do not share
 a common ancestor. 
 The topmost node, the root, of Clang AST is called the translation
-unit declaration \(\icode{TranslationUnitDecl}\). 
+unit declaration (\icode{TranslationUnitDecl}). 
 Edges between nodes are simplified, as each node stores 
 a container of its children.
 
@@ -185,13 +190,42 @@ Listing~\ref{lst:astdump} contains a short program written in C++.
 The source code was provided to a Clang tool clang-check, which
 dumped the abstract syntax subtree of a given function.
 In this case, the filter was set to the \icode{main} function.
-The AST dump visualizes the the subtree using ASCII characters
-and node informations.
+The AST dump visualizes the subtree using ASCII characters
+and node information.
 Nodes entries start with their type names. 
 Each node also carries its address, source location, and description.
 Note that the root of the subtree is of type \icode{FunctionDecl}.
 The usual root \icode{TranslationUnitDecl} is absent due to the function
 filter being applied.
+
+The Clang AST attempts to represent the source code as faithfully 
+as possible. 
+It can be said that Clang's AST is closer to C, C++, 
+and Objective-C code and grammar than other ASTs. 
+To achieve the best accuracy in reproducing a source code file, 
+it must save additional data besides the AST. 
+This supplementary data makes information that would be lost 
+otherwise, such as compile-time constants, available 
+in the unreduced form. 
+
+For each parsed source code file, an instance of ASTContext 
+is used to represent the AST. 
+The ASTContext allows the programmer to use many valuable methods. 
+
+\change[inline]{TODO: Show some of those functions from the documentation.}
+
+The ASTContext bundles Clang's AST for a translation unit 
+and allows its traversal from the \icode{getTranslationUnitDecl}
+point, which is the file's highest node. 
+Additionally, the context has access to the identifier table 
+and the source manager. 
+The \icode{SourceManager} class offloads some of the data 
+from AST's nodes. 
+Nodes store their \icode{SourceLocation}. 
+The location is not in its complete form since it is required 
+to be small in size. 
+Instead, the node's full location is referenced 
+in \icode{SourceManager}.
 
 Extracting Clang AST comes at the cost of compiling the program's
 source code. 
@@ -206,10 +240,48 @@ The compilation action also implies that LibTooling tools often
 do not support incomplete source codes. 
 The same can be said for programs that contain compile-time errors.
 
-\section{ASTVisitor}
+An additional characteristic of Clang's AST is its immutability. 
+The AST has strong invariants that might be broken upon changing 
+its structure. 
+Generally, changes to the Clang AST are strongly discouraged, 
+although some changes happen internally. 
+Those changes include template instantiation.
 
-\change[inline]{TODO: Talk about the visitor pipeline (Action
-to Consumer to Visitor).}
+Traversing the Clang AST is possible through two different APIs. 
+First, it is possible to invoke an \icode{ASTFrontendAction}, which 
+creates an \icode{ASTConsumer}, who then calls 
+the \icode{ASTRecursiveVisitor}. 
+The front-end action is invoked upon parsing a source file. 
+The action can be overridden to create a consumer and pass any necessary 
+data to it. 
+For example, this data might include references to variables used for 
+counting objects in the AST or more complicated constructs. 
+
+The \icode{ASTConsumer}'s job is to read the Clang AST and handle actions
+on the tree's specific items. 
+One such action is \icode{HandleTopLevelDecl()}, which, as the name suggests,
+handles the highest priority declaration in a file. 
+These handle functions are overridable. 
+The consumer also keeps track of a visitor implemented by inhering from 
+the ASTRecursiveVisitor class. 
+The consumer dispatches the visitor from overridden handle methods. 
+However, it is not always beneficial to override granular handle methods. 
+Handling specific events in the consumer might lead to an intriguing case 
+in which a part of the code is parsed while the rest is not. 
+This unwanted behavior can be avoided by overriding just 
+the \icode{HandleTranslationUnit()} method. 
+The translation unit is handled once the entire source file is parsed. 
+Dispatching the visitor internally from a consumer is the preferred 
+approach. 
+Visit methods of the ASTRecursiveVisitor should not be called directly. 
+Details concerning the visitor can be found in the following section.
+
+Second, one can use AST Matchers. 
+Matchers, unlike the visitor approach, do not require a complicated setup. 
+Instead, they provide a query-like syntax for matching Clangs AST's nodes. 
+Matchers will be talked about in detail later.
+
+\section{ASTVisitor}
 
 LibTooling offers a built-in curiously recurring template pattern 
 (CRTP) visitor. 
@@ -230,6 +302,8 @@ Secondly, the method \icode{VisitVarDecl} only accepts \icode{VarDecl}
 and its inheriting types.
 Because \icode{VarDecl} is a child of \icode{Decl}, not the other way
 around, \icode{Decl} will not trigger this visit function.
+Typically, when using less specific visit methods, a good 
+way of differentiating node types is casting them dynamically.
 
 \begin{lstlisting}[caption=CountASTVisitor, language=C++, 
 label={lst:countvisitor}]
