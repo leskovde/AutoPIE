@@ -158,13 +158,96 @@ This hierarchy contains classes that represent every supported
 source code construct.
 Nodes are of four different types: statements (\icode{Stmt}), 
 declarations (\icode{Decl}), declaration context (\icode{DeclContext}),
-and types (\icode{Type}). 
+and types (\icode{Type})\change{TODO: Add a short description to each node type.}. 
 However, in the APIs mentioned above, the nodes do not share
-a common ancestor. 
-The topmost node, the root, of Clang AST is called the translation
+a common ancestor.
+Figure~\ref{dia:ast} shows a part of the class hierarchy. 
+The entire class diagram cannot be shown as there are over a thousand 
+different classes. 
+The topmost node, the root, of a concrete Clang AST is called the translation
 unit declaration (\icode{TranslationUnitDecl}). 
 Edges between nodes are simplified, as each node stores 
 a container of its children.
+
+\begin{figure}[h]\centering
+\begin{tikzpicture}
+	\begin{class}[text width=2cm]{Stmt}{-5.5, 0}
+	\end{class}
+
+	\begin{class}[text width=2.5cm]{ValueStmt}{-5.5, -6}		
+		\inherit{Stmt}
+	\end{class}
+
+	\begin{class}[text width=2cm]{Expr}{-5.5, -8}
+		\inherit{ValueStmt}
+	\end{class}
+
+	\begin{class}[text width=1.75cm]{IfStmt}{-4.25, -2.75}
+		\inherit{Stmt}
+	\end{class}
+
+	\begin{class}[text width=2cm]{Type}{-2, 0}
+	\end{class}
+
+	\begin{class}[text width=2.5cm]{ArrayType}{-3.5, -4.25}
+		\inherit{Type}
+	\end{class}
+
+	\begin{class}[text width=3cm]{DeducedType}{-2, -6}
+		\inherit{Type}
+	\end{class}
+
+	\begin{class}[text width=2.5cm]{AutoType}{-2, -8}
+		\inherit{DeducedType}
+	\end{class}
+
+	\begin{class}[text width=2cm]{Decl}{1.5, 0}
+	\end{class}
+
+	\begin{class}[text width=2.5cm]{EmptyDecl}{-0.25, -2.75}
+		\inherit{Decl}
+	\end{class}
+
+	\begin{class}[text width=2.5cm]{NamedDecl}{1.5, -6}
+		\inherit{Decl}
+	\end{class}
+
+	\begin{class}[text width=2.5cm]{TypeDecl}{1.5, -8}
+		\inherit{NamedDecl}
+	\end{class}
+
+	\begin{class}[text width=3cm]{DeclContext}{4.75, 0}
+	\end{class}
+
+	\begin{class}[text width=2.25cm]{BlockDecl}{3.25, -4.25}
+		\inherit{DeclContext}
+	\end{class}
+
+	\begin{class}[text width=2.5cm]{TagDecl}{4.75, -6}
+		\inherit{DeclContext}
+	\end{class}
+	
+	\begin{class}[text width=2.5cm]{EnumDecl}{4.75, -8}
+		\inherit{TagDecl}
+	\end{class}
+\end{tikzpicture}
+\caption{An example of the Clang AST class hierarchy. 
+The figure contains only a handful of classes and their children.
+Note that the top most classes do not share a common ancestor.}
+\label{dia:ast}
+\end{figure}
+
+Listing~\ref{lst:astdump} contains a short program written in C++.
+The source code was provided to a Clang tool clang-check, which
+dumped the abstract syntax subtree of a given function.
+In this case, the filter was set to the \icode{main} function.
+The AST dump visualizes the subtree using ASCII characters
+and node information.
+Nodes entries start with their type names. 
+Each node also carries its address, source location, and description.
+Note that the root of the subtree is of type \icode{FunctionDecl}.
+The usual root \icode{TranslationUnitDecl} is absent due to the function
+filter being applied.
 
 \begin{lstlisting}[caption=Clang AST Dump., language=bash, 
 label={lst:astdump}, basicstyle=\tiny, numbers=none]
@@ -196,18 +279,6 @@ FunctionDecl 0x556041ab67e0 <./simple.cpp:3:1, line:9:1> line:3:5 main 'int ()'
         | `-DeclRefExpr 0x556041ab83f8 <col:10> 'int' lvalue Var 0x556041ab6898 'x' 'int'
         `-IntegerLiteral 0x556041ab8418 <col:14> 'int' 42
 \end{lstlisting}
-
-Listing~\ref{lst:astdump} contains a short program written in C++.
-The source code was provided to a Clang tool clang-check, which
-dumped the abstract syntax subtree of a given function.
-In this case, the filter was set to the \icode{main} function.
-The AST dump visualizes the subtree using ASCII characters
-and node information.
-Nodes entries start with their type names. 
-Each node also carries its address, source location, and description.
-Note that the root of the subtree is of type \icode{FunctionDecl}.
-The usual root \icode{TranslationUnitDecl} is absent due to the function
-filter being applied.
 
 The Clang AST attempts to represent the source code as faithfully 
 as possible. 
