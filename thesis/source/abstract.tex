@@ -19,9 +19,9 @@ He then has~to find the cause~of the~error and create a~bugfix.
 This process can be made significantly more efficient by reducing 
 the amount~of code the developer has~to look into. 
 This paper introduces three different methodologies~of automatically reducing
-a~given program $P$ into its minimal runnable subset $P'$.
-The automatically generated program $P'$ also has~to result~in the~same runtime
-error as~$P$.
+a~given program $\mathcal{P}$ into its minimal runnable subset $\mathcal{P'}$.
+The automatically generated program $\mathcal{P'}$ also has~to 
+result~in the~same runtime error as~$\mathcal{P}$.
 The main focus~of the reduction is on~correctness when operating in a~concrete
 application domain set by this study.
 Implementations~of introduced methodologies written using the~LLVM compiler
@@ -30,6 +30,7 @@ Performance is measured based~on the statement count~of the~newly generated
 program and the~speed at which the~minimal variant was generated.
 Moreover, the~limits of the~three different approaches are investigated
 with respect~to~the general application domain.
-The~paper concludes with an~overview~of the~most general and efficient methodology.
+The~paper concludes with an~overview~of the~most general and efficient 
+methodology.
 
 \end{document}
