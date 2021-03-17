@@ -155,7 +155,7 @@ unit declaration (\icode{TranslationUnitDecl}).
 Edges between nodes are simplified, as each node stores 
 a container of its children.
 
-\begin{lstlisting}[caption=Clang AST Dump, language=bash, 
+\begin{lstlisting}[caption=Clang AST Dump., language=bash, 
 label={lst:astdump}, basicstyle=\tiny, numbers=none]
 $ cat -n simple.cpp
      1  #include<iostream>
@@ -273,7 +273,8 @@ the \icode{HandleTranslationUnit()} method.
 The translation unit is handled once the entire source file is parsed. 
 Dispatching the visitor internally from a consumer is the preferred 
 approach. 
-Visit methods of the ASTRecursiveVisitor should not be called directly. 
+Visit methods of the \icode{ASTRecursiveVisitor} should not be called 
+directly. 
 Details concerning the visitor can be found in the following section.
 
 Second, one can use AST Matchers. 
@@ -289,6 +290,7 @@ The class \icode{RecursiveASTVisitor} offers \icode{Visit} methods that
 can be overridden to the programmer's liking. 
 Each override specifies the type of node on which the method 
 triggers and the actions that should be performed.
+
 The implementation seen on listing~\ref{lst:countvisitor} illustrates
 the idea. A custom class with a strict dedication, i.e., counting
 program's statements, has two visit functions.
@@ -305,7 +307,7 @@ around, \icode{Decl} will not trigger this visit function.
 Typically, when using less specific visit methods, a good 
 way of differentiating node types is casting them dynamically.
 
-\begin{lstlisting}[caption=CountASTVisitor, language=C++, 
+\begin{lstlisting}[caption=CountASTVisitor., language=C++, 
 label={lst:countvisitor}]
 /**
  * Counts the number of statements.
@@ -364,7 +366,94 @@ the visit function as opposed to \icode{true}.
 
 \section{Matchers}
 
-\change[inline]{TODO: Finish matchers, add code examples.}
+Clang's ASTMatchers is a domain-specific language (DSL) used for querying 
+specified AST nodes. 
+Each matcher represents a predicate on nodes. 
+Together, they form a query-like expression that matches particular nodes. 
+Like the rest of LibTooling, the DSL is written in C++ and is used from 
+C++ as well.
+Matchers are useful for query tools and code transformations. 
+In a query tool, one might want to extract a niche subset of Clang's AST, 
+inspect it, and perhaps perform some action on it. 
+Similarly, refactoring tools can use matchers to navigate and extract 
+similar nodes, rewrite their source code, or add descriptive comments.
+A matcher will match on some adequate node. 
+It might match multiple times if the AST has enough of these nodes. 
+When combined, multiple matchers form a matcher expression. 
+Such expression can be seen as a query for the Clang AST. 
+The expression reads like an English sentence, from left to right, 
+alternating several type-specifying and node-narrowing matchers.
+
+All available matchers fall into three basic categories. 
+The first one being node matchers. 
+Node matcher's job is to match a specific type of AST node. 
+An example of such a matcher could be the \icode{binaryOperator(...)} 
+matcher, whose purpose is to look for nodes of that exact 
+type: \icode{BinaryOperator}. 
+Node matchers are the core of matcher expressions. 
+Expressions start with them, and they specify which node type is expected. 
+Node matchers also serve as arguments for other matcher types. 
+Furthermore, they allow binding nodes. 
+Binding nodes allows the programmer to retrieve matched nodes later and 
+use them for code transformation tasks. 
+
+The second category, called narrowing matchers, serves a different purpose. 
+By matching specific attributes on the current AST node, they narrow down 
+the search range. 
+Narrowing matchers allow specifying more granular demands for the searched 
+node. 
+A concrete example would be the \icode{hasOperatorName("+")} matcher. 
+As one might guess, this matcher narrows down the search to those nodes 
+whose binary operator is the plus sign. 
+Narrowing matchers also provide more general logical matchers. 
+These include \icode{allOf}, \icode{anyOf}, \icode{anything}, 
+and \icode{unless}.
+
+The last category specifies the relationship between nodes. 
+Traversal matchers are used for filtering reachable nodes based on 
+the AST's structure. 
+Most notably, they include matchers for specifying node's children, 
+such as \icode{has}, \icode{hasDescendant}, and \icode{forEachDescendant}. 
+Traversal matchers take node matchers, the first category, as arguments. 
+For example, the \icode{hasLHS(integerLiteral(equals(0)))} matcher specifies
+the requirement for the current node to have the given child. 
+In this case, it is an integer with the value 0 on the left hand side.
+
+Together, these three examples form a matcher expression found on 
+\url{https://clang.llvm.org/docs/LibASTMatchersTutorial.html}. 
+Going by the mentioned rules of building an expression, it would have 
+the following form: 
+
+\begin{lstlisting}[caption=Matcher expression., language=C++, 
+label={lst:matcherexpr}, numbers=none]
+binaryOperator(hasOperatorName("+"), hasLHS(integerLiteral(equals(0)))).
+\end{lstlisting}
+
+The expression in~\ref{lst:matcherexpr} searches for a binary operator. 
+The search is further narrowed to a plus sign with a zero left-hand 
+side of the operation.
+
+In the tool, expressions are build by calling a creator function. 
+The expression is then represented as a tree of matchers. 
+While the developer has access to a plethora of predefined matchers, 
+as seen here \url{https://clang.llvm.org/docs/LibASTMatchersReference.html}, 
+they can define custom ones as well. 
+Creating a custom matcher can be done in two ways. 
+First, a matcher can be created by inheriting an existing Matcher class 
+and overriding it to one's liking. 
+Second, one can use a matcher creation macro. 
+These macros specify the type, the name, and the parameters of the matcher.
+
+The default behavior, defined by the \icode{AsIs} mode, is to traverse 
+the entire AST and visit all nodes, including implicit ones. 
+Implicit nodes might include constructs omitted in the source code, 
+such as parentheses. 
+Working with these nodes increases the difficulty of writing matcher 
+expressions severely since it requires a deep knowledge of the AST's 
+hierarchy and its corner-cases. 
+The traversal mode can, however, be changed to ignore implicit nodes. 
+One such traversal mode is \icode{IgnoreUnlessSpelledInSource}, 
+which conveniently only looks at nodes represented by the source code. 
 
 \section{Source-to-source transformation}
 

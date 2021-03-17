@@ -104,7 +104,7 @@
   - when the action is run, it should create an ASTConsumer and pass any necessary data to it
   - ASTConsumer reads the AST and handles actions on certain AST items, e.g. HandleTopLevelDecl(), functions are overridable
   - the consumer also keeps track of a visitor and calls its visit and traverse functions in overriden Handle methods
-  - handling specific events in the consumer may lead to a case in which a part of the code is parsed while the rest is not - this can be avoided by overriding just the HandleTranslationUnit() method, which is called the entire code is parsed
+  - handling specific events in the consumer may lead to a case in which a part of the code is parsed while the rest is not - this can be avoided by overriding just the HandleTranslationUnit() method, which is called after the entire code is parsed
   - for each source file, an ASTContext is used to represent the AST (ASTContext has many useful methods)
   - ASTContext bundles the AST for a translation unit and allows to traverse it from getTranslationUnitDecl
   - ASTContext has for example access to the indentifier table and source manager
@@ -139,5 +139,5 @@
     - notably specifying children (`has`, `hasDescendant`, `forEachDescendant`)
     - take node matchers as arguments
   - matcher expressions are created by calling a creator function and building a tree of matchers
-  - creating custom matchers can be done by either inheriting an existing Matcher class or by using a macher creation macro
+  - creating custom matchers can be done by either inheriting an existing Matcher class or by using a matcher creation macro
   - these macros specify the type, the name and the parameters (and their types) of the matcher
