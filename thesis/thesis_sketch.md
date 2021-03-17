@@ -22,7 +22,7 @@ Contains the most up-to-date outline and a summary of what's being worked on.
 
    - summarize the techniques and their advantages and limitations
 
-4. C/C++ compilers and analysis tools
+3. C/C++ compilers and analysis tools
 
    - explain the requirements for the tool in which the work will be implemented (both C and C++ support, AST dumping, AST manipulation)
 
@@ -33,21 +33,24 @@ Contains the most up-to-date outline and a summary of what's being worked on.
       - overview of clang and llvm
       - overview of libclang and why it was not used for this project
       - overview of libtooling and its advantages
+   3.   ANTRL
+   4.  DMS
 
    - summary of the tools and highlighting of the favourite (libtooling) 
 
 5. Clang libtooling
 
-   1. AST
+   1. Compilation databases
+   2. AST
       - describe the Clang AST, how it differs from the usual AST and how its represented in memory
-   2. AST visitor
+   3. AST visitor
       - the basic premise of the clang AST visitor and its implementation
       - explain the ability to override visit functions, returning true or false to continue
       - explain limitations (when traversing subtrees, etc.)
-   3. Matchers
+   4. Matchers
       - the usage, give examples
       - explain how they might be useful (fetching all functions, etc.)
-   4. Source to source transformation
+   5. Source to source transformation
       - the link between the source code and the AST
       - SourceManager and Rewriter
       - TreeDiff, TreeTransform, ...

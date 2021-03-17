@@ -1,7 +1,5 @@
 \chapter{Compilers and analysis tools}
 
-\change[inline]{TODO: Add more tools.}
-
 In the~previous chapter, the~reader was introduced to a~branch of~program
 ana\-ly\-sis. 
 The techniques discussed above focused on both the~static and runtime
@@ -26,8 +24,6 @@ A vertex of~an AST represents a~construct of~the~code while not being concrete
 with the~programming language's details. 
 This generality is perfect for C and C++'s chosen domain, 
 as both languages only differ syntax-wise in~minor details.
-
-\change[inline]{TODO: Add more text about AST.}
 
 Below are the~findings concerning the~most important candidates.
 
@@ -88,7 +84,7 @@ The fact that the~front end runs on a~common intermediate language also indicate
 that openly working with abstract code representations is supported.
 
 There are three most notable interfaces for customizing Clang. 
-Firstly, the~LibClang interface allows the~users to write 
+Firstly, the LibClang interface allows the~users to write 
 comprehend-able high-level code with limited functionality. 
 On the~other hand, LibTooling gives the~user much more control 
 at the~cost of~a~steep learning curve. 
@@ -96,8 +92,6 @@ Lastly, the~Plugins interface features similar difficulty
 as LibTooling with a~more specific goal. 
 Plugins are used with the~Clang compiler and can be run 
 as a~front-end action when called during compilation.
-
-\change[inline]{TODO: Add more general text based on what I write in~the Clang chapter.}
 
 \section{ANTLR}
 

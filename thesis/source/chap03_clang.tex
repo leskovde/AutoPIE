@@ -1,7 +1,5 @@
 \chapter{Clang LibTooling}
 
-\change[inline]{TODO: Add a~paragraph (or a~subsection) about compilation databases.}
-
 The previous chapter described tools and environments that were taken
 into consideration for this project. 
 The utmost importance was given to the~ease of~use, availability, and 
@@ -145,7 +143,7 @@ This hierarchy contains classes that represent every supported
 source code construct.
 Nodes are of~four different types: statements (\icode{Stmt}), 
 declarations (\icode{Decl}), declaration context (\icode{DeclContext}),
-and types (\icode{Type})\change{TODO: Add a~short description to each node type.}. 
+and types (\icode{Type}). 
 However, in~the APIs mentioned above, the~nodes do not share
 a common ancestor.
 
@@ -153,7 +151,7 @@ The children of~\icode{Type} represent all available types.
 The goal is to give each type in~the source code a~canonical type,
 i.e., a~type stripped of~any typedef names. 
 Canonical types are used for type comparison, while non-canonical 
-types give full information during diagnostics. 
+types give complete information during diagnostics. 
 The \icode{Decl} hierarchy's goal is to have a~class for each 
 type of~declaration or definition. 
 These declarations vary, and the~children cover specific cases 
