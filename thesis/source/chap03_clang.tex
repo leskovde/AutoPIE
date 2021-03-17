@@ -401,7 +401,7 @@ way of~differentiating node types is casting them dynamically.
 \begin{lstlisting}[caption=CountASTVisitor., language=C++, 
 label={lst:countvisitor}]
 /**
- * Counts the~number of~statements.
+ * Counts the number of statements.
  */
 class CountASTVisitor : public clang::RecursiveASTVisitor<CountASTVisitor>
 {
@@ -414,7 +414,7 @@ public:
 
         virtual bool VisitStmt(clang::Stmt* st)
         {
-                outs() << "Found a~statement.\n";
+                outs() << "Found a statement.\n";
 				statementCount++;
 				
                 return true;
@@ -422,7 +422,7 @@ public:
 		
 		virtual bool VisitVarDecl(clang::VarDecl* decl)
         {
-                outs() << "Found a~variable declaration.\n";
+                outs() << "Found a variable declaration.\n";
 				
                 return true;
         }
