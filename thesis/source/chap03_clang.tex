@@ -40,7 +40,7 @@ Furthermore, Clang offers an extensive tooling infrastructure
 through which tools such as clang-tidy were developed. 
 A relatively well-documented tooling API written in C++ helps 
 programmers create their tools easily. 
-However, not all developers share the same skill floor and skill ceiling. 
+However, not all developers share the same skill set. 
 Some programmers require complicated additional features, while others 
 prefer an easy-to-use interface. 
 The tooling API has been split into multiple libraries and frameworks. 
@@ -94,6 +94,17 @@ Programmers who use LibTooling cannot expect compatibility in upcoming
 releases. 
 On the bright side, the libraries of LibTooling allow a plethora of source
 code modifications, AST traversals, and access to the compiler's internals.
+
+The set of features supplied by LibTooling is immense. 
+The following sections describe notable features used during 
+the implementation of this project. 
+The reader should get a better idea of how a tool is built and what 
+LibTooling offers during the development process. 
+Important concepts, such as providing the correct input to the tool 
+in the form of a compilation database, traversing the AST, 
+and modifying source code inside the tooling environment, 
+are described below. 
+These concepts will be referenced further in the text.
 
 \section{Compilation databases}
 
@@ -457,8 +468,8 @@ which conveniently only looks at nodes represented by the source code.
 
 \section{Source-to-source transformation}
 
-To transform source code based on its AST, it must extract the AST 
-from the code, alter the AST, and then translate it back to valid 
+To transform source code based on its AST, the programmer must extract 
+the AST from the code, alter the AST, and then translate it back to valid 
 source code. 
 LibTooling allows the programmer to extract the AST and examine it. 
 Additional functionality also allows modifying the AST both directly 
