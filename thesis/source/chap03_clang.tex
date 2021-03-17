@@ -1,20 +1,5 @@
 \chapter{Clang LibTooling}
 
-\change[inline]{TODO: Convert links into references (
-\url{https://llvm.org/} 
-and \url{https://clang.llvm.org/} 
-and \url{https://clang.llvm.org/docs/LibTooling.html}
-and \url{https://clang.llvm.org/docs/IntroductionToTheClangAST.html}
-and \url{https://eli.thegreenplace.net/2014/05/01/modern-source-to-source-transformation-with-clang-and-libtooling}
-and \url{https://clang.llvm.org/doxygen/classclang_1_1RecursiveASTVisitor.html}
-and \url{https://eli.thegreenplace.net/2014/05/01/modern-source-to-source-transformation-with-clang-and-libtooling}
-and \url{https://eli.thegreenplace.net/2014/05/21/compilation-databases-for-clang-based-tools}
-and \url{https://kevinaboos.wordpress.com/2013/07/23/clang-tutorial-part-ii-libtooling-example/}
-and \url{https://llvm.org/devmtg/2017-06/2-Hal-Finkel-LLVM-2017.pdf}
-and \url{https://clang.llvm.org/docs/LibASTMatchersReference.html}
-and \url{https://clang.llvm.org/docs/LibASTMatchers.html}
-)}
-
 \change[inline]{TODO: Add a paragraph (or a subsection) about compilation databases.}
 
 The previous chapter described tools and environments that were taken
@@ -80,7 +65,8 @@ Overall, the framework and tools written using it are high-level and
 are easily readable.
 
 The most feature woven set of libraries is LibTooling. 
-Unlike Plugins, LibTooling allows the developer to build standalone 
+Unlike Plugins, LibTooling \citep{libtooling:online} 
+allows the developer to build standalone 
 Clang tools. 
 This robust framework is written in C++ and has an active 
 community of contributors. 
@@ -109,7 +95,8 @@ These concepts will be referenced further in the text.
 \section{Compilation databases}
 
 To accurately and faithfully recreate a compilation, tools created using 
-LibTooling require a compilation database (CD) for a given input project.
+LibTooling require a compilation database (CD) \citep{cd:online} 
+for a given input project.
 
 The motivation behind a CD is simple.
 If a source file uses unusual include paths that need to be provided 
@@ -147,8 +134,8 @@ compilation database.
 
 \section{Clang AST}
 
-The abstract syntax tree used in the Clang front-end is different 
-from the typical AST. 
+The abstract syntax tree used in the Clang front-end \citep{ast:online}
+is different from the typical AST. 
 It saves and carries more data, namely context.  
 For example, it contains additional information to map source 
 code to nodes and capture semantics. 
@@ -161,15 +148,35 @@ declarations (\icode{Decl}), declaration context (\icode{DeclContext}),
 and types (\icode{Type})\change{TODO: Add a short description to each node type.}. 
 However, in the APIs mentioned above, the nodes do not share
 a common ancestor.
+
+The children of \icode{Type} represent all available types.
+The goal is to give each type in the source code a canonical type,
+i.e., a type stripped of any typedef names. 
+Canonical types are used for type comparison, while non-canonical 
+types give full information during diagnostics. 
+The \icode{Decl} hierarchy's goal is to have a class for each 
+type of declaration or definition. 
+These declarations vary, and the children cover specific cases 
+such as function, structure, and enum declarations. 
+Some declarations, such as function and namespace declarations, 
+capture additional data in \icode{DeclContext}'s children. 
+The final node type, \icode{Stmt}, represents a single statement. 
+It has subclasses for loops, control statements, compound statements, 
+and more. 
+Additionally, expressions (\icode{Expr}) also belong 
+to the \icode{Stmt} hierarchy.
+
 Figure~\ref{dia:ast} shows a part of the class hierarchy. 
 The entire class diagram cannot be shown as there are over a thousand 
-different classes. 
+different classes\footnote{The class hierarchy is shown in Clang's
+Doxygen documentation. An example of the Stmt hierarchy can be found
+at \url{https://clang.llvm.org/doxygen/classclang_1_1Stmt.html}.}. 
 The topmost node, the root, of a concrete Clang AST is called the translation
 unit declaration (\icode{TranslationUnitDecl}). 
 Edges between nodes are simplified, as each node stores 
 a container of its children.
 
-\begin{figure}[h]\centering
+\begin{figure}[ht]\centering
 \begin{tikzpicture}
 	\begin{class}[text width=2cm]{Stmt}{-5.5, 0}
 	\end{class}
@@ -249,8 +256,9 @@ Note that the root of the subtree is of type \icode{FunctionDecl}.
 The usual root \icode{TranslationUnitDecl} is absent due to the function
 filter being applied.
 
+\begin{figure}[ht]\centering
 \begin{lstlisting}[caption=Clang AST Dump., language=bash, 
-label={lst:astdump}, basicstyle=\tiny, numbers=none]
+label={lst:astdump}, basicstyle=\small, numbers=none]
 $ cat -n simple.cpp
      1  #include<iostream>
      2
@@ -263,22 +271,23 @@ $ cat -n simple.cpp
      9  } 
 $ clang-check -ast-dump -ast-dump-filter=main simple.cpp --
 Dumping main:
-FunctionDecl 0x556041ab67e0 <./simple.cpp:3:1, line:9:1> line:3:5 main 'int ()'
+FunctionDecl '...' <./simple...> line:3:5 main 'int ()'
 `-CompoundStmt 0x556041ab84a0 <line:4:1, line:9:1>
   |-DeclStmt 0x556041ab6900 <line:5:2, col:7>
   | `-VarDecl 0x556041ab6898 <col:2, col:6> col:6 used x 'int'
-  |-CXXOperatorCallExpr 0x556041ab83b8 <line:6:2, col:14> 'std::basic...'
+  |-CXXOperatorCallExpr '...' <line:6:2, col:14> 'std::bas...'
   | |-ImplicitCastExpr 0x556041ab83a0 <col:11> 'std::basic...'
   | | `-DeclRefExpr 0x556041ab8318 <col:11> 'std::basic...'
-  | |-DeclRefExpr 0x556041ab6980 <col:2, col:7> 'std::istream...'
-  | `-DeclRefExpr 0x556041ab69b0 <col:14> 'int' lvalue Var 0x556041ab6898 'x' 'int'
+  | |-DeclRefExpr 0x556041ab6980 <col:2, col:7> 'std::istr...'
+  | `-DeclRefExpr '...' <col:14> 'int' lvalue Var '...' 'x'
   `-ReturnStmt 0x556041ab8490 <line:8:2, col:16>
     `-ParenExpr 0x556041ab8470 <col:9, col:16> 'int'
-      `-BinaryOperator 0x556041ab8450 <col:10, col:14> 'int' '/'
-        |-ImplicitCastExpr 0x556041ab8438 <col:10> 'int' <LValueToRValue>
-        | `-DeclRefExpr 0x556041ab83f8 <col:10> 'int' lvalue Var 0x556041ab6898 'x' 'int'
+      `-BinaryOperator '...' <col:10, col:14> 'int' '/'
+        |-ImplicitCastExpr '...' <col:10> 'int' <LValueToRValue>
+        | `-DeclRefExpr 0x556041ab83f8 <col:10> 'int...'
         `-IntegerLiteral 0x556041ab8418 <col:14> 'int' 42
 \end{lstlisting}
+\end{figure}
 
 The Clang AST attempts to represent the source code as faithfully 
 as possible. 
@@ -368,7 +377,8 @@ Matchers will be talked about in detail later.
 
 LibTooling offers a built-in curiously recurring template pattern 
 (CRTP) visitor. 
-The class \icode{RecursiveASTVisitor} offers \icode{Visit} methods that 
+The class \icode{RecursiveASTVisitor} \citep{visitor:online} 
+offers \icode{Visit} methods that 
 can be overridden to the programmer's liking. 
 Each override specifies the type of node on which the method 
 triggers and the actions that should be performed.
@@ -389,6 +399,7 @@ around, \icode{Decl} will not trigger this visit function.
 Typically, when using less specific visit methods, a good 
 way of differentiating node types is casting them dynamically.
 
+\begin{figure}[ht]\centering
 \begin{lstlisting}[caption=CountASTVisitor., language=C++, 
 label={lst:countvisitor}]
 /**
@@ -419,6 +430,7 @@ public:
         }
 };
 \end{lstlisting}
+\end{figure}
 
 Visiting statements, expressions, declarations, 
 and types is straightforward. 
@@ -448,7 +460,8 @@ the visit function as opposed to \icode{true}.
 
 \section{Matchers}
 
-Clang's ASTMatchers is a domain-specific language (DSL) used for querying 
+Clang's ASTMatchers \citep{matchers:online} 
+is a domain-specific language (DSL) used for querying 
 specified AST nodes. 
 Each matcher represents a predicate on nodes. 
 Together, they form a query-like expression that matches particular nodes. 
@@ -501,8 +514,8 @@ For example, the \icode{hasLHS(integerLiteral(equals(0)))} matcher specifies
 the requirement for the current node to have the given child. 
 In this case, it is an integer with the value 0 on the left hand side.
 
-Together, these three examples form a matcher expression found on 
-\url{https://clang.llvm.org/docs/LibASTMatchersTutorial.html}. 
+Together, these three examples form a matcher expression found in
+the AST Matcher tutorial \citep{matcherstutorial:online}. 
 Going by the mentioned rules of building an expression, it would have 
 the following form: 
 
@@ -518,7 +531,7 @@ side of the operation.
 In the tool, expressions are build by calling a creator function. 
 The expression is then represented as a tree of matchers. 
 While the developer has access to a plethora of predefined matchers, 
-as seen here \url{https://clang.llvm.org/docs/LibASTMatchersReference.html}, 
+as seen in the Matchers Reference \citep{matchersreference:online}, 
 they can define custom ones as well. 
 Creating a custom matcher can be done in two ways. 
 First, a matcher can be created by inheriting an existing Matcher class 
@@ -544,7 +557,7 @@ the AST from the code, alter the AST, and then translate it back to valid
 source code. 
 LibTooling allows the programmer to extract the AST and examine it. 
 Additional functionality also allows modifying the AST both directly 
-and indirectly. 
+and indirectly \citep{sourcetosource:online}. 
 However, there are obstacles and limitations to both approaches. 
 
 Let us examine the pitfalls of direct AST transformation first. 

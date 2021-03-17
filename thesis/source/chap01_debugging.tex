@@ -2,14 +2,6 @@
 
 \change[inline]{TODO: Link relevant literature from Slicing of LLVM bitcode (muni.cz) and Bobox Runtime Optimization (cuni.cz)}
 
-\change[inline]{TODO: Convert links into references (
-\url{http://findbugs.sourceforge.net/} 
-and \url{https://spotbugs.github.io/index.html} 
-and \url{https://clang-analyzer.llvm.org/}
-and \url{https://codechecker.readthedocs.io/en/latest/}
-and \url{https://fbinfer.com/}
-)}
-
 Debugging can be described as the process of analyzing erroneous code to find 
 the cause of those errors. 
 Errors can also be of different natures.
@@ -42,8 +34,9 @@ attempts~at automating at least some parts of it during the last few decades.
 The rise in popularity of program analysis resulted in automated error checks 
 for popular programming languages. 
 
-SpotBugs, formerly known as FindBugs, is a free and platform-independent 
-application for, as the name suggests, finding bugs.
+SpotBugs \citep{spotbugs:online}, formerly known as FindBugs, 
+is a free and platform-inde\-pen\-dent application for, as the name 
+suggests, finding bugs.
 It works with the bytecode of JDK8 and newer, which indicates that source 
 code is not required.
 SpotBugs uses static analysis to discover bug patterns.
@@ -53,8 +46,9 @@ source code invariants created during code maintenance.
 Java developers can use SpotBugs's static analysis in its GUI form or 
 as a plugin for build tools.
 
-Clang static analyzer provides similar functionality to C, C++, and 
-Objective-C programmers.
+Clang static analyzer \citep{analyzer:online} provides 
+similar functionality to C, C++, and 
+Ob\-jec\-tive-C programmers.
 The code written in these languages is parsed by the analyzer.
 A collection of code analyzing techniques is then applied to it.
 This process results in an automatic bug finding, similar to compiler 
@@ -66,7 +60,8 @@ Due to its extensibility and integration in tools and IDEs alike,
 the Clang static analyzer is popular amongst developers working 
 with the C family of languages.
 
-The functionality of the previous tool was extended in CodeChecker.
+The functionality of the previous tool was extended 
+in CodeChecker \citep{codechecker:online}.
 Code\-Check\-er serves as a wrapper for the Clang static analyzer and 
 Clang-Tidy.
 Wrapping these two tools into a more sophisticated application helps 
@@ -75,7 +70,8 @@ Additionally, the wrapper also deals with false positives.
 Furthermore, it allows the user to visualize the result as HTML or 
 save time by analyzing only relevant files.
 
-Facebook's Infer translates both the C family of languages and Java 
+Facebook's Infer \citep{infer:online} translates both 
+the C family of languages and Java 
 into a common intermediate language.
 It also utilizes compilation information for additional accuracy.
 The intermediate code is then analyzed one function at a time.
@@ -280,8 +276,9 @@ Slicing is the process of finding such a part of a program.
 Suggested approaches neglected any execution information and 
 focused solely on observations made by analyzing the code.
 
+\begin{figure}[p]
 \begin{minipage}{0.46\textwidth}
-\begin{lstlisting}[basicstyle=\tiny, caption=Simple branching pro\-gram.,
+\begin{lstlisting}[basicstyle=\small, caption=Simple branching pro\-gram.,
   language=C++, label={lst:simpleexample}]
 #include<iostream>
 
@@ -303,7 +300,8 @@ int main(void)
 	int x = 1;
 	int a = read();
 	
-	for (int i = 0; i < 0xffff; i++)
+	for (int i = 0; 
+	i < 0xffff; i++)
 	{
 		write(i);
 	}
@@ -332,7 +330,7 @@ int main(void)
 \end{minipage}
 \hfill
 \begin{minipage}{.45\textwidth}
-\begin{lstlisting}[basicstyle=\tiny, caption=Static slice of the simple 
+\begin{lstlisting}[basicstyle=\small, caption=Static slice of the simple 
   branching program., language=C++, numbers=right,
   label={lst:staticslice}]
 #include<iostream>
@@ -360,6 +358,7 @@ int main(void)
 	
 
 	
+	
 	if ((a % 2) == 0)
 	{
 		if (a != 0)
@@ -382,6 +381,7 @@ int main(void)
 }
 \end{lstlisting}
 \end{minipage}
+\end{figure}
 
 One can imagine that the size of a static slice would be much smaller
 than the original program. 
@@ -427,7 +427,7 @@ the value of which depends on the order of the vertices execution.
 Once the PDG is built, slices can be extracted in linear time 
 with respect to the number of vertices.
 
-\begin{figure}[h]\centering
+\begin{figure}[ht]\centering
 \includegraphics[scale=0.35]{pdg_sliced}
 \caption{Sliced PDG. The graph was created from the source 
 code of~\ref{lst:simpleexample}.
@@ -488,6 +488,7 @@ dynamic slicing builds a slice for a given execution of a program.
 Using information available during a run of the program 
 results in a typically much smaller slice.
 
+\begin{figure}[ht]\centering
 \begin{lstlisting}[caption=Dynamic slice of the simple
   branching program., language=C++, label={lst:dynamicslice}]
 #include<iostream>
@@ -517,6 +518,7 @@ int main(void)
 	return 0;
 }  
 \end{lstlisting}
+\end{figure}
 
 This decrease in size is mainly due to removing unnecessary 
 branching of control statements and unexecuted statements in general. 

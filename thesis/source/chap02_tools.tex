@@ -2,14 +2,6 @@
 
 \change[inline]{TODO: Add more tools.}
 
-\change[inline]{TODO: Convert links into references (
-\url{https://www.antlr.org/about.html} 
-and \url{https://github.com/antlr/antlr4} 
-and \url{http://www.semdesigns.com/Products/DMS/DMSToolkit.html}
-and \url{https://clang.llvm.org/docs/ClangPlugins.html}
-and \url{https://www.youtube.com/watch?v=_rUwW8Awc5s}
-)}
-
 In the previous chapter, the reader was introduced to a branch of program
 ana\-ly\-sis. 
 The techniques discussed above focused on both the static and runtime
@@ -41,7 +33,8 @@ Below are the findings concerning the most important candidates.
 
 \section{GCC}
 
-A well-known C and C++ compiler, the GNU Compiler Collection is an extensive
+A well-known C and C++ compiler, the GNU Compiler Collection \citep{gcc:online} 
+is an extensive
 open source project. 
 As popular as GCC is, it does not provide the features an analysis-tool-building 
 developer needs. 
@@ -79,7 +72,8 @@ However, that is hardly a useful feature in the context of this paper.
 
 \section{Clang}
 
-Thanks to LLVM, the widespread compiler infrastructure, the Clang project 
+Thanks to LLVM \citep{llvm:online}, the widespread compiler infrastructure,
+the Clang project \citep{clang:online}
 has provided a compiler front end not only for C and C++ but also 
 for CUDA, OpenCL, and other languages. 
 The extend of Clang as a compiler front end is so vast that it covers 
@@ -109,7 +103,8 @@ as a front-end action when called during compilation.
 
 A less typical way of extracting an AST from a source file is by using grammar
 recognition.
-ANTLR, which stands for Another Tool for Language Recognition, is a free 
+ANTLR \citep{antlr:online}, which stands for Another Tool for 
+Language Recognition, is a free 
 parser generator that generates both a lexer and a parser based on 
 a given grammar.
 Additionally, ANTLR can also generate a tree parser.
@@ -141,8 +136,8 @@ However, that still might not be enough to choose it over other tools.
 
 \section{DMS}
 
-Similar to ANTLR, the DMS Software Reengineering Toolkit features 
-a parser generator.
+Similar to ANTLR, the DMS Software Reengineering Toolkit \citep{dms:online}
+features a parser generator.
 The tool is proprietary software created by Semantic Designs.
 Besides the mentioned parser generator, it features an entire toolkit for 
 creating custom software analysis.

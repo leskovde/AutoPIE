@@ -101,6 +101,12 @@
 	literate={\ \ }{{\ }}1
 }
 
+
+%%% Force line breaks in URLs
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\makeatother
+
 %%% UML diagrams
 \usepackage[simplified]{pgf-umlcd}
 
