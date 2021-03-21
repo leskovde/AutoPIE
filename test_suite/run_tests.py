@@ -26,7 +26,9 @@ class BaseTest(unittest.TestCase):
 
     def setUp(self):
         self.inputs_dir = 'tests'
-        self.executable_binary = 'cat'
+
+        # TODO: Change to the actual location.
+        self.executable_binary = 'build/autopie'
 
     def evaluate(self, expected_output, actual_output, command=''):
         """Compares the actual output to the reference output. Prints any differences and fails, if there are any."""
