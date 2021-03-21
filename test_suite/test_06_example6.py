@@ -1,13 +1,13 @@
 import unittest
 from run_tests import BaseTest
 
-TestName = 'example1.c'
+TestName = 'example6.c'
 
 Output = '''\
 '''
 
 
-class Example1(BaseTest):
+class Example6(BaseTest):
     def test_execution(self):
         self.runTool(TestName, Output, [])
 
