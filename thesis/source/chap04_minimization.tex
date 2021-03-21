@@ -36,8 +36,12 @@ It notably requires a description of the error and the source code
 location at which the error was produced.
 Based on the described scenario, we can draw the following definitions.
 
-Def: Let loc: S -> (file, line, col).
-We call the result of loc the location of statement S.
+\begin{defn}[Location]\label{def04:1}
+  Let $loc$: $\mathcal{S} \mapsto \{x | x = (file, line, col)\}$, 
+  where $\mathcal{S} = \{S_1, S_2, \ldots, S_n\}$ 
+  is the set of program's statements.
+  We call the result of $loc(S_i)$ the \emph{location} of statement $S_i$.
+\end{defn}
 
 The source code's location is specified by a file name, the line number, and 
 on that line, the number of characters from the left.
@@ -46,9 +50,13 @@ ending points.
 However, in this simplified description, only the starting point is taken 
 into consideration.
 
-Def: Let E = (location, desc) be a runtime error specified by its location 
-and description thrown by the program P = {S1, S2, ..., Sn}.
-We call the Si the failure-inducing statement of E iff loc(S) = E(location).
+\begin{defn}[Failure-inducing statement]\label{def04:1}
+  Let $E = (location, desc)$ be a runtime error specified by its location 
+  and description thrown by the program $\mathcal{P} =
+  (S_1, S_2, \ldots, S_n)$.
+  We call $S_i$ the \emph{failure-inducing statement} of 
+  $E$ if $loc(S_i) = E(location)$.
+\end{defn}
 
 Failure-inducing statements are constructs in the code that directly 
 contributed to the thrown error.
