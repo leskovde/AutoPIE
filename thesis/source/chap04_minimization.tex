@@ -1,0 +1,405 @@
+\chapter{Program minimization}
+
+As described in the first chapter, debugging is a time-consuming task.
+Any amount of help with debugging is always appreciated by developers.
+This paper attempts to help by providing means to minimize the debugged
+program for a given runtime error.
+The minimization's goal is to reduce the amount of source code programmers 
+must go through when debugging, thus speeding up the process.
+The size reduction of the program should be fully automated and reasonably 
+fast on simple inputs.
+Furthermore, it should correctly handle any source code from the program 
+domain specified below.
+Great attention is given to the accuracy with which the minimizing algorithm 
+works and its running performance.
+
+\change[inline]{TODO: Change the domain based on the implementation 
+(e.g., UI applications might work, so extend to UI, same with threads).}
+
+The domain in which the algorithm operates can be described as more minor, 
+simple projects.
+The approach takes into consideration code written in C and C++.
+More complicated concepts such as templates are omitted.
+Additionally, projects with non-deterministic features as such multithreading 
+are also not taken into consideration.
+Instead, the program minimization described in this paper focuses 
+on simple single-threaded console applications.
+
+The problem of program minimization while preserving runtime errors can be 
+described as follows.
+A developer has encountered a runtime error in his application.
+Using logging or debugging tools, he can extract the stack trace at that 
+given point.
+The stack trace provides valuable information the algorithm takes into 
+consideration during its execution.
+It notably requires a description of the error and the source code 
+location at which the error was produced.
+Based on the described scenario, we can draw the following definitions.
+
+Def: Let loc: S -> (file, line, col).
+We call the result of loc the location of statement S.
+
+The source code's location is specified by a file name, the line number, and 
+on that line, the number of characters from the left.
+The location could be described in further detail by including starting and 
+ending points.
+However, in this simplified description, only the starting point is taken 
+into consideration.
+
+Def: Let E = (location, desc) be a runtime error specified by its location 
+and description thrown by the program P = {S1, S2, ..., Sn}.
+We call the Si the failure-inducing statement of E iff loc(S) = E(location).
+
+Failure-inducing statements are constructs in the code that directly 
+contributed to the thrown error.
+That means the statements were present at the error's location when the error 
+occurred.
+
+Having found the source code location, the developer can now investigate 
+the source code for a potential bug.
+In the process, he might consider the values of application arguments 
+present at launch-time and change his debugging process accordingly.
+Nonetheless, the developer has to look through the source code to find 
+the error's root cause.
+This exact point is where the source code size reduction comes into action.
+Using static and dynamic analysis, it is possible to effectively and 
+safely minimize unnecessary source code.
+Such code includes statements, declarations, and expressions that do not 
+affect the program's state at the point given by the error.
+With additional verification, it is also probable to remove code constructs 
+that affect the state, but the error occurs regardless of whether they 
+are present or not.
+
+Using code size reduction, one can look at the reduced program's source 
+code to find the error.
+The newly generated program has to fulfill the following invariant.
+
+Invariant: Every program P' created by reducing the original program P 
+based on dynamic information given by P's execution with arguments A 
+must result in the same runtime error E.
+The error's absolute location can differ; it must, however, occur in the 
+same context.
+
+The rule specifies that a program must end in the same runtime error 
+as the original program to be considered a correct reduced program.
+Though, with the change in the program's size, the location 
+of failure-inducing statements also changes.
+In P, the error's location should be further down compared to 
+P' since P' has less code in general.
+Stress is placed on the location's context in which the error arises.
+As long as locations in P' are adjusted based on those in P, the 
+location of the error does not matter.
+
+\change[inline]{TODO: Come up with an actual way to make sure a program 
+is minimal.}
+\change[inline]{TODO: Come up with an approximation to guess whether
+the program will terminate.}
+
+As far as minimality goes, there is no actual conclusion on recognizing 
+whether a solution is minimal.
+Similarly, it has not been determined how to recognize programs that can 
+run indefinitely.
+
+Minimization of programs requires two steps—first, the removal of chunks 
+of the given source code.
+Second, performing a validation to determine whether the result meets 
+the required criteria, i.e., minimality and correctness.
+Following approaches for both steps have been considered.
+
+\section{Naive reduction}
+
+\subsection{Description}
+
+The simplest approach examined in this project is the naive removal of each 
+source code statement.
+This technique aims to try every possible variation of the code and find 
+the smallest correct solution through trial and error.
+All possible variations, both valid and invalid at compile-time, can be 
+generated by separating the source code into units of statements, 
+declarations, and expressions and removing one code unit at a time.
+
+Once the input source code is provided, it is split into $n$ of these 
+code units.
+Every unit is then taken into consideration, removing it and keeping every 
+other unit in the code.
+This process results in $n$ new variants, each complementing their 
+respective code unit.
+These outputs are then fed back as input code and processed the same way 
+one by one.
+
+\change[inline]{TODO: Add a definition for code units.}
+
+\change[inline]{TODO: Show pseudocode.}
+
+Each iteration with the input size of $n$ code units results in $n$ new 
+variants, those contribute to $n * (n - 1) $ new results.
+The naive time complexity is, therefore, the abysmal $O(n!)$.
+Moreover, the $n!$ variants require some verification and classification 
+to determine whether they are minimal or not.
+The correctness of many of these variants can be determined at compile-time.
+The rest, however, must be executed and tested for runtime errors.
+
+An efficient way of finding the smallest correct program variant is to rule 
+out programs with compile-time errors, sort the remaining variants by size 
+and verify them from the smallest to the largest.
+Depending on the input program's execution time, the verification might take 
+more time than the variant generation step.
+
+\subsection{Takeaways}
+
+\change{TODO: Draw parallels to the traveling salesman problem and reduce 
+the complexity to exponential.}
+
+The algorithm can be sped up by using the following techniques.
+The input's size can be significantly reduced by performing static 
+slicing of the input program as the first step.
+Compared to the naive approach, static slicing is a significantly less 
+expensive operation.
+Furthermore, it does not require the program to run.
+With two main issues concerning the current discussed approach - the size 
+of the input and its execution time - static slicing manages to ignore 
+one of these factors.
+Both the input size and subsequent execution time could both be brought 
+down by using dynamic slicing.
+
+The usage of dynamic slices, as opposed to static, has its potential pros.
+On the other hand, it has definitive cons.
+One such con is the requirement to run the said program.
+This point will be discussed in more detail later; however, let us consider 
+static slicing for this approach to minimize the number of program executions.
+Since static slicing does not handle branching and other control statements 
+nearly as efficiently as dynamic slicing, we can employ a simple trick 
+to help.
+Using the same additional input information as dynamic slicing, i.e., 
+program arguments, we can provide more specific information 
+to the static slicing algorithm.
+All that is required is to define the arguments with their respective 
+values inside the code.
+Slices generated from this modified source code will be more precise 
+since they will not contain unnecessary branching.
+
+It is important to restate that this modification only affects control 
+statements dependent on the program's arguments.
+If the arguments are not in the original, unmodified static slice, their 
+values will not affect the slice's size.
+Such modified input is guaranteed to be smaller or equal in size.
+Removing only a single code unit, i.e., a statement, an expression, 
+or a declaration, and leaving its complement sometimes generates 
+an invalid and unnecessary program variant.
+This problem can arise when removing a variable declaration.
+All subsequent source code using this variable will be invalid.
+Therefore, the removal of some code units should also remove their potential 
+usage.
+This case does not only concern the mentioned variable declarations but 
+function declaration, function definitions, and structure, enum, 
+and class declarations as well.
+
+These proposed modifications can potentially reduce the output of each 
+iteration.
+However, lower runtime complexity is not guaranteed.
+Static slicing may help in programs whose intent is to perform multiple 
+independent tasks, but it might not contribute anything to the complexity 
+decrease otherwise.
+The removal of dependent constructs described in the second point should be 
+used regardless of the input's nature, though it still does not ensure 
+the algorithms' quicker running time.
+The running time will especially be left unchanged in programs that do not 
+employ structured or object-oriented programming.
+
+
+\section{Delta debugging}
+
+Zeller's Delta debugging \cite{Zeller99, Zeller01, Zeller02} has been 
+described in detail in section 1.1.
+Although it serves primarily to find failure-inducing parts of inputs when 
+run on test cases, it can tremendously help with program minimization.
+For a given input, Delta debugging attempts to find and isolate its 
+smallest failure-inducing subset.
+Other than the input, Delta debugging also requires the debugged program 
+(in its executable form) and expected output.
+
+Let us draw parallels between the mentioned requirements and this project's 
+minimization task.
+The input for program minimization is the given program's source code.
+The code can be labeled as the input Delta debugging takes.
+It is essential to clarify that this Delta debugging usage does not utilize 
+the source code as the debugged program.
+Instead, it considers it as a given input.
+Then, we must specify the expected output.
+It is required that the program terminates with a given runtime error.
+Let us label that runtime error and its location as the expected output.
+Lastly, we must set the debugged program.
+In our case, to get from the test's input (source code) to the expected 
+output (a specific runtime error), the input must first be compiled 
+and then executed.
+The fitting debugged program is, therefore, a pipeline of a compiler and 
+an execution environment.
+
+The result is what we need - a minimal program variant that fails with 
+a particular error.
+As was already mentioned, the location of the error might differ based 
+on the variant's structure.
+Nonetheless, the location could be aligned based on the source code in 
+an additional step.
+
+\change[inline]{TODO: Take the following paragraph (equal sizes) with 
+a grain of salt.
+Think about the implementation of DD for this project.
+Is it better to only consider leaf nodes or always look at full 
+code constructs (functions, classes, ...)?}
+
+The minimizing Delta debugging algorithm works iteratively.
+Initially, during each iteration, the input is split into $n$ code units 
+of equal size.
+Equal sizes do not fit the nature of our input very well.
+A better solution would be to split the source code into $n$ or fewer units 
+based on the code constructs present in the code.
+For example, there is no point in splitting a function definition in half.
+Instead, it would make more sense to leave its head and body as a single 
+code unit.
+The body could then be divided more gradually in further iterations.
+Each iteration runs a test on each of the $n$ code units and its 
+complements, resulting in $n * 2$ tests run per iteration.
+In our case, the test consists of compiling and executing a snippet of 
+source code.
+
+The requirement to run this many executions significantly hinders 
+the performance of the algorithm.
+Delta debugging can also be done in another manner.
+The isolating algorithm can make an overall better use of iterations.
+When minimizing using Delta debugging, the result of each iteration 
+only changes when the test fails.
+On the other hand, the isolating approach also contributes changes 
+to the result when the test passes.
+However, passing cases are sporadic when working with source code.\change{TODO: Verify 
+that the following is true! 
+Make sure to understand the DD approach correctly and its 
+verification (compilation and execution of snippets).}
+They only arise when every executed code unit ends in the same desired 
+result.
+It is unlikely that those code units would compile on their own since 
+they would probably represent only a snippet of code, not a stand-alone 
+subprogram.
+Furthermore, it is even less probable that the code units would result 
+in the same runtime error when executed.
+
+\change[inline]{TODO: Come up with a way to guess the time complexity of DD.}
+
+
+\section{Slicing-based solution}
+
+As mentioned in the naive approach, both static and dynamic slicing need 
+to be analyzed further.
+The main focus of the discussion should be the running time.
+It is known that dynamic slices are the smallest they can be.
+However, they require information available at execution time.
+The question is whether running the program is necessary.
+
+We know that the program that is being minimized has been run before.
+Hence the availability of the information about the encountered runtime 
+error.
+If the program ran deterministically, it would have to terminate in future 
+executions as well.
+That is considering it would run with the same arguments as previously.
+The time of the termination might vary depending on the purpose of 
+the program.
+For server-like applications, it might take months to encounter an error 
+at runtime.
+Static slicing does not suffer from the mentioned issue.
+It is inexpensive in terms of execution time regardless of the purpose 
+of the sliced program.
+With the arguments trick mentioned in section 4.1, static slices can be 
+as small as dynamic ones.
+Minimality of the slice is, however, not guaranteed.
+
+It is safer to employ dynamic slicing to get the smallest slices possible.
+However, one can make modifications to help dynamic slicing run more 
+effectively.
+Let us consider a program that performs multiple demanding tasks 
+such as computations.
+These tasks are primarily independent, and their runtime is long.
+Using dynamic slicing alone would be inconvenient.
+However, by first employing static slicing to remove these long-running 
+unnecessary tasks, the program's execution time can be significantly reduced.
+The reduced program could then be sliced dynamically.
+The result would be a minimal slice at a fraction of the original time 
+compared to dynamic slicing alone.
+
+This crafted ideal use case only concerns a very narrow range of existing 
+programs.
+However, due to its low running time, static slicing could be used before 
+just about any attempt at dynamic slicing.
+
+\change[inline]{TODO: Add references to the halting problem and 
+Rice's theorem.}
+
+The improvement in the form of a static slice is genuinely convenient.
+However, checking whether the improvement has any effect before running 
+dynamic slicing is not an easy task.
+The issue stems from the Halting problem and Rice's theorem.
+The halting problem states that it is undecidable whether a program 
+terminates on its particular input.
+Rice expanded the thought further by stating that all interesting semantic 
+properties of a program are undecidable.
+Without proper and accurate means to determine many wanted properties, 
+we are required to approximate them.
+
+Amongst such properties is the factor of how effective static slicing is.
+The approximation will be required in the following sections as well.
+In particular, the section concerning program validation will look at this 
+issue in more detail.
+One way of guessing the effectiveness of static slicing in terms of size 
+reduction is by analyzing the program's branching factor.
+By employing a metric for the number and density of control-flow altering 
+statements, we can approximate static slicing's relative performance.
+It is assumed that programs with a high branching factor, i.e., with more 
+control-flow-altering statements, are less likely to reduce their size 
+during static slicing.
+Nonetheless, slicing statically before doing so dynamically has been 
+a rule of thumb for this project.
+
+The proposed systematical solution is described in the following algorithm.\change{TODO: Add 
+pseudo code.}
+The input program is sliced statically w.r.t.
+every variable available at the failure-inducing line.
+The slices are then unified and given as the input to a dynamic slicer.
+Similarly, the dynamic slicer generates slices w.r.t.
+those potentially failure-inducing variables.
+Those dynamic slices are unified.
+The intermediate result extracted after performing the two slicing types 
+should be significantly smaller than the original program.
+It is then fed to a more precise and less efficient algorithm for further 
+reduction.
+Since the result so far contains slices for multiple variables, it might not 
+be minimal yet.
+However, it can be assumed that it is valid, i.e., ends with the desired 
+runtime error.
+We could implement the naive approach or Delta debugging as the more 
+precise algorithm.
+
+\change[inline]{TODO: If a more sophisticated final algorithm is 
+created, mention it.}
+
+Another thought-about approach is hybrid slicing.\change{TODO: Get more information on hybrid slicing.}
+The comparison of hybrid slicing and the combination of static and dynamic 
+could yield exciting results.
+It can be assumed that hybrid slicing would be more effective on smaller 
+programs with a short execution time.
+The static-dynamic combination could work better on larger-scale 
+applications, where static slicing can remove unnecessarily long-running 
+chunks of code.
+
+
+\section{Program verification}
+
+\change[inline]{TODO: Add https://youtu.be/UcxF6CVueDM?t=177 as a reference.}
+
+
+\change[inline]{TODO: Meditate at the thought of using slicing 
+for systematic validation.
+For example, a slice of the original program and the reduced program's 
+slice must not differ in some parts.}
+
+One way of achieving systematic validation is by inserting 
+instrumentation code at compile-time.\change{TODO: Verify this statement and explain further.}
+

@@ -59,7 +59,7 @@ Contains the most up-to-date outline and a summary of what's being worked on.
 
    - in depth explanation of the problem and its goals
    - setting the domain (what kinds of programs the solution should work on)
-   - explain the naive solution and its limitation (exponential complexity, potentially many useless verifications)
+   - explain the naive solution and its limitations (exponential complexity, potentially many useless verifications)
    - explain the solution based on delta debugging (purely delta debugging based solution) and its disadvantage of needing to run verifications during reduction
    - explain the solution based on slicing, what other approaches are used together with slicing and why they were chosen (TBD), explain why some reduction can be done correctly without needing verification
    - explain how the verification is done naively (running a debugger and checking its output)

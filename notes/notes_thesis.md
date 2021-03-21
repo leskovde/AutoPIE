@@ -81,6 +81,25 @@
 
 - Kompilacni model c/c++ ma header fily, coz dela analyzu tezsi (vyzaduje vicero preparsovani) - vysvetlit, jak header fily stezuji praci mne.
 
+- Rice's theorem: Every interesting question about a program is undecidable.
+
+- It cannot be determined whether a program will terminate.
+
+- Instead of deciding something undecidable, we can approximate.
+
+- False negatives - bad for verification - bugs can slip undetected
+
+- False positives - bad for production - time waster for developers
+
+- Static analysis:
+
+  - no execution required
+  - a good (cheap) substitute for tests
+  - hard for C++: the compilation model (include for header files) implies a lot of reparsing, type information required for parsing, macros make it hard to cache the representation of header files
+  - simulated execution: try to enumerate every possible execution path = path sensitive algorithm - exponential in the branching factor
+  - cross translation unit analysis - when dealing with multiple .cpp files, we might encounter a usage of a function from the different file - this might be a challenge since libtooling allows only one ASTContext at a time - might be good to save some information about different translation units
+  - analysis across multiple projects - will this be supported?
+
 - SpotBugs
 
   - formerly FindBugs
