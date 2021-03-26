@@ -406,16 +406,16 @@ label={lst:countvisitor}]
 class CountASTVisitor : public clang::RecursiveASTVisitor<CountASTVisitor>
 {
         clang::ASTContext* astContext;
-        int statementCount;
+        CounterObject* statementCount;
 
 public:
-        explicit CountASTVisitor(clang::CompilerInstance* ci)
-                : astContext(&ci->getASTContext()), statementCount(0) { }
+        explicit CountASTVisitor(clang::CompilerInstance* ci, CounterObject* counter)
+                : astContext(&ci->getASTContext()), statementCount(counter) { }
 
         virtual bool VisitStmt(clang::Stmt* st)
         {
                 outs() << "Found a statement.\n";
-				statementCount++;
+				(*statementCount)++;
 				
                 return true;
         }
@@ -450,6 +450,59 @@ overridden \icode{Visit} method.
 Traversing the~class hierarchy from the~bottom up 
 translates to calling specific visit functions for specific types 
 rather than visit functions of~their abstract types.
+
+\begin{figure}[ht]\centering
+\begin{lstlisting}[caption=ASTConsumer., language=C++, 
+label={lst:astconsumer}]
+/**
+ * Dispatches the CountASTVisitor on the translation unit decl.
+ */
+class CountASTConsumer final : public ASTConsumer
+{
+	CountASTVisitor* visitor;
+
+public:
+	// Pass any desired data to the visitor.
+	explicit CountASTConsumer(CompilerInstance* ci, CounterObject* counter)
+		: visitor(new CountASTVisitor(ci, counter)) { }
+
+	void HandleTranslationUnit(ASTContext& context) override
+	{
+		// Use the ASTContext to reference the translation unit decl.
+		visitor->TraverseDecl(
+			context.getTranslationUnitDecl());
+	}
+};
+\end{lstlisting}
+\end{figure}
+
+\begin{figure}[ht]\centering
+\begin{lstlisting}[caption=ASTFrontendAction., language=C++, 
+label={lst:astfrontendaction}]
+/**
+ * Creates a consumer, performs actions after the AST traversal.
+ */
+class CountAction final : public ASTFrontendAction
+{
+	CounterObject statementCount;
+public:
+
+	// Perform the desired action after the traversal.
+	void EndSourceFileAction() override
+	{
+		outs() << "Statement count: " << statementCount.Value << "\n";
+	}
+
+	std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& ci, StringRef file) override
+	{
+		// Pass any data to the consumer.
+		return std::unique_ptr<ASTConsumer>(
+			std::make_unique<CountASTConsumer>(
+				&ci, &statementCount));
+	}
+};
+\end{lstlisting}
+\end{figure}
 
 The tree traversal can be done in~a preorder or postorder fashion. 
 Preorder traversal is the~default. the~developer can also stop
