@@ -34,7 +34,8 @@ attempts~at automating at least some parts of~it during the~last few decades.
 The rise in~popularity of~program analysis resulted in~automated error checks 
 for popular programming languages. 
 
-SpotBugs \citep{spotbugs:online}, formerly known as FindBugs, 
+SpotBugs\footnote{SpotBugs can be found at 
+\url{https://spotbugs.github.io/index.html}.}, formerly known as FindBugs, 
 is a~free and platform-inde\-pen\-dent application for, as the~name 
 suggests, finding bugs.
 It works with the~bytecode of~JDK8 and newer, which indicates that source 
@@ -46,7 +47,8 @@ source code invariants created during code maintenance.
 Java developers can use SpotBugs's static analysis in~its GUI form or 
 as a~plugin for build tools.
 
-Clang static analyzer \citep{analyzer:online} provides 
+Clang static analyzer\footnote{The Clang static analyzer's 
+homepage is \url{https://clang-analyzer.llvm.org/}.} provides 
 similar functionality to C, C++, and 
 Ob\-jec\-tive-C programmers.
 The code written in~these languages is parsed by the~ana\-ly\-zer.
@@ -61,7 +63,8 @@ the Clang static analyzer is popular amongst developers working
 with the~C family of~languages.
 
 The functionality of~the~previous tool was extended 
-in CodeChecker \citep{codechecker:online}.
+in CodeChecker\footnote{The latest information concerning CodeChecker
+can be found at \url{https://codechecker.readthedocs.io/en/latest/}.}.
 Code\-Check\-er serves as a~wrapper for the~Clang static analyzer and 
 Clang-Tidy.
 Wrapping these two tools into a~more sophisticated application helps 
@@ -70,7 +73,8 @@ Additionally, the~wrapper also deals with false positives.
 Furthermore, it allows the~user to visualize the~result as HTML or 
 save time by analyzing only relevant files.
 
-Facebook's Infer \citep{infer:online} translates both 
+Facebook's Infer\footnote{General overview of Infer can be found at 
+\url{https://fbinfer.com/}.} translates both 
 the C family of~languages and Java 
 into a~common intermediate language.
 It also utilizes compilation information for add\-itional accuracy.
