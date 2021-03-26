@@ -91,6 +91,10 @@
 
 - False positives - bad for production - time waster for developers
 
+- Cool zpusob - pattern recognition - take all the execution flows and do a deep pattern recognition of how the program is executing - do this in multiple different ways and choose the best result (voting classifier)
+
+- https://youtu.be/G4hL5Om4IJ4?t=3992 LLVM is the de facto platform for compilers
+
 - Static analysis:
 
   - no execution required
