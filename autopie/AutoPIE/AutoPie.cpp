@@ -94,6 +94,45 @@ void ReduceStatement(GlobalContext& ctx, clang::tooling::CompilationDatabase& cd
 	ctx.iteration++;
 }
 
+unsigned long GenerateVariants(GlobalContext* context, clang::tooling::CommonOptionsParser& op, const int originalSourceSize)
+{
+	unsigned long variantCount = 0;
+	
+	if (context->searchStack.empty())
+	{
+		outs() << "DEBUG: Global context contains 0 variants - the input file has not been queued.\n";
+	}
+	
+	while (!context->searchStack.empty())
+	{
+		auto currentFile = context->searchStack.top();
+		context->searchStack.pop();
+
+		if (variantCount % 50 == 0)
+		{
+			outs() << "Done " << variantCount << " variants. Current stack size: " << context->searchStack.size() << "\n";
+		}
+		
+		variantCount++;
+
+		const auto variantSize = GetStatementCount(*context, op.getCompilations(), currentFile);
+
+		if (static_cast<double>(variantSize) / originalSourceSize < ReductionRatio)
+		{
+			continue;
+		}
+
+		// Remove each statement once and push a new file without that statement onto the stack (done inside the FrontEndAction).
+		for (auto i = 1; i <= variantSize; i++)
+		{
+			outs() << "\tIteration: " << std::to_string(context->iteration) << " (targeting statement no. " << i << " )\n\n";
+			ReduceStatement(*context, op.getCompilations(), currentFile, i);
+		}
+	}
+
+	return variantCount;
+}
+
 /**
  * Generates a minimal program variant by naively removing statements.
  * 
@@ -113,26 +152,29 @@ int main(int argc, const char** argv)
 		return 0;
 	}
 
+	auto parsedInput = InputData(ErrorMessage, Location(SourceFile, LineNumber), ReductionRatio);
+
 	// Prompt the user to clear the temp directory.
 	if (!ClearTempDirectory(true))
 	{
-		llvm::outs() << "Terminating...";
+		llvm::outs() << "Terminating...\n";
 		return 0;
 	}
 
-	auto context = GlobalContext::GetInstance(*op.getSourcePathList().begin(), LineNumber, ErrorMessage);
-
+	auto context = GlobalContext::GetInstance(parsedInput, *op.getSourcePathList().begin());
 	const auto originalStatementCount = GetStatementCount(*context, op.getCompilations(), *op.getSourcePathList().begin());
 
+	auto count = GenerateVariants(context, op, originalStatementCount);
+	
 	// TODO: Prevent duplicate program variants during generation => both search and verification speedup.
 	
 	// Search all possible source code variations in a DFS manner.
-	while (!context->variants.empty())
+	while (!context->searchStack.empty())
 	{
-		auto currentFile = context->variants.top();
-		context->variants.pop();
+		auto currentFile = context->searchStack.top();
+		context->searchStack.pop();
 
-		outs() << "REDUCING: " << currentFile << " with " << std::to_string(context->variants.size()) << " files remaining on the stack.\n";
+		outs() << "REDUCING: " << currentFile << " with " << std::to_string(context->searchStack.size()) << " files remaining on the stack.\n";
 
 		const auto expressionCount = GetStatementCount(*context, op.getCompilations(), currentFile);
 
@@ -180,7 +222,7 @@ int main(int argc, const char** argv)
 
 	if (!minimalProgramVariantFound)
 	{
-		outs() << "Minimal program variant could not be found.";
+		outs() << "Minimal program variant could not be found.\n";
 	}
 
 	outs() << "\n============================================================\n";

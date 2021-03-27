@@ -2,6 +2,7 @@
 #include <clang/Rewrite/Core/Rewriter.h>
 #include <stack>
 #include <iostream>
+#include "Helper.h"
 
 class CountVisitorContext
 {
@@ -69,43 +70,38 @@ public:
 
 class GlobalContext
 {
+	// TODO: Implement the rule of 5.
+	// TODO: Change the raw pointer to an unique_ptr.
 	static GlobalContext* instance;
 
-	GlobalContext(const std::string& file, const int errorLine, const std::string& errorMessage)
+	GlobalContext(InputData& input, const std::string& source) : parsedInput(input)
 	{
+		globalRewriter = clang::Rewriter();
 		countVisitorContext = CountVisitorContext();
 		statementReductionContext = StatementReductionContext();
 
-		globalRewriter = clang::Rewriter();
-		variants = std::stack<std::string>();
+		searchStack = std::stack<std::string>();
+		searchStack.push(source);
 
-		errorLineNumber = errorLine;
-		errorLineMessage = errorMessage;
-		fileName = file;
-
-		variants.push(fileName);
-
-		std::cout << "New non-default constructor call.\n";
+		llvm::errs() << "DEBUG: GlobalContext - New non-default constructor call.\n";
 	}
 
-	GlobalContext() : errorLineNumber(0)
+	GlobalContext(): parsedInput(InputData("", Location("", 0), 0.0))
 	{
-		std::cout << "New default constructor call.\n";
+		llvm::errs() << "DEBUG: GlobalContext - New default constructor call.\n";
 	}
-	
+
 public:
-	
+
+	// AST traversal properties.
+	clang::Rewriter globalRewriter;
 	CountVisitorContext countVisitorContext;
 	StatementReductionContext statementReductionContext;
 
-	clang::Rewriter globalRewriter;
-	std::stack<std::string> variants;
-
-	int errorLineNumber;
-	std::string errorLineMessage;
-	std::string fileName;
-
+	// Variant generation properties.
 	int iteration = 0;
+	InputData parsedInput;
+	std::stack<std::string> searchStack;
 
 	GlobalContext(GlobalContext& other) = delete;
 
@@ -121,9 +117,11 @@ public:
 		return instance;
 	}
 
-	static GlobalContext* GetInstance(const std::string& file, const int errorLine, const std::string& errorMessage)
+	static GlobalContext* GetInstance(InputData& input, const std::string& source)
 	{
-		instance = new GlobalContext(file, errorLine, errorMessage);
+		delete instance;
+
+		instance = new GlobalContext(input, source);
 		
 		return instance;
 	}

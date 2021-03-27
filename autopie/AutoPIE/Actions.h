@@ -32,10 +32,10 @@ public:
 		std::error_code errorCode;
 		llvm::raw_fd_ostream outFile(fileName, errorCode, llvm::sys::fs::F_None);
 
-		globalContext->globalRewriter.getEditBuffer(sm.getMainFileID()).write(outFile); // --> this will write the result to outFile
+		globalContext->globalRewriter.getEditBuffer(sm.getMainFileID()).write(outFile);
 		outFile.close();
 
-		globalContext->variants.push(fileName);
+		globalContext->searchStack.push(fileName);
 	}
 
 	std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, llvm::StringRef file) override

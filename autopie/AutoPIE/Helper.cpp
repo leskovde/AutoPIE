@@ -51,6 +51,7 @@ bool ClearTempDirectory(const bool prompt = false)
 	{
 		llvm::outs() << "WARNING: The path 'temp/' exists and is about to be cleared! Do you want to proceed? [Y/n] ";
 		const auto decision = std::getchar();
+		llvm::outs() << "\n";
 
 		if (decision == 'n' || decision == 'N')
 		{
@@ -58,7 +59,7 @@ bool ClearTempDirectory(const bool prompt = false)
 		}
 	}
 
-	llvm::outs() << "Clearing the 'temp/' directory...";
+	llvm::outs() << "Clearing the 'temp/' directory...\n";
 
 	std::filesystem::remove_all("temp/");
 	std::filesystem::create_directory("temp");
