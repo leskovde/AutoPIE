@@ -529,10 +529,29 @@ and types is straightforward.
 The same applies to children of~these classes. 
 However, it is challenging to visit more complicated entities 
 such as nested types, e.g., \icode{int* const* x}. 
-Such cases require fetching additional semantical context, 
-utilizing \icode{ASTMatchers} and nodes of~type declaration context.
+Such cases require navigation through source locations in order to reach 
+a particular built-in type.
+In an example from the LLVM Euro Conference 2013\footnote{The particular 
+speech in which the example is mentioned can be found 
+at \url{https://youtu.be/VqCkCDFLSsc?t=916}. The recording starts at
+the relevant slide.}, 
+one can reach the built-in type of \icode{int * p;} in two ways. 
+The declaration is for a pointer type, which has a \icode{PointerTypeLoc}. 
+On the one hand, it is possible to reach the \icode{BuiltinType} by 
+calling \icode{getPointeeLoc()}. 
+The result is a \icode{BuiltinTypeLoc}, through which a \icode{QualType} 
+can be extracted. 
+The qualifier leads to the desired \icode{BuiltinType}. 
+On the other hand, one can extract a \icode{QualType} from 
+the starting \icode{PointerTypeLoc} and use it to get 
+a \icode{PointerType} instance. 
+By calling \icode{getPointeeType()}, it is possible to get to 
+the \icode{QualType} that leads to the desired built-in type. 
 
-\change[inline]{TODO: Show how complicated cases are handled.}
+Both of these approaches start at the same source location and end 
+with the same built-in type. 
+The steps necessary to traverse this simple pointer type, however, 
+were not trivial.
 
 The \icode{RecursiveASTVisitor} is launched by visiting the~root node using 
 a \icode{TraverseDecl} method. 
