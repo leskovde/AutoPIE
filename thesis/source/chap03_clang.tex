@@ -349,6 +349,51 @@ data to it.
 For example, this data might include references to variables used for 
 counting objects in~the AST or more complicated constructs. 
 
+Listing~\ref{lst:astfrontendaction} showcases an example of such frontend 
+action. 
+The custom class contains a variable used for counting statements 
+in the source code. 
+The reference to that variable is passed further when creating a consumer. 
+After the source code is parsed, the overridden \icode{EndSourceFileAction} 
+method is launched. 
+Inside the method's body, the data gathered during the traversal is 
+displayed.
+
+\begin{figure}[ht]\centering
+\begin{lstlisting}[language=C++]
+/**
+ * Creates a consumer, performs actions after 
+ * the AST traversal.
+ */
+class CountAction final : public ASTFrontendAction
+{
+	CounterObject statementCount;
+	
+public:
+
+	// Perform the desired action after the traversal.
+	void EndSourceFileAction() override
+	{
+		outs() << "Statement count: " 
+			<< statementCount.Value << "\n";
+	}
+
+	std::unique_ptr<ASTConsumer> CreateASTConsumer(
+		CompilerInstance& ci, StringRef file) override
+	{
+		// Pass any data to the consumer.
+		return std::unique_ptr<ASTConsumer>(
+			std::make_unique<CountASTConsumer>(
+				&ci, &statementCount));
+	}
+};
+\end{lstlisting}
+\caption{Custom ASTFrontendAction. An instance can be created before
+parsing a source file. The example shows the ability to perform
+a body of actions after the file is parsed.}
+\label{lst:astfrontendaction}
+\end{figure}
+
 The \icode{ASTConsumer}'s job is to read the~Clang AST and handle actions
 on the~tree's specific items. 
 One such action is \icode{HandleTopLevelDecl()}, which, as the~name suggests,
@@ -368,6 +413,46 @@ approach.
 Visit methods of~the~\icode{ASTRecursiveVisitor} should not be called 
 directly. 
 Details concerning the~visitor can be found in~the following section.
+
+In the example shown in~\ref{lst:astconsumer}, the consumer passes variable 
+references to the visitor. 
+These references have previously been attained from the frontend action. 
+A reference to the constructed visitor is stored inside the consumer. 
+The visitor is then dispatched in the overridden 
+\icode{HandleTranslationUnit} method. 
+As was described earlier, \icode{ASTContext} helps to retrieve references 
+to top-level nodes.
+
+
+\begin{figure}[ht]\centering
+\begin{lstlisting}[language=C++]
+/**
+ * Dispatches the CountASTVisitor on the translation 
+ * unit decl.
+ */
+class CountASTConsumer final : public ASTConsumer
+{
+	CountASTVisitor* visitor;
+
+public:
+	// Pass any desired data to the visitor.
+	CountASTConsumer(CompilerInstance* ci, CounterObject* counter)
+		: visitor(new CountASTVisitor(ci, counter)) { }
+
+	void HandleTranslationUnit(ASTContext& context) override
+	{
+		// Use the ASTContext to reference 
+		// the translation unit decl.
+		visitor->TraverseDecl(
+			context.getTranslationUnitDecl());
+	}
+};
+\end{lstlisting}
+\caption{An example of a custom ASTConsumer implementation.
+Showcased is the ability to transfer data to a visitor and
+to dispatch the visitor.}
+\label{lst:astconsumer}
+\end{figure}
 
 Second, one can use AST Matchers. 
 Matchers, unlike the~visitor approach, do not require a~complicated setup. 
@@ -460,72 +545,6 @@ overridden \icode{Visit} method.
 Traversing the~class hierarchy from the~bottom up 
 translates to calling specific visit functions for specific types 
 rather than visit functions of~their abstract types.
-
-\begin{figure}[ht]\centering
-\begin{lstlisting}[caption=ASTConsumer., language=C++, 
-label={lst:astconsumer}]
-/**
- * Dispatches the CountASTVisitor on the translation 
- * unit decl.
- */
-class CountASTConsumer final : public ASTConsumer
-{
-	CountASTVisitor* visitor;
-
-public:
-	// Pass any desired data to the visitor.
-	CountASTConsumer(CompilerInstance* ci, CounterObject* counter)
-		: visitor(new CountASTVisitor(ci, counter)) { }
-
-	void HandleTranslationUnit(ASTContext& context) override
-	{
-		// Use the ASTContext to reference 
-		// the translation unit decl.
-		visitor->TraverseDecl(
-			context.getTranslationUnitDecl());
-	}
-};
-\end{lstlisting}
-\caption{An example of a custom ASTConsumer implementation.
-Showcased is the ability to transfer data to a visitor and
-to dispatch the visitor.}
-\label{lst:astconsumer}
-\end{figure}
-
-\begin{figure}[ht]\centering
-\begin{lstlisting}[language=C++]
-/**
- * Creates a consumer, performs actions after 
- * the AST traversal.
- */
-class CountAction final : public ASTFrontendAction
-{
-	CounterObject statementCount;
-	
-public:
-
-	// Perform the desired action after the traversal.
-	void EndSourceFileAction() override
-	{
-		outs() << "Statement count: " 
-			<< statementCount.Value << "\n";
-	}
-
-	std::unique_ptr<ASTConsumer> CreateASTConsumer(
-		CompilerInstance& ci, StringRef file) override
-	{
-		// Pass any data to the consumer.
-		return std::unique_ptr<ASTConsumer>(
-			std::make_unique<CountASTConsumer>(
-				&ci, &statementCount));
-	}
-};
-\end{lstlisting}
-\caption{Custom ASTFrontendAction. An instance can be created before
-parsing a source file. The example shows the ability to perform
-a body of actions after the file is parsed.}
-\label{lst:astfrontendaction}
-\end{figure}
 
 The tree traversal can be done in~a preorder or postorder fashion. 
 Preorder traversal is the~default. the~developer can also stop
