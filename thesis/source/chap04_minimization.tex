@@ -143,11 +143,15 @@ one by one.
 \begin{algorithm}
 	\label{alg:naive}
 	\caption{Naive Statement Removal.} 
+	\hspace*{\algorithmicindent} \textbf{Input:} \\
+	\hspace*{\algorithmicindent}\hspace*{\algorithmicindent} $L \ldots$ location of the error. \\
+	\hspace*{\algorithmicindent}\hspace*{\algorithmicindent} $P \ldots$ the input source code. \\
+	\hspace*{\algorithmicindent}\hspace*{\algorithmicindent} $A \ldots$ the input program's arguments. \\
+	\hspace*{\algorithmicindent} \textbf{Output:} The reduced source code. 
 	\begin{algorithmic}[1]
 		\State $allVariants \leftarrow \{\}$
 		\State $variantQueue \leftarrow \{\}$
-		\State $variantQueue.Push(input)$
-		\Comment Where $input$ is algorithm's input.
+		\State $variantQueue.Push(P)$
 		\While{$variantQueue.Count > 0$}
 			\State $currentVariant \leftarrow variantQueue.Pop()$
 			\State $(C_1, C_2, \ldots, C_n) \leftarrow  SplitIntoCodeUnits(currentVariant)$
@@ -159,10 +163,11 @@ one by one.
 		\EndWhile
 		\State $allVariants \leftarrow SortBySize(allVariants, Ascending)$
 		\ForAll{$V \in allVariants$}
-			\If{$IsValid(V)$}
+			\If{$IsValid(V, L, A)$}
 				\Return $V$.
 			\EndIf
 		\EndFor
+		\State \Return none.
 	\end{algorithmic} 
 \end{algorithm}
 

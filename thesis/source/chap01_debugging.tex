@@ -175,16 +175,17 @@ without the~definition as well.
 \begin{algorithm}
 	\label{alg:dd}
 	\caption{Minimizing Delta Debugging Algorithm.} 
+	\hspace*{\algorithmicindent} \textbf{Input:} $\sigma \ldots$ the test's input string. \\
+	\hspace*{\algorithmicindent} \textbf{Output:} The reduced failure-causing substring. 
 	\begin{algorithmic}[1]
 		\State $n \leftarrow 2$
-		\State Split a~string $\sigma$ into $\alpha_1,\dots,\alpha_n$ of~equal size.
-		\Comment Where $\sigma$ is test's input.
+		\State Split the~string $\sigma$ into $\alpha_1,\dots,\alpha_n$ of~equal size.
 		\State For each $\alpha_i$, calculate its complement $\beta_i$.
 		\State Run tests on $\alpha_1,\dots,\alpha_n,\beta_1,\dots,\beta_n$.
 		\If{all tests passed}
 			\State $n \leftarrow 2*n$
 			\If{$n > |\sigma|$}
-				\Return the~most recent failure causing substring.
+				\Return the~most recent failure-causing substring.
 			\Else
 				\State goto (2).
 			\EndIf
