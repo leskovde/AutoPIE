@@ -255,8 +255,7 @@ The usual root \icode{TranslationUnitDecl} is absent due to the~function
 filter being applied.
 
 \begin{figure}[ht]\centering
-\begin{lstlisting}[caption=Clang AST Dump., language=bash, 
-label={lst:astdump}, basicstyle=\small, numbers=none]
+\begin{lstlisting}[language=bash, basicstyle=\small, numbers=none]
 $ cat -n simple.cpp
      1  #include<iostream>
      2
@@ -285,6 +284,10 @@ FunctionDecl '...' <./simple...> line:3:5 main 'int ()'
         | `-DeclRefExpr 0x556041ab83f8 <col:10> 'int...'
         `-IntegerLiteral 0x556041ab8418 <col:14> 'int' 42
 \end{lstlisting}
+\caption{Clang AST Dump. The example source code visible
+in the figure has been filtered by function name and fed
+to a Clang tool.}
+\label{lst:astdump}
 \end{figure}
 
 The Clang AST attempts to represent the~source code as faithfully 
@@ -398,8 +401,7 @@ Typically, when using less specific visit methods, a~good
 way of~differentiating node types is casting them dynamically.
 
 \begin{figure}[ht]\centering
-\begin{lstlisting}[caption=CountASTVisitor., language=C++, 
-label={lst:countvisitor}]
+\begin{lstlisting}[language=C++]
 /**
  * Counts the number of statements.
  */
@@ -433,6 +435,9 @@ public:
         }
 };
 \end{lstlisting}
+\caption{CountASTVisitor. A custom implementation of the ASTRecursiveVisitor
+which tracks the number of encountered statements.}
+\label{lst:countvisitor}
 \end{figure}
 
 Visiting statements, expressions, declarations, 
@@ -481,11 +486,14 @@ public:
 	}
 };
 \end{lstlisting}
+\caption{An example of a custom ASTConsumer implementation.
+Showcased is the ability to transfer data to a visitor and
+to dispatch the visitor.}
+\label{lst:astconsumer}
 \end{figure}
 
 \begin{figure}[ht]\centering
-\begin{lstlisting}[caption=ASTFrontendAction., language=C++, 
-label={lst:astfrontendaction}]
+\begin{lstlisting}[language=C++]
 /**
  * Creates a consumer, performs actions after 
  * the AST traversal.
@@ -513,6 +521,10 @@ public:
 	}
 };
 \end{lstlisting}
+\caption{Custom ASTFrontendAction. An instance can be created before
+parsing a source file. The example shows the ability to perform
+a body of actions after the file is parsed.}
+\label{lst:astfrontendaction}
 \end{figure}
 
 The tree traversal can be done in~a preorder or postorder fashion. 
@@ -584,10 +596,13 @@ to matchers. It can be found at
 Going by the~mentioned rules of~building an expression, it would have 
 the following form: 
 
-\begin{lstlisting}[caption=Matcher expression., language=C++, 
-label={lst:matcherexpr}, numbers=none]
+\begin{figure}
+\begin{lstlisting}[language=C++, numbers=none]
 binaryOperator(hasOperatorName("+"), hasLHS(integerLiteral(equals(0)))).
 \end{lstlisting}
+\caption{Matcher expression.}
+\label{lst:matcherexpr}
+\end{figure}
 
 The expression in~\ref{lst:matcherexpr} searches for a~binary operator. 
 The search is further narrowed to a~plus sign with a~zero left-hand 

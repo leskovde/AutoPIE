@@ -383,6 +383,10 @@ int main(void)
 }
 \end{lstlisting}
 \end{minipage}
+\caption{An illustration of the difference static slicing makes.
+The source code on the left is the original program, the code on the
+right is its static slice w.r.t. $C = (write(x)_{42}, \{x\})$.}
+\label{lst:staticcomparison}
 \end{figure}
 
 One can imagine that the~size of~a~static slice would be much smaller
@@ -490,8 +494,7 @@ Using information available during a~run of~the~program
 results in~a typically much smaller slice.
 
 \begin{figure}[ht]\centering
-\begin{lstlisting}[caption=Dynamic slice of~the~simple
-  branching program., language=C++, label={lst:dynamicslice}]
+\begin{lstlisting}[language=C++]
 #include<iostream>
 
 void write(int x)
@@ -519,6 +522,9 @@ int main(void)
 	return 0;
 }  
 \end{lstlisting}
+\caption{Dynamic slice of~the~simple branching program seen
+in~\ref{lst:simpleexample} w.r.t. $C = (write(x)_{42}, \{x\}, \{2\})$.}
+\label{lst:dynamicslice}
 \end{figure}
 
 This decrease in~size is mainly due to removing unnecessary 
