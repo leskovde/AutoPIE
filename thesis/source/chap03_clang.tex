@@ -409,9 +409,12 @@ class CountASTVisitor : public clang::RecursiveASTVisitor<CountASTVisitor>
         CounterObject* statementCount;
 
 public:
-        explicit CountASTVisitor(clang::CompilerInstance* ci, CounterObject* counter)
-                : astContext(&ci->getASTContext()), statementCount(counter) { }
+        CountASTVisitor(clang::CompilerInstance* ci, CounterObject* counter)
+                : astContext(&ci->getASTContext()), 
+					statementCount(counter) { }
 
+		// Perform a body of actions upon 
+		// encountering a statement.
         virtual bool VisitStmt(clang::Stmt* st)
         {
                 outs() << "Found a statement.\n";
@@ -420,6 +423,8 @@ public:
                 return true;
         }
 		
+		// Perform a body of actions upon encountering 
+		// a variable declaration.
 		virtual bool VisitVarDecl(clang::VarDecl* decl)
         {
                 outs() << "Found a variable declaration.\n";
@@ -455,7 +460,8 @@ rather than visit functions of~their abstract types.
 \begin{lstlisting}[caption=ASTConsumer., language=C++, 
 label={lst:astconsumer}]
 /**
- * Dispatches the CountASTVisitor on the translation unit decl.
+ * Dispatches the CountASTVisitor on the translation 
+ * unit decl.
  */
 class CountASTConsumer final : public ASTConsumer
 {
@@ -463,12 +469,13 @@ class CountASTConsumer final : public ASTConsumer
 
 public:
 	// Pass any desired data to the visitor.
-	explicit CountASTConsumer(CompilerInstance* ci, CounterObject* counter)
+	CountASTConsumer(CompilerInstance* ci, CounterObject* counter)
 		: visitor(new CountASTVisitor(ci, counter)) { }
 
 	void HandleTranslationUnit(ASTContext& context) override
 	{
-		// Use the ASTContext to reference the translation unit decl.
+		// Use the ASTContext to reference 
+		// the translation unit decl.
 		visitor->TraverseDecl(
 			context.getTranslationUnitDecl());
 	}
@@ -480,20 +487,24 @@ public:
 \begin{lstlisting}[caption=ASTFrontendAction., language=C++, 
 label={lst:astfrontendaction}]
 /**
- * Creates a consumer, performs actions after the AST traversal.
+ * Creates a consumer, performs actions after 
+ * the AST traversal.
  */
 class CountAction final : public ASTFrontendAction
 {
 	CounterObject statementCount;
+	
 public:
 
 	// Perform the desired action after the traversal.
 	void EndSourceFileAction() override
 	{
-		outs() << "Statement count: " << statementCount.Value << "\n";
+		outs() << "Statement count: " 
+			<< statementCount.Value << "\n";
 	}
 
-	std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& ci, StringRef file) override
+	std::unique_ptr<ASTConsumer> CreateASTConsumer(
+		CompilerInstance& ci, StringRef file) override
 	{
 		// Pass any data to the consumer.
 		return std::unique_ptr<ASTConsumer>(
@@ -676,6 +687,8 @@ Thankfully, templates are rarely used.
 A more common threat, macros, has a~similar effect. 
 Modifying a~source code containing macros and comments results in~
 losing both.
+
+\change[inline]{TODO: Show an example of instrumentation code.}
 
 Doing source-to-source transformation is often accompanied by 
 inserting instrumentation code. 
