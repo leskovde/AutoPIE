@@ -1,12 +1,10 @@
 #include <iostream>
 #include <filesystem>
-// Declares clang::SyntaxOnlyAction.
+
+#include "llvm/Support/CommandLine.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
-// Declares llvm::cl::extrahelp.
-#include "llvm/Support/CommandLine.h"
-
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTConsumer.h"
@@ -20,14 +18,32 @@
 
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 
-using namespace clang;
-using namespace driver;
-using namespace tooling;
 using namespace llvm;
 
-cl::OptionCategory MyToolCategory("my-tool options");
 
-extern cl::OptionCategory MyToolCategory;
+static cl::OptionCategory Args("AutoPIE Options");
+static cl::extrahelp CommonHelp(clang::tooling::CommonOptionsParser::HelpMessage);
+static cl::extrahelp MoreHelp("\nMore help text...");
+
+static cl::opt<std::string> SourceFile("loc-file",
+	cl::desc("(The name of the file in which the error occured.)"),
+	cl::init(""),
+	cl::cat(Args));
+
+static cl::opt<int> LineNumber("loc-line",
+	cl::desc("(The line number on which the error occured.)"),
+	cl::init(0),
+	cl::cat(Args));
+
+static cl::opt<std::string> ErrorMessage("error-message",
+	cl::desc("(A part of the error message specifying the nature of the error.)"),
+	cl::init(""),
+	cl::cat(Args));
+
+static cl::opt<double> ReductionRatio("ratio",
+	cl::desc("(Limits the reduction to a specific ratio between 0 and 1.)"),
+	cl::init(1.0),
+	cl::cat(Args));
 
 bool Validate(const char* const userInputError, const std::filesystem::directory_entry& entry)
 {
@@ -78,35 +94,33 @@ void ReduceStatement(GlobalContext& ctx, clang::tooling::CompilationDatabase& cd
 	ctx.iteration++;
 }
 
-// Generates a minimal program variant by naively removing statements.
-// Call:
-// > TheTool.exe [path to a cpp file] -- [runtime error] [error line location] [reduction ratio]
-// e.g. TheTool.exe C:\Users\User\llvm\llvm-project\TestSource.cpp -- std::invalid_argument 12 0.5
+/**
+ * Generates a minimal program variant by naively removing statements.
+ * 
+ * Call:
+ * > AutoPIE.exe [file with error] [line with error] [error description message] [reduction ratio] <source path 0> [... <source path N>] --
+ * e.g. AutoPIE.exe --loc-file="example.cpp" --loc-line=17 --error-message="stack overflow" --ratio=0.5 example.cpp --
+ */
 int main(int argc, const char** argv)
 {
-	assert(argc > 2);
-	
-	// TODO: Change strtol to something that parses `double`.
-	const auto acceptableRatio = std::strtol(argv[argc - 1], nullptr, 10);
-	
-	const auto userInputError = argv[argc - 3];
-	const auto userInputErrorLocation = std::strtol(argv[argc - 2], nullptr, 10);
+	// Parse the command-line args passed to the tool.
+	clang::tooling::CommonOptionsParser op(argc, argv, Args);
 
-	// Parse the command-line args passed to the code.
-	CommonOptionsParser op(argc, argv, MyToolCategory);
-	
+	// TODO: Create multi-file support.
 	if (op.getSourcePathList().size() > 1)
 	{
 		outs() << "Only a single source file is supported.\n";
 		return 0;
 	}
 
-	// Clean the temp directory.
-	std::filesystem::remove_all("temp/");
-	std::filesystem::create_directory("temp");
+	// Prompt the user to clear the temp directory.
+	if (!ClearTempDirectory(true))
+	{
+		llvm::outs() << "Terminating...";
+		return 0;
+	}
 
-
-	auto context = GlobalContext::GetInstance(*op.getSourcePathList().begin(), userInputErrorLocation, userInputError);
+	auto context = GlobalContext::GetInstance(*op.getSourcePathList().begin(), LineNumber, ErrorMessage);
 
 	const auto originalStatementCount = GetStatementCount(*context, op.getCompilations(), *op.getSourcePathList().begin());
 
@@ -122,7 +136,7 @@ int main(int argc, const char** argv)
 
 		const auto expressionCount = GetStatementCount(*context, op.getCompilations(), currentFile);
 
-		if ((static_cast<double>(expressionCount) / originalStatementCount) < acceptableRatio)
+		if ((static_cast<double>(expressionCount) / originalStatementCount) < ReductionRatio)
 		{
 			continue;
 		}
@@ -156,7 +170,7 @@ int main(int argc, const char** argv)
 
 	for (const auto& entry : files)
 	{
-		if (Validate(userInputError, entry))
+		if (Validate(ErrorMessage.c_str(), entry))
 		{
 			outs() << "Minimal program variant: ./temp/" << entry.path().c_str() << "\n";
 			minimalProgramVariantFound = true;

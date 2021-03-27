@@ -44,3 +44,24 @@ std::string ExecCommand(const char* cmd)
 
 	return result;
 }
+
+bool ClearTempDirectory(const bool prompt = false)
+{
+	if (prompt && std::filesystem::exists("temp/"))
+	{
+		llvm::outs() << "WARNING: The path 'temp/' exists and is about to be cleared! Do you want to proceed? [Y/n] ";
+		const auto decision = std::getchar();
+
+		if (decision == 'n' || decision == 'N')
+		{
+			return false;
+		}
+	}
+
+	llvm::outs() << "Clearing the 'temp/' directory...";
+
+	std::filesystem::remove_all("temp/");
+	std::filesystem::create_directory("temp");
+
+	return true;
+}
