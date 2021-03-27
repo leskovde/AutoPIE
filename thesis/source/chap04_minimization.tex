@@ -153,7 +153,7 @@ and verify them from the smallest to the largest.
 Depending on the input program's execution time, the verification might take 
 more time than the variant generation step.
 
-\subsection{Takeaways}
+\subsection{Takeaways} \label{sec:takeaways}
 
 \change{TODO: Draw parallels to the traveling salesman problem and reduce 
 the complexity to exponential.}
@@ -316,8 +316,8 @@ at runtime.
 Static slicing does not suffer from the mentioned issue.
 It is inexpensive in terms of execution time regardless of the purpose 
 of the sliced program.
-With the arguments trick mentioned in section 4.1, static slices can be 
-as small as dynamic ones.
+With the arguments trick mentioned in section~\ref{sec:takeaways}, 
+static slices can be as small as dynamic ones.
 Minimality of the slice is, however, not guaranteed.
 
 It is safer to employ dynamic slicing to get the smallest slices possible.

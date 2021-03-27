@@ -332,34 +332,7 @@ The compilation action also implies that LibTooling tools often
 do not support incomplete source codes. 
 The same can be said for programs that contain compile-time errors.
 
-An additional characteristic of~Clang's AST is its immutability. 
-The AST has strong invariants that might be broken upon changing 
-its structure. 
-Generally, changes to the~Clang AST are strongly discouraged, 
-although some changes happen internally. 
-Those changes include template instantiation.
-
-Traversing the~Clang AST is possible through two different APIs. 
-First, it is possible to invoke an \icode{ASTFrontendAction}, which 
-creates an \icode{ASTConsumer}, who then calls 
-the \icode{ASTRecursiveVisitor}. 
-The front-end action is invoked upon parsing a~source file. 
-The action can be overridden to create a~consumer and pass any necessary 
-data to it. 
-For example, this data might include references to variables used for 
-counting objects in~the AST or more complicated constructs. 
-
-Listing~\ref{lst:astfrontendaction} showcases an example of such frontend 
-action. 
-The custom class contains a variable used for counting statements 
-in the source code. 
-The reference to that variable is passed further when creating a consumer. 
-After the source code is parsed, the overridden \icode{EndSourceFileAction} 
-method is launched. 
-Inside the method's body, the data gathered during the traversal is 
-displayed.
-
-\begin{figure}[ht]\centering
+\begin{figure}[h]\centering
 \begin{lstlisting}[language=C++]
 /**
  * Creates a consumer, performs actions after 
@@ -394,37 +367,34 @@ a body of actions after the file is parsed.}
 \label{lst:astfrontendaction}
 \end{figure}
 
-The \icode{ASTConsumer}'s job is to read the~Clang AST and handle actions
-on the~tree's specific items. 
-One such action is \icode{HandleTopLevelDecl()}, which, as the~name suggests,
-handles the~highest priority declaration in~a file. 
-These handle functions are overridable. 
-The consumer also keeps track of~a~visitor implemented by inhering from 
-the ASTRecursiveVisitor class. 
-The consumer dispatches the~visitor from overridden handle methods. 
-However, it is not always beneficial to override granular handle methods. 
-Handling specific events in~the consumer might lead to an intriguing case 
-in which a~part of~the~code is parsed while the~rest is not. 
-This unwanted behavior can be avoided by overriding just 
-the \icode{HandleTranslationUnit()} method. 
-The translation unit is handled once the~entire source file is parsed. 
-Dispatching the~visitor internally from a~consumer is the~preferred 
-approach. 
-Visit methods of~the~\icode{ASTRecursiveVisitor} should not be called 
-directly. 
-Details concerning the~visitor can be found in~the following section.
+An additional characteristic of~Clang's AST is its immutability. 
+The AST has strong invariants that might be broken upon changing 
+its structure. 
+Generally, changes to the~Clang AST are strongly discouraged, 
+although some changes happen internally. 
+Those changes include template instantiation.
 
-In the example shown in~\ref{lst:astconsumer}, the consumer passes variable 
-references to the visitor. 
-These references have previously been attained from the frontend action. 
-A reference to the constructed visitor is stored inside the consumer. 
-The visitor is then dispatched in the overridden 
-\icode{HandleTranslationUnit} method. 
-As was described earlier, \icode{ASTContext} helps to retrieve references 
-to top-level nodes.
+Traversing the~Clang AST is possible through two different APIs. 
+First, it is possible to invoke an \icode{ASTFrontendAction}, which 
+creates an \icode{ASTConsumer}, who then calls 
+the \icode{ASTRecursiveVisitor}. 
+The front-end action is invoked upon parsing a~source file. 
+The action can be overridden to create a~consumer and pass any necessary 
+data to it. 
+For example, this data might include references to variables used for 
+counting objects in~the AST or more complicated constructs. 
 
+Listing~\ref{lst:astfrontendaction} showcases an example of such frontend 
+action. 
+The custom class contains a variable used for counting statements 
+in the source code. 
+The reference to that variable is passed further when creating a consumer. 
+After the source code is parsed, the overridden \icode{EndSourceFileAction} 
+method is launched. 
+Inside the method's body, the data gathered during the traversal is 
+displayed.
 
-\begin{figure}[ht]\centering
+\begin{figure}[H]\centering
 \begin{lstlisting}[language=C++]
 /**
  * Dispatches the CountASTVisitor on the translation 
@@ -453,6 +423,35 @@ Showcased is the ability to transfer data to a visitor and
 to dispatch the visitor.}
 \label{lst:astconsumer}
 \end{figure}
+
+The \icode{ASTConsumer}'s job is to read the~Clang AST and handle actions
+on the~tree's specific items. 
+One such action is \icode{HandleTopLevelDecl()}, which, as the~name suggests,
+handles the~highest priority declaration in~a file. 
+These handle functions are overridable. 
+The consumer also keeps track of~a~visitor implemented by inhering from 
+the ASTRecursiveVisitor class. 
+The consumer dispatches the~visitor from overridden handle methods. 
+However, it is not always beneficial to override granular handle methods. 
+Handling specific events in~the consumer might lead to an intriguing case 
+in which a~part of~the~code is parsed while the~rest is not. 
+This unwanted behavior can be avoided by overriding just 
+the \icode{HandleTranslationUnit()} method. 
+The translation unit is handled once the~entire source file is parsed. 
+Dispatching the~visitor internally from a~consumer is the~preferred 
+approach. 
+Visit methods of~the~\icode{ASTRecursiveVisitor} should not be called 
+directly. 
+Details concerning the~visitor can be found in~the following section.
+
+In the example shown in~\ref{lst:astconsumer}, the consumer passes variable 
+references to the visitor. 
+These references have previously been attained from the frontend action. 
+A reference to the constructed visitor is stored inside the consumer. 
+The visitor is then dispatched in the overridden 
+\icode{HandleTranslationUnit} method. 
+As was described earlier, \icode{ASTContext} helps to retrieve references 
+to top-level nodes.
 
 Second, one can use AST Matchers. 
 Matchers, unlike the~visitor approach, do not require a~complicated setup. 
@@ -615,7 +614,7 @@ to matchers. It can be found at
 Going by the~mentioned rules of~building an expression, it would have 
 the following form: 
 
-\begin{figure}
+\begin{figure}[H]\centering
 \begin{lstlisting}[language=C++, numbers=none]
 binaryOperator(hasOperatorName("+"), hasLHS(integerLiteral(equals(0)))).
 \end{lstlisting}
