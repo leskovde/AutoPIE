@@ -68,20 +68,7 @@ bool ClearTempDirectory(const bool prompt = false)
 	return true;
 }
 
-bool IsFull(std::vector<bool>& bitfield)
-{
-	for (const auto& bit : bitfield)
-	{
-		if (!bit)
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
-
-static std::string Stringify(std::vector<bool>& bitfield)
+static std::string Stringify(BitMask& bitfield)
 {
 	std::string bits;
 
@@ -100,13 +87,26 @@ static std::string Stringify(std::vector<bool>& bitfield)
 	return bits;
 }
 
-void Increment(std::vector<bool>& bitfield)
+bool IsFull(BitMask& bitMask)
+{
+	for (const auto& bit : bitMask)
+	{
+		if (!bit)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+void Increment(BitMask& bitMask)
 {
 	// TODO: Write unit tests for this function (and the all variant generation).
 
-	llvm::outs() << "DEBUG: Before inc: " << Stringify(bitfield) << "\n";
+	llvm::outs() << "DEBUG: Before inc: " << Stringify(bitMask) << "\n";
 	
-	for (auto it = bitfield.rbegin(); it != bitfield.rend(); ++it)
+	for (auto it = bitMask.rbegin(); it != bitMask.rend(); ++it)
 	{
 		if (*it)
 		{
@@ -119,18 +119,18 @@ void Increment(std::vector<bool>& bitfield)
 		}
 	}
 
-	llvm::outs() << "DEBUG: After inc: " << Stringify(bitfield) << "\n";
+	llvm::outs() << "DEBUG: After inc: " << Stringify(bitMask) << "\n";
 }
 
-bool IsValid(std::vector<bool>& bitfield, DependencyGraph& dependencies)
+bool IsValid(BitMask& bitMask, DependencyGraph& dependencies)
 {
-	for (size_t i = 0; i < bitfield.size(); i++)
+	for (size_t i = 0; i < bitMask.size(); i++)
 	{
 		auto children = dependencies.GetDependentNodes(i);
 
 		for (auto child : children)
 		{
-			if (bitfield[i] != bitfield[child])
+			if (bitMask[i] != bitMask[child])
 			{
 				return false;
 			}

@@ -6,6 +6,8 @@
 
 class DependencyGraph;
 
+using BitMask = std::vector<bool>;
+
 struct Location
 {
 	std::string fileName;
@@ -35,8 +37,8 @@ std::string ExecCommand(const char* cmd);
 
 bool ClearTempDirectory(bool prompt);
 
-bool IsFull(std::vector<bool>& bitfield);
+bool IsFull(BitMask& bitMask);
 
-void Increment(std::vector<bool>& bitfield);
+void Increment(BitMask& bitMask);
 
-bool IsValid(std::vector<bool>& bitfield, DependencyGraph& dependencies);
+bool IsValid(BitMask& bitMask, DependencyGraph& dependencies);

@@ -2,7 +2,6 @@
 #include <clang/AST/ASTConsumer.h>
 
 #include "Visitors.h"
-#include <bitset>
 #include "DependencyGraph.h"
 
 class StatementReductionASTConsumer final : public clang::ASTConsumer
@@ -14,8 +13,10 @@ public:
 		: visitor(std::make_unique<StatementReductionASTVisitor>(ci, context))
 	{}
 
-	void HandleTranslationUnit(clang::ASTContext& context) override
+	void HandleTranslationUnit(clang::ASTContext& context, const std::string& fileName, const BitMask bitMask) const
 	{
+		visitor->SetBitMask(bitMask);
+		visitor->SetOutputFile(fileName);
 		visitor->TraverseDecl(context.getTranslationUnitDecl());
 	}
 };
@@ -36,12 +37,12 @@ public:
 		visitor_->TraverseDecl(context.getTranslationUnitDecl());
 	}
 
-	int GetCodeUnitsCount() const
+	[[nodiscard]] int GetCodeUnitsCount() const
 	{
 		return codeUnitsCount_;
 	}
 
-	DependencyGraph GetDependencyGraph()
+	DependencyGraph GetDependencyGraph() const
 	{
 		return graph_;
 	}
@@ -67,16 +68,28 @@ public:
 		// Podle pravidel generovat bitmasky.
 		// Podle bitmasky projit visitorem AST a vypsat ho.
 
-		auto bitMask = std::vector<bool>(numberOfCodeUnits);
+		auto bitMask = BitMask(numberOfCodeUnits);
 		auto dependencies = mappingConsumer_.GetDependencyGraph();
 
+		llvm::outs() << "Maximum expected variants: " << pow(2, numberOfCodeUnits) << "\n";
+		
+		auto variantsCount = 0;
+		
 		while (!IsFull(bitMask))
 		{
 			Increment(bitMask);
 
 			if (IsValid(bitMask, dependencies))
 			{
+				if (variantsCount % 50 == 0)
+				{
+					llvm::outs() << "Done " << variantsCount << " variants.\n";
+				}
+
+				variantsCount++;
 				
+				auto fileName = std::to_string(variantsCount) + "_tempFile.cpp";
+				reductionConsumer_.HandleTranslationUnit(context, fileName, bitMask);
 			}
 		}
 	}

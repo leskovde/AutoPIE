@@ -8,10 +8,13 @@
 // Traverses the AST and removes a selected statement set by the CurrentLine number.
 class StatementReductionASTVisitor : public clang::RecursiveASTVisitor<StatementReductionASTVisitor>
 {
-	int iteration = 0;
 	clang::ASTContext& astContext;
 	GlobalContext& globalContext;
-
+	
+	int iteration = 0;
+	BitMask bitMask;
+	std::string outputFile;
+	
 public:
 	StatementReductionASTVisitor(clang::CompilerInstance* ci, GlobalContext& ctx)
 		: astContext(ci->getASTContext()), globalContext(ctx)
@@ -56,6 +59,16 @@ public:
 		}
 
 		return true;
+	}
+
+	void SetOutputFile(const std::string& fileName)
+	{
+		outputFile = fileName;
+	}
+
+	void SetBitMask(const BitMask& mask)
+	{
+		bitMask = mask;
 	}
 };
 
