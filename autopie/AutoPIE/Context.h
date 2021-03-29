@@ -70,22 +70,6 @@ public:
 
 class GlobalContext
 {
-	// TODO: Implement the rule of 5.
-	// TODO: Change the raw pointer to an unique_ptr.
-	static GlobalContext* instance;
-
-	GlobalContext(InputData& input, const std::string& source) : parsedInput(input)
-	{
-		globalRewriter = clang::Rewriter();
-		countVisitorContext = CountVisitorContext();
-		statementReductionContext = StatementReductionContext();
-
-		searchStack = std::stack<std::string>();
-		searchStack.push(source);
-
-		llvm::errs() << "DEBUG: GlobalContext - New non-default constructor call.\n";
-	}
-
 	GlobalContext(): parsedInput(InputData("", Location("", 0), 0.0))
 	{
 		llvm::errs() << "DEBUG: GlobalContext - New default constructor call.\n";
@@ -103,26 +87,15 @@ public:
 	InputData parsedInput;
 	std::stack<std::string> searchStack;
 
-	GlobalContext(GlobalContext& other) = delete;
-
-	void operator=(const GlobalContext&) = delete;
-	
-	static GlobalContext* GetInstance()
+	GlobalContext(InputData& input, const std::string& source) : parsedInput(input)
 	{
-		if (!instance)
-		{
-			instance = new GlobalContext();
-		}
-		
-		return instance;
-	}
+		globalRewriter = clang::Rewriter();
+		countVisitorContext = CountVisitorContext();
+		statementReductionContext = StatementReductionContext();
 
-	static GlobalContext* GetInstance(InputData& input, const std::string& source)
-	{
-		delete instance;
+		searchStack = std::stack<std::string>();
+		searchStack.push(source);
 
-		instance = new GlobalContext(input, source);
-		
-		return instance;
+		llvm::errs() << "DEBUG: GlobalContext - New non-default constructor call.\n";
 	}
 };

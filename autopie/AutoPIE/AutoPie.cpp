@@ -89,11 +89,12 @@ void ReduceStatement(GlobalContext& ctx, clang::tooling::CompilationDatabase& cd
 	ctx.statementReductionContext = StatementReductionContext(statementNumber);
 
 	clang::tooling::ClangTool tool(cd, fileName);
-	auto result = tool.run(clang::tooling::newFrontendActionFactory<StatementReduceAction>().get());
+	auto result = tool.run(clang::tooling::newFrontendActionFactory<VariantGenerationAction>().get());
 
 	ctx.iteration++;
 }
 
+/*
 unsigned long GenerateVariants(GlobalContext* context, clang::tooling::CommonOptionsParser& op, const int originalSourceSize)
 {
 	unsigned long variantCount = 0;
@@ -117,10 +118,12 @@ unsigned long GenerateVariants(GlobalContext* context, clang::tooling::CommonOpt
 
 		const auto variantSize = GetStatementCount(*context, op.getCompilations(), currentFile);
 
-		if (static_cast<double>(variantSize) / originalSourceSize < ReductionRatio)
+		if (static_cast<double>(variantSize) / originalSourceSize < context->parsedInput.reductionRatio)
 		{
 			continue;
 		}
+
+		// TODO: Start from here.
 
 		// Remove each statement once and push a new file without that statement onto the stack (done inside the FrontEndAction).
 		for (auto i = 1; i <= variantSize; i++)
@@ -132,6 +135,7 @@ unsigned long GenerateVariants(GlobalContext* context, clang::tooling::CommonOpt
 
 	return variantCount;
 }
+*/
 
 /**
  * Generates a minimal program variant by naively removing statements.
@@ -161,35 +165,12 @@ int main(int argc, const char** argv)
 		return 0;
 	}
 
-	auto context = GlobalContext::GetInstance(parsedInput, *op.getSourcePathList().begin());
-	const auto originalStatementCount = GetStatementCount(*context, op.getCompilations(), *op.getSourcePathList().begin());
+	auto context = GlobalContext(parsedInput, *op.getSourcePathList().begin());
 
-	auto count = GenerateVariants(context, op, originalStatementCount);
+	clang::tooling::ClangTool tool(op.getCompilations(), context.parsedInput.errorLocation.fileName);
+	auto result = tool.run(CustomFrontendActionFactory(context).get());
 	
 	// TODO: Prevent duplicate program variants during generation => both search and verification speedup.
-	
-	// Search all possible source code variations in a DFS manner.
-	while (!context->searchStack.empty())
-	{
-		auto currentFile = context->searchStack.top();
-		context->searchStack.pop();
-
-		outs() << "REDUCING: " << currentFile << " with " << std::to_string(context->searchStack.size()) << " files remaining on the stack.\n";
-
-		const auto expressionCount = GetStatementCount(*context, op.getCompilations(), currentFile);
-
-		if ((static_cast<double>(expressionCount) / originalStatementCount) < ReductionRatio)
-		{
-			continue;
-		}
-
-		// Remove each statement once and push a new file without that statement onto the stack (done inside the FrontEndAction).
-		for (auto i = 1; i <= expressionCount; i++)
-		{
-			outs() << "\tIteration: " << std::to_string(context->iteration) << " (targeting statement no. " << i << " )\n\n";
-			ReduceStatement(*context, op.getCompilations(), currentFile, i);
-		}
-	}
 
 	outs() << "\n============================================================\n";
 	outs() << "VERIFICATION\n";

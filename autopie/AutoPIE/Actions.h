@@ -3,20 +3,28 @@
 #include <clang/Frontend/FrontendAction.h>
 
 #include "Consumers.h"
+#include <clang/Tooling/Tooling.h>
+#include "Context.h"
 
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 
 std::string TempName = "tempFile.cpp";
 
-class StatementReduceAction final : public clang::ASTFrontendAction
+std::unique_ptr<clang::tooling::FrontendActionFactory> CustomFrontendActionFactory(GlobalContext& context);
+
+class VariantGenerationAction final : public clang::ASTFrontendAction
 {
-	GlobalContext* globalContext = GlobalContext::GetInstance();
+	GlobalContext& globalContext;
 	
 public:
+
+	explicit VariantGenerationAction(GlobalContext& context): globalContext(context)
+	{}
 
 	// Prints the updated source file to a new file specific to the current iteration.
 	void EndSourceFileAction() override
 	{
+		/*
 		if (!globalContext->statementReductionContext.GetSourceStatus())
 		{
 			return;
@@ -36,12 +44,12 @@ public:
 		outFile.close();
 
 		globalContext->searchStack.push(fileName);
+		*/
 	}
 
 	std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, llvm::StringRef file) override
 	{
 		return std::unique_ptr<clang::ASTConsumer>(std::make_unique<StatementReductionASTConsumer>(&ci, globalContext));
-		// pass CI pointer to ASTConsumer
 	}
 };
 
