@@ -6,10 +6,6 @@
 #include <clang/Tooling/Tooling.h>
 #include "Context.h"
 
-#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
-
-std::string TempName = "tempFile.cpp";
-
 std::unique_ptr<clang::tooling::FrontendActionFactory> CustomFrontendActionFactory(GlobalContext& context);
 
 class VariantGenerationAction final : public clang::ASTFrontendAction
@@ -48,6 +44,6 @@ public:
 
 	std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, llvm::StringRef file) override
 	{
-		return std::unique_ptr<clang::ASTConsumer>(std::make_unique<VariantPrintingASTConsumer>(&ci, globalContext));
+		return std::unique_ptr<clang::ASTConsumer>(std::make_unique<VariantGenerationConsumer>(&ci, globalContext));
 	}
 };

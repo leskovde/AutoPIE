@@ -151,7 +151,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Actions.cpp" />
-    <ClCompile Include="Context.cpp" />
     <ClCompile Include="Helper.cpp" />
     <ClCompile Include="AutoPie.cpp" />
   </ItemGroup>

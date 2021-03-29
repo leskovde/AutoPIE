@@ -4,6 +4,7 @@
 
 #include "Helper.h"
 #include "DependencyGraph.h"
+#include <clang/Basic/SourceManager.h>
 
 clang::SourceRange GetSourceRange(const clang::Stmt& s)
 {
@@ -31,7 +32,7 @@ std::string ExecCommand(const char* cmd)
 {
 	std::array<char, 128> buffer;
 	std::string result;
-	std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cmd, "r"), _pclose);
+	const std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cmd, "r"), _pclose);
 
 	if (!pipe)
 	{
@@ -68,11 +69,11 @@ bool ClearTempDirectory(const bool prompt = false)
 	return true;
 }
 
-static std::string Stringify(BitMask& bitfield)
+static std::string Stringify(BitMask& bitMask)
 {
 	std::string bits;
 
-	for (auto bit : bitfield)
+	for (auto bit : bitMask)
 	{
 		if (bit)
 		{
@@ -103,22 +104,20 @@ bool IsFull(BitMask& bitMask)
 void Increment(BitMask& bitMask)
 {
 	// TODO: Write unit tests for this function (and the all variant generation).
-
-	llvm::outs() << "DEBUG: Before inc: " << Stringify(bitMask) << "\n";
 	
-	for (auto it = bitMask.rbegin(); it != bitMask.rend(); ++it)
+	for (size_t i = bitMask.size() - 1; i >= 0; i--)
 	{
-		if (*it)
+		if (bitMask[i])
 		{
-			it->flip();
+			bitMask[i].flip();
 		}
 		else
 		{
-			it->flip();
+			bitMask[i].flip();
 			break;
 		}
 	}
-
+	
 	llvm::outs() << "DEBUG: After inc: " << Stringify(bitMask) << "\n";
 }
 
@@ -138,4 +137,39 @@ bool IsValid(BitMask& bitMask, DependencyGraph& dependencies)
 	}
 
 	return true;
+}
+
+/**
+ * Gets the portion of the code that corresponds to given SourceRange exactly as
+ * the range is given.
+ *
+ * @warning The end location of the SourceRange returned by some Clang functions
+ * (such as clang::Expr::getSourceRange) might actually point to the first character
+ * (the "location") of the last token of the expression, rather than the character
+ * past-the-end of the expression like clang::Lexer::getSourceText expects.
+ * get_source_text_raw() does not take this into account. Use get_source_text()
+ * instead if you want to get the source text including the last token.
+ *
+ * @warning This function does not obtain the source of a macro/preprocessor expansion.
+ * Use get_source_text() for that.
+ */
+llvm::StringRef GetSourceTextRaw(const clang::SourceRange range, const clang::SourceManager& sm)
+{
+	return clang::Lexer::getSourceText(clang::CharSourceRange::getCharRange(range), sm, clang::LangOptions());
+}
+
+
+/**
+ * Gets the portion of the code that corresponds to given SourceRange, including the
+ * last token. Returns expanded macros.
+ */
+llvm::StringRef GetSourceText(clang::SourceRange range, const clang::SourceManager& sm)
+{
+	const clang::LangOptions lo;
+
+	const auto startLoc = sm.getSpellingLoc(range.getBegin());
+	const auto lastTokenLoc = sm.getSpellingLoc(range.getEnd());
+	const auto endLoc = clang::Lexer::getLocForEndOfToken(lastTokenLoc, 0, sm, lo);
+	const auto printableRange = clang::SourceRange{ startLoc, endLoc };
+	return GetSourceTextRaw(printableRange, sm);
 }

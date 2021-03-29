@@ -25,23 +25,28 @@ class DependencyMappingASTConsumer final : public clang::ASTConsumer
 {
 	MappingASTVisitorRef mappingVisitor_;
 	DependencyASTVisitorRef dependencyVisitor_;
-	NodeMappingRef nodeMapping_ = std::make_shared<NodeMapping>();
+	NodeMappingRef nodeMapping_;
 
 public:
 	DependencyMappingASTConsumer(clang::CompilerInstance* ci, GlobalContext& context)
-		: mappingVisitor_(std::make_unique<MappingASTVisitor>(ci, context, nodeMapping_)),
-		dependencyVisitor_(std::make_unique<DependencyASTVisitor>(ci, context, nodeMapping_))
-	{}
+	{
+		nodeMapping_ = std::make_shared<NodeMapping>();
+		mappingVisitor_ = std::make_unique<MappingASTVisitor>(ci, nodeMapping_);
+		dependencyVisitor_ = std::make_unique<DependencyASTVisitor>(ci, context, nodeMapping_);
+	}
 
 	void HandleTranslationUnit(clang::ASTContext& context) override
 	{
 		mappingVisitor_->TraverseDecl(context.getTranslationUnitDecl());
+
+		llvm::outs() << "DEBUG: AST nodes counted: " << mappingVisitor_->codeUnitsCount << ", AST nodes actual: " << nodeMapping_->size() << "\n";
+		
 		dependencyVisitor_->TraverseDecl(context.getTranslationUnitDecl());
 	}
 
 	[[nodiscard]] int GetCodeUnitsCount() const
 	{
-		return mappingVisitor_->codeUnitsCount;
+		return nodeMapping_->size();
 	}
 
 	DependencyGraph GetDependencyGraph() const

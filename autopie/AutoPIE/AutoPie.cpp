@@ -72,28 +72,6 @@ bool Validate(const char* const userInputError, const std::filesystem::directory
 	return false;
 }
 
-// Returns the number statements in the fileName source code file.
-int GetStatementCount(GlobalContext& ctx, clang::tooling::CompilationDatabase& cd, const std::string& fileName)
-{
-	ctx.countVisitorContext.ResetStatementCount();
-
-	clang::tooling::ClangTool tool(cd, fileName);
-	auto result = tool.run(clang::tooling::newFrontendActionFactory<CountAction>().get());
-	
-	return ctx.countVisitorContext.GetTotalStatementCount();
-}
-
-// Removes statementNumber-th statement in the fileName source code file.
-void ReduceStatement(GlobalContext& ctx, clang::tooling::CompilationDatabase& cd, const std::string& fileName, const int statementNumber)
-{
-	ctx.statementReductionContext = StatementReductionContext(statementNumber);
-
-	clang::tooling::ClangTool tool(cd, fileName);
-	auto result = tool.run(clang::tooling::newFrontendActionFactory<VariantGenerationAction>().get());
-
-	ctx.iteration++;
-}
-
 /*
 unsigned long GenerateVariants(GlobalContext* context, clang::tooling::CommonOptionsParser& op, const int originalSourceSize)
 {
@@ -159,7 +137,7 @@ int main(int argc, const char** argv)
 	auto parsedInput = InputData(ErrorMessage, Location(SourceFile, LineNumber), ReductionRatio);
 
 	// Prompt the user to clear the temp directory.
-	if (!ClearTempDirectory(true))
+	if (!ClearTempDirectory(false))
 	{
 		outs() << "Terminating...\n";
 		return 0;
@@ -169,6 +147,8 @@ int main(int argc, const char** argv)
 
 	clang::tooling::ClangTool tool(op.getCompilations(), context.parsedInput.errorLocation.fileName);
 	auto result = tool.run(CustomFrontendActionFactory(context).get());
+
+	return 0;
 	
 	// TODO: Prevent duplicate program variants during generation => both search and verification speedup.
 

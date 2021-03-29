@@ -4,6 +4,7 @@
 #include <clang/Rewrite/Core/Rewriter.h>
 
 #include "Helper.h"
+#include "Context.h"
 #include "DependencyGraph.h"
 
 class VariantPrintingASTVisitor;
@@ -25,6 +26,29 @@ class VariantPrintingASTVisitor : public clang::RecursiveASTVisitor<VariantPrint
 	BitMask bitMask;
 	int currentNode = 0;
 	std::string outputFile;
+
+	void Print(clang::SourceRange range)
+	{
+		const auto startLineNumber = astContext.getSourceManager().getSpellingLineNumber(range.getBegin());
+		const auto endLineNumber = astContext.getSourceManager().getSpellingLineNumber(range.getEnd());
+
+		const auto endTokenLoc = astContext.getSourceManager().getSpellingLoc(range.getEnd());
+
+		const auto startLoc = astContext.getSourceManager().getSpellingLoc(range.getBegin());
+		const auto endLoc = clang::Lexer::getLocForEndOfToken(endTokenLoc, 0, astContext.getSourceManager(), clang::LangOptions());
+
+		range = clang::SourceRange(startLoc, endLoc);
+
+		clang::Rewriter localRewriter;
+		localRewriter.setSourceMgr(astContext.getSourceManager(), astContext.getLangOpts());
+
+		auto s = GetSourceText(range, astContext.getSourceManager());
+
+		llvm::outs() << localRewriter.getRewrittenText(range) << "\n";
+		llvm::outs() << range.printToString(astContext.getSourceManager()) << "\n";
+
+		//globalContext->globalRewriter.RemoveText(range);
+	}
 	
 public:
 	VariantPrintingASTVisitor(clang::CompilerInstance* ci, GlobalContext& ctx)
@@ -35,40 +59,30 @@ public:
 			astContext.getLangOpts());
 	}
 
+	virtual bool VisitDecl(clang::Decl* decl)
+	{
+		if (bitMask[currentNode])
+		{
+			auto range = decl->getSourceRange();
+
+			Print(range);
+		}
+		
+		currentNode++;
+		return true;
+	}
+
+	virtual bool VisitExpr(clang::Expr* expr)
+	{
+
+		currentNode++;
+		return true;
+	}
+	
 	virtual bool VisitStmt(clang::Stmt* st)
 	{
-		iteration++;
 
-		if (iteration == globalContext.statementReductionContext.GetTargetStatementNumber())
-		{
-			const auto numberOfChildren = GetChildrenCount(st);
-
-			const auto range = GetSourceRange(*st);
-			const auto locStart = astContext.getSourceManager().getPresumedLoc(range.getBegin());
-			const auto locEnd = astContext.getSourceManager().getPresumedLoc(range.getEnd());
-
-			clang::Rewriter localRewriter;
-			localRewriter.setSourceMgr(astContext.getSourceManager(), astContext.getLangOpts());
-
-			llvm::outs() << "\t\t============================================================\n";
-			llvm::outs() << "\t\tSTATEMENT NO. " << iteration << "\n";
-			llvm::outs() << "CODE: " << localRewriter.getRewrittenText(range) << "\n";
-			llvm::outs() << range.printToString(astContext.getSourceManager()) << "\n";
-			llvm::outs() << "\t\tCHILDREN COUNT: " << numberOfChildren << "\n";
-			llvm::outs() << "\t\t============================================================\n\n";
-
-			//globalContext->statementReductionContext = StatementReductionContext(globalContext->statementReductionContext.GetTargetStatementNumber() + numberOfChildren);
-
-			if (locStart.getLine() != globalContext.parsedInput.errorLocation.lineNumber && 
-				locEnd.getLine() != globalContext.parsedInput.errorLocation.lineNumber)
-			{
-				globalContext.globalRewriter.RemoveText(range);
-				globalContext.statementReductionContext.ChangeSourceStatus();
-			}
-
-			return false;
-		}
-
+		currentNode++;
 		return true;
 	}
 
@@ -86,11 +100,10 @@ public:
 class MappingASTVisitor : public clang::RecursiveASTVisitor<MappingASTVisitor>
 {
 	clang::ASTContext& astContext_;
-	GlobalContext& globalContext_;
 	NodeMappingRef nodeMapping_;
 
 	void InsertMapping(int astId, int myId) const
-	{
+	{		
 		auto const success = nodeMapping_->insert(std::pair<int, int>(astId, myId)).second;
 
 		if (!success)
@@ -102,31 +115,40 @@ class MappingASTVisitor : public clang::RecursiveASTVisitor<MappingASTVisitor>
 public:
 	int codeUnitsCount = 0;
 
-	MappingASTVisitor(clang::CompilerInstance* ci, GlobalContext& ctx, const NodeMappingRef mapping)
-		: astContext_(ci->getASTContext()), globalContext_(ctx), nodeMapping_(mapping)
+	MappingASTVisitor(clang::CompilerInstance* ci, const NodeMappingRef mapping)
+		: astContext_(ci->getASTContext()), nodeMapping_(mapping)
 	{}
 
 	virtual bool VisitDecl(clang::Decl* decl)
 	{
-		InsertMapping(decl->getID(), codeUnitsCount);
+		if (nodeMapping_->find(decl->getID()) == nodeMapping_->end())
+		{
+			InsertMapping(decl->getID(), codeUnitsCount);
+			codeUnitsCount++;
+		}
 
-		codeUnitsCount++;
 		return true;
 	}
 
 	virtual bool VisitExpr(clang::Expr* expr)
 	{
-		InsertMapping(expr->getID(astContext_), codeUnitsCount);
-
-		codeUnitsCount++;
+		if (nodeMapping_->find(expr->getID(astContext_)) == nodeMapping_->end())
+		{
+			InsertMapping(expr->getID(astContext_), codeUnitsCount);
+			codeUnitsCount++;
+		}
+		
 		return true;
 	}
 
 	virtual bool VisitStmt(clang::Stmt* stmt)
 	{
-		InsertMapping(stmt->getID(astContext_), codeUnitsCount);
-
-		codeUnitsCount++;
+		if (nodeMapping_->find(stmt->getID(astContext_)) == nodeMapping_->end())
+		{
+			InsertMapping(stmt->getID(astContext_), codeUnitsCount);
+			codeUnitsCount++;
+		}
+		
 		return true;
 	}
 };
@@ -147,14 +169,19 @@ public:
 
 	virtual bool VisitExpr(clang::Expr* expr)
 	{
+		// Do not allow small expressions to be recognized as full statements by visiting this method instead of VisitStmt.
 		return true;
 	}
 	
 	virtual bool VisitStmt(clang::Stmt* stmt)
 	{
-		for (auto& child : stmt->children())
+		// Apparently only statements have children.
+		for (auto it = stmt->child_begin(); it != stmt->child_end(); ++it)
 		{
-			graph.InsertDependency((*nodeMapping_)[stmt->getID(astContext_)], (*nodeMapping_)[child->getID(astContext_)]);
+			if (*it)
+			{
+				graph.InsertDependency((*nodeMapping_)[stmt->getID(astContext_)], (*nodeMapping_)[it->getID(astContext_)]);				
+			}
 		}
 		
 		return true;

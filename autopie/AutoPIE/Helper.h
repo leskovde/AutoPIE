@@ -3,6 +3,7 @@
 #include <clang/AST/Stmt.h>
 #include <filesystem>
 #include <clang/AST/ExternalASTSource.h>
+#include <clang/Lex/Lexer.h>
 
 class DependencyGraph;
 
@@ -42,3 +43,7 @@ bool IsFull(BitMask& bitMask);
 void Increment(BitMask& bitMask);
 
 bool IsValid(BitMask& bitMask, DependencyGraph& dependencies);
+
+llvm::StringRef GetSourceTextRaw(clang::SourceRange range, const clang::SourceManager& sm);
+
+llvm::StringRef GetSourceText(clang::SourceRange range, const clang::SourceManager& sm);
