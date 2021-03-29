@@ -4,6 +4,8 @@
 #include <filesystem>
 #include <clang/AST/ExternalASTSource.h>
 
+class DependencyGraph;
+
 struct Location
 {
 	std::string fileName;
@@ -32,3 +34,9 @@ int GetChildrenCount(clang::Stmt* st);
 std::string ExecCommand(const char* cmd);
 
 bool ClearTempDirectory(bool prompt);
+
+bool IsFull(std::vector<bool>& bitfield);
+
+void Increment(std::vector<bool>& bitfield);
+
+bool IsValid(std::vector<bool>& bitfield, DependencyGraph& dependencies);

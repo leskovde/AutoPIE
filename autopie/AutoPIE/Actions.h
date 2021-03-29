@@ -21,7 +21,6 @@ public:
 	explicit VariantGenerationAction(GlobalContext& context): globalContext(context)
 	{}
 
-	// Prints the updated source file to a new file specific to the current iteration.
 	void EndSourceFileAction() override
 	{
 		/*
@@ -50,26 +49,5 @@ public:
 	std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, llvm::StringRef file) override
 	{
 		return std::unique_ptr<clang::ASTConsumer>(std::make_unique<StatementReductionASTConsumer>(&ci, globalContext));
-	}
-};
-
-class CountAction final : public clang::ASTFrontendAction
-{
-	GlobalContext* globalContext = GlobalContext::GetInstance();
-
-public:
-
-	// Prints the number of statements in the source code to the console
-	void EndSourceFileAction() override
-	{
-		llvm::outs() << "\t\tCOUNT ACTION: END OF FILE ACTION:\n";
-		llvm::outs() << "\t\t\tStatement count: " << globalContext->countVisitorContext.GetTotalStatementCount();
-		llvm::outs() << "\n\n";
-	}
-
-	std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, llvm::StringRef file) override
-	{
-		return std::unique_ptr<clang::ASTConsumer>(std::make_unique<CountASTConsumer>(&ci, globalContext));
-		// pass CI pointer to ASTConsumer
 	}
 };

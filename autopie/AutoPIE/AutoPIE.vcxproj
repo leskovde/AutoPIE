@@ -159,6 +159,7 @@
     <ClInclude Include="Actions.h" />
     <ClInclude Include="Consumers.h" />
     <ClInclude Include="Context.h" />
+    <ClInclude Include="DependencyGraph.h" />
     <ClInclude Include="Helper.h" />
     <ClInclude Include="Visitors.h" />
   </ItemGroup>

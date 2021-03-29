@@ -161,7 +161,7 @@ int main(int argc, const char** argv)
 	// Prompt the user to clear the temp directory.
 	if (!ClearTempDirectory(true))
 	{
-		llvm::outs() << "Terminating...\n";
+		outs() << "Terminating...\n";
 		return 0;
 	}
 

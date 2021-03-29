@@ -3,6 +3,7 @@
 #include <stdexcept>
 
 #include "Helper.h"
+#include "DependencyGraph.h"
 
 clang::SourceRange GetSourceRange(const clang::Stmt& s)
 {
@@ -63,6 +64,78 @@ bool ClearTempDirectory(const bool prompt = false)
 
 	std::filesystem::remove_all("temp/");
 	std::filesystem::create_directory("temp");
+
+	return true;
+}
+
+bool IsFull(std::vector<bool>& bitfield)
+{
+	for (const auto& bit : bitfield)
+	{
+		if (!bit)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+static std::string Stringify(std::vector<bool>& bitfield)
+{
+	std::string bits;
+
+	for (auto bit : bitfield)
+	{
+		if (bit)
+		{
+			bits.append("1");
+		}
+		else
+		{
+			bits.append("0");
+		}
+	}
+
+	return bits;
+}
+
+void Increment(std::vector<bool>& bitfield)
+{
+	// TODO: Write unit tests for this function (and the all variant generation).
+
+	llvm::outs() << "DEBUG: Before inc: " << Stringify(bitfield) << "\n";
+	
+	for (auto it = bitfield.rbegin(); it != bitfield.rend(); ++it)
+	{
+		if (*it)
+		{
+			it->flip();
+		}
+		else
+		{
+			it->flip();
+			break;
+		}
+	}
+
+	llvm::outs() << "DEBUG: After inc: " << Stringify(bitfield) << "\n";
+}
+
+bool IsValid(std::vector<bool>& bitfield, DependencyGraph& dependencies)
+{
+	for (size_t i = 0; i < bitfield.size(); i++)
+	{
+		auto children = dependencies.GetDependentNodes(i);
+
+		for (auto child : children)
+		{
+			if (bitfield[i] != bitfield[child])
+			{
+				return false;
+			}
+		}
+	}
 
 	return true;
 }
