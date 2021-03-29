@@ -74,26 +74,49 @@ public:
 
 	virtual bool VisitExpr(clang::Expr* expr)
 	{
+		if (bitMask[currentNode])
+		{
+			auto range = expr->getSourceRange();
 
+			Print(range);
+		}
+	
 		currentNode++;
 		return true;
 	}
 	
-	virtual bool VisitStmt(clang::Stmt* st)
+	virtual bool VisitStmt(clang::Stmt* stmt)
 	{
+		if (bitMask[currentNode])
+		{
+			auto range = stmt->getSourceRange();
+
+			Print(range);
+		}
+	
+		currentNode++;
+		return true;
+	}
+	
+	/*
+	virtual bool VisitForStmt(clang::ForStmt* stmt)
+	{
+		if (bitMask[currentNode])
+		{
+			const auto range = stmt->getSourceRange();
+			Print(range);
+		}
 
 		currentNode++;
 		return true;
 	}
-
-	void SetOutputFile(const std::string& fileName)
+	*/
+	
+	void Reset(const std::string& fileName, const BitMask& mask)
 	{
-		outputFile = fileName;
-	}
-
-	void SetBitMask(const BitMask& mask)
-	{
+		currentNode = 0;
 		bitMask = mask;
+		outputFile = fileName;
 	}
 };
 
@@ -151,6 +174,19 @@ public:
 		
 		return true;
 	}
+
+	/*
+	virtual bool VisitForStmt(clang::ForStmt* stmt)
+	{
+		if (nodeMapping_->find(stmt->getID(astContext_)) == nodeMapping_->end())
+		{
+			InsertMapping(stmt->getID(astContext_), codeUnitsCount);
+			codeUnitsCount++;
+		}
+
+		return true;
+	}
+	*/
 };
 
 class DependencyASTVisitor : public clang::RecursiveASTVisitor<DependencyASTVisitor>
@@ -186,4 +222,19 @@ public:
 		
 		return true;
 	}
+
+	/*
+	virtual bool VisitForStmt(clang::ForStmt* stmt)
+	{
+		for (auto it = stmt->child_begin(); it != stmt->child_end(); ++it)
+		{
+			if (*it)
+			{
+				graph.InsertDependency((*nodeMapping_)[stmt->getID(astContext_)], (*nodeMapping_)[it->getID(astContext_)]);
+			}
+		}
+
+		return true;
+	}
+	*/
 };

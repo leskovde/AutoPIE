@@ -13,6 +13,11 @@ public:
 
 	void InsertDependency(const int parent, const int child)
 	{
+		if (parent == child)
+		{
+			return;
+		}
+			
 		auto it = edges_.find(parent);
 
 		if (it == edges_.end())
