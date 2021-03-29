@@ -48,6 +48,6 @@ public:
 
 	std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, llvm::StringRef file) override
 	{
-		return std::unique_ptr<clang::ASTConsumer>(std::make_unique<StatementReductionASTConsumer>(&ci, globalContext));
+		return std::unique_ptr<clang::ASTConsumer>(std::make_unique<VariantPrintingASTConsumer>(&ci, globalContext));
 	}
 };

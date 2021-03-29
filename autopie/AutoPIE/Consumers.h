@@ -4,16 +4,16 @@
 #include "Visitors.h"
 #include "DependencyGraph.h"
 
-class StatementReductionASTConsumer final : public clang::ASTConsumer
+class VariantPrintingASTConsumer final : public clang::ASTConsumer
 {
-	StatementReductionASTVisitorRef visitor;
+	VariantPrintingASTVisitorRef visitor;
 
 public:
-	StatementReductionASTConsumer(clang::CompilerInstance* ci, GlobalContext& context)
-		: visitor(std::make_unique<StatementReductionASTVisitor>(ci, context))
+	VariantPrintingASTConsumer(clang::CompilerInstance* ci, GlobalContext& context)
+		: visitor(std::make_unique<VariantPrintingASTVisitor>(ci, context))
 	{}
 
-	void HandleTranslationUnit(clang::ASTContext& context, const std::string& fileName, const BitMask bitMask) const
+	void HandleTranslationUnit(clang::ASTContext& context, const std::string& fileName, const BitMask& bitMask) const
 	{
 		visitor->SetBitMask(bitMask);
 		visitor->SetOutputFile(fileName);
@@ -21,41 +21,43 @@ public:
 	}
 };
 
-class MappingASTConsumer final : public clang::ASTConsumer
+class DependencyMappingASTConsumer final : public clang::ASTConsumer
 {
-	int codeUnitsCount_ = 0;
-	DependencyGraph graph_;
-	CountASTVisitorRef visitor_;
+	MappingASTVisitorRef mappingVisitor_;
+	DependencyASTVisitorRef dependencyVisitor_;
+	NodeMappingRef nodeMapping_ = std::make_shared<NodeMapping>();
 
 public:
-	MappingASTConsumer(clang::CompilerInstance* ci, GlobalContext& context)
-		: visitor_(std::make_unique<CountASTVisitor>(ci, context))
+	DependencyMappingASTConsumer(clang::CompilerInstance* ci, GlobalContext& context)
+		: mappingVisitor_(std::make_unique<MappingASTVisitor>(ci, context, nodeMapping_)),
+		dependencyVisitor_(std::make_unique<DependencyASTVisitor>(ci, context, nodeMapping_))
 	{}
 
 	void HandleTranslationUnit(clang::ASTContext& context) override
 	{
-		visitor_->TraverseDecl(context.getTranslationUnitDecl());
+		mappingVisitor_->TraverseDecl(context.getTranslationUnitDecl());
+		dependencyVisitor_->TraverseDecl(context.getTranslationUnitDecl());
 	}
 
 	[[nodiscard]] int GetCodeUnitsCount() const
 	{
-		return codeUnitsCount_;
+		return mappingVisitor_->codeUnitsCount;
 	}
 
 	DependencyGraph GetDependencyGraph() const
 	{
-		return graph_;
+		return dependencyVisitor_->graph;
 	}
 };
 
 class VariantGenerationConsumer final : public clang::ASTConsumer
 {
-	MappingASTConsumer mappingConsumer_;
-	StatementReductionASTConsumer reductionConsumer_;
+	DependencyMappingASTConsumer mappingConsumer_;
+	VariantPrintingASTConsumer reductionConsumer_;
 
 public:
 	VariantGenerationConsumer(clang::CompilerInstance* ci, GlobalContext& context)
-		: mappingConsumer_(MappingASTConsumer(ci, context)), reductionConsumer_(ci, context)
+		: mappingConsumer_(DependencyMappingASTConsumer(ci, context)), reductionConsumer_(ci, context)
 	{}
 	
 	void HandleTranslationUnit(clang::ASTContext& context) override
