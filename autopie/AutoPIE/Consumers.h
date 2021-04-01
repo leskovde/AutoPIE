@@ -43,6 +43,8 @@ public:
 		llvm::outs() << "DEBUG: AST nodes counted: " << mappingVisitor_->codeUnitsCount << ", AST nodes actual: " << nodeMapping_->size() << "\n";
 		
 		dependencyVisitor_->TraverseDecl(context.getTranslationUnitDecl());
+
+		dependencyVisitor_->graph.PrintGraphForDebugging();
 	}
 
 	[[nodiscard]] int GetCodeUnitsCount() const

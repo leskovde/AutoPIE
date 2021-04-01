@@ -5,10 +5,30 @@
 #include "Helper.h"
 #include "DependencyGraph.h"
 #include <clang/Basic/SourceManager.h>
+#include <clang/Rewrite/Core/Rewriter.h>
+#include <clang/AST/ASTContext.h>
 
 clang::SourceRange GetSourceRange(const clang::Stmt& s)
 {
 	return { s.getBeginLoc(), s.getEndLoc() };
+}
+
+std::string RangeToString(clang::ASTContext& astContext, clang::SourceRange range)
+{
+	const auto startLineNumber = astContext.getSourceManager().getSpellingLineNumber(range.getBegin());
+	const auto endLineNumber = astContext.getSourceManager().getSpellingLineNumber(range.getEnd());
+
+	const auto endTokenLoc = astContext.getSourceManager().getSpellingLoc(range.getEnd());
+
+	const auto startLoc = astContext.getSourceManager().getSpellingLoc(range.getBegin());
+	const auto endLoc = clang::Lexer::getLocForEndOfToken(endTokenLoc, 0, astContext.getSourceManager(), clang::LangOptions());
+
+	range = clang::SourceRange(startLoc, endLoc);
+
+	clang::Rewriter localRewriter;
+	localRewriter.setSourceMgr(astContext.getSourceManager(), astContext.getLangOpts());
+
+	return GetSourceText(range, astContext.getSourceManager()).str();
 }
 
 int GetChildrenCount(clang::Stmt* st)

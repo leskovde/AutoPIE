@@ -32,6 +32,8 @@ struct InputData
 
 clang::SourceRange GetSourceRange(const clang::Stmt& s);
 
+std::string RangeToString(clang::ASTContext& astContext, clang::SourceRange range);
+
 int GetChildrenCount(clang::Stmt* st);
 
 std::string ExecCommand(const char* cmd);

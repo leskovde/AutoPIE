@@ -27,8 +27,9 @@ class VariantPrintingASTVisitor : public clang::RecursiveASTVisitor<VariantPrint
 	int currentNode = 0;
 	std::string outputFile;
 
-	void Print(clang::SourceRange range)
+	void Print(const clang::SourceRange range) const
 	{
+		/*
 		const auto startLineNumber = astContext.getSourceManager().getSpellingLineNumber(range.getBegin());
 		const auto endLineNumber = astContext.getSourceManager().getSpellingLineNumber(range.getEnd());
 
@@ -43,9 +44,12 @@ class VariantPrintingASTVisitor : public clang::RecursiveASTVisitor<VariantPrint
 		localRewriter.setSourceMgr(astContext.getSourceManager(), astContext.getLangOpts());
 
 		auto s = GetSourceText(range, astContext.getSourceManager());
-
-		llvm::outs() << localRewriter.getRewrittenText(range) << "\n";
-		llvm::outs() << range.printToString(astContext.getSourceManager()) << "\n";
+		*/
+		
+		llvm::outs() << RangeToString(astContext, range);
+		
+		//llvm::outs() << localRewriter.getRewrittenText(range) << "\n";
+		//llvm::outs() << range.printToString(astContext.getSourceManager()) << "\n";
 
 		//globalContext->globalRewriter.RemoveText(range);
 	}
@@ -63,7 +67,7 @@ public:
 	{
 		if (bitMask[currentNode])
 		{
-			auto range = decl->getSourceRange();
+			const auto range = decl->getSourceRange();
 
 			Print(range);
 		}
@@ -76,7 +80,7 @@ public:
 	{
 		if (bitMask[currentNode])
 		{
-			auto range = expr->getSourceRange();
+			const auto range = expr->getSourceRange();
 
 			Print(range);
 		}
@@ -89,7 +93,7 @@ public:
 	{
 		if (bitMask[currentNode])
 		{
-			auto range = stmt->getSourceRange();
+			const auto range = stmt->getSourceRange();
 
 			Print(range);
 		}
@@ -196,27 +200,42 @@ class DependencyASTVisitor : public clang::RecursiveASTVisitor<DependencyASTVisi
 	NodeMappingRef nodeMapping_;
 	
 public:
-	int codeUnitsCount = 0;
+	//int codeUnitsCount = 0;
 	DependencyGraph graph = DependencyGraph();
 	
 	DependencyASTVisitor(clang::CompilerInstance* ci, GlobalContext& ctx, const NodeMappingRef mapping)
 		: astContext_(ci->getASTContext()), globalContext_(ctx), nodeMapping_(mapping)
 	{}
 
+	virtual bool VisitDecl(clang::Decl* decl)
+	{
+		graph.InsertCodeSnippetForDebugging((*nodeMapping_)[decl->getID()],
+			RangeToString(astContext_, decl->getSourceRange()));
+
+		return true;
+	}
+	
 	virtual bool VisitExpr(clang::Expr* expr)
 	{
+		graph.InsertCodeSnippetForDebugging((*nodeMapping_)[expr->getID(astContext_)],
+			RangeToString(astContext_, expr->getSourceRange()));
+		
 		// Do not allow small expressions to be recognized as full statements by visiting this method instead of VisitStmt.
 		return true;
 	}
 	
 	virtual bool VisitStmt(clang::Stmt* stmt)
 	{
+		graph.InsertCodeSnippetForDebugging((*nodeMapping_)[stmt->getID(astContext_)], 
+			RangeToString(astContext_, stmt->getSourceRange()));
+		
 		// Apparently only statements have children.
 		for (auto it = stmt->child_begin(); it != stmt->child_end(); ++it)
 		{
 			if (*it)
 			{
-				graph.InsertDependency((*nodeMapping_)[stmt->getID(astContext_)], (*nodeMapping_)[it->getID(astContext_)]);				
+				graph.InsertDependency((*nodeMapping_)[stmt->getID(astContext_)],
+					(*nodeMapping_)[it->getID(astContext_)]);
 			}
 		}
 		

@@ -48,19 +48,19 @@ static cl::opt<double> ReductionRatio("ratio",
 bool Validate(const char* const userInputError, const std::filesystem::directory_entry& entry)
 {
 	outs() << "ENTRY: " << entry.path().string() << "\n";
-	std::string compileCommand = "g++ -o temp\\" + entry.path().filename().replace_extension(".exe").string() + " " +
+	const std::string compileCommand = "g++ -o temp\\" + entry.path().filename().replace_extension(".exe").string() + " " +
 		entry.path().string() + " 2>&1";
 
-	auto compilationResult = ExecCommand(compileCommand.c_str());
+	const auto compilationResult = ExecCommand(compileCommand.c_str());
 	outs() << "COMPILATION: " << compilationResult << "\n";
 
 	if (compilationResult.find("error") == std::string::npos)
 	{
-		std::string debugCommand = "gdb --batch -ex run temp\\" + entry
+		const std::string debugCommand = "gdb --batch -ex run temp\\" + entry
 		                                                          .path().filename().replace_extension(".exe").string()
 			+ " 2>&1";
 
-		auto debugResult = ExecCommand(debugCommand.c_str());
+		const auto debugResult = ExecCommand(debugCommand.c_str());
 		outs() << "DEBUG: " << debugResult << "\n";
 
 		if (debugResult.find(userInputError) != std::string::npos)
