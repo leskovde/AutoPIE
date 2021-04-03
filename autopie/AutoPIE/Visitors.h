@@ -142,14 +142,17 @@ class MappingASTVisitor : public clang::RecursiveASTVisitor<MappingASTVisitor>
 public:
 	int codeUnitsCount = 0;
 
-	MappingASTVisitor(clang::CompilerInstance* ci, const NodeMappingRef mapping)
+	MappingASTVisitor(clang::CompilerInstance* ci, const NodeMappingRef& mapping)
 		: astContext_(ci->getASTContext()), nodeMapping_(mapping)
 	{}
 
-	virtual bool VisitDecl(clang::Decl* decl)
+	bool VisitDecl(clang::Decl* decl)
 	{
+		// TODO: Create a more sophisticated mapping that filters duplicates.
+		// E.g. VarDecl and DeclStmt share the same source code - filter based on source code.
 		if (nodeMapping_->find(decl->getID()) == nodeMapping_->end())
 		{
+			llvm::outs() << "Node " << codeUnitsCount << ": Type " << decl->getDeclKindName() << "\n";
 			InsertMapping(decl->getID(), codeUnitsCount);
 			codeUnitsCount++;
 		}
@@ -157,7 +160,7 @@ public:
 		return true;
 	}
 
-	virtual bool VisitExpr(clang::Expr* expr)
+	bool VisitCallExpr(clang::CallExpr* expr)
 	{
 		if (nodeMapping_->find(expr->getID(astContext_)) == nodeMapping_->end())
 		{
@@ -168,10 +171,17 @@ public:
 		return true;
 	}
 
-	virtual bool VisitStmt(clang::Stmt* stmt)
+	bool VisitStmt(clang::Stmt* stmt)
 	{
+		if (llvm::isa<clang::Expr>(stmt))
+		{
+			// Ignore expressions in general since they tend to be too small.
+			return true;
+		}
+		
 		if (nodeMapping_->find(stmt->getID(astContext_)) == nodeMapping_->end())
 		{
+			llvm::outs() << "Node " << codeUnitsCount << ": Type " << stmt->getStmtClassName() << "\n";
 			InsertMapping(stmt->getID(astContext_), codeUnitsCount);
 			codeUnitsCount++;
 		}
@@ -203,39 +213,44 @@ public:
 	//int codeUnitsCount = 0;
 	DependencyGraph graph = DependencyGraph();
 	
-	DependencyASTVisitor(clang::CompilerInstance* ci, GlobalContext& ctx, const NodeMappingRef mapping)
+	DependencyASTVisitor(clang::CompilerInstance* ci, GlobalContext& ctx, const NodeMappingRef& mapping)
 		: astContext_(ci->getASTContext()), globalContext_(ctx), nodeMapping_(mapping)
 	{}
 
 	virtual bool VisitDecl(clang::Decl* decl)
 	{
-		graph.InsertCodeSnippetForDebugging((*nodeMapping_)[decl->getID()],
+		graph.InsertCodeSnippetForDebugging(nodeMapping_->at(decl->getID()),
 			RangeToString(astContext_, decl->getSourceRange()));
 
 		return true;
 	}
-	
-	virtual bool VisitExpr(clang::Expr* expr)
+
+	bool VisitCallExpr(clang::CallExpr* expr)
 	{
-		graph.InsertCodeSnippetForDebugging((*nodeMapping_)[expr->getID(astContext_)],
+		graph.InsertCodeSnippetForDebugging(nodeMapping_->at(expr->getID(astContext_)),
 			RangeToString(astContext_, expr->getSourceRange()));
-		
-		// Do not allow small expressions to be recognized as full statements by visiting this method instead of VisitStmt.
+
 		return true;
 	}
 	
 	virtual bool VisitStmt(clang::Stmt* stmt)
 	{
-		graph.InsertCodeSnippetForDebugging((*nodeMapping_)[stmt->getID(astContext_)], 
+		if (llvm::isa<clang::Expr>(stmt))
+		{
+			// Ignore expressions in general since they tend to be too small.
+			return true;
+		}
+		
+		graph.InsertCodeSnippetForDebugging(nodeMapping_->at(stmt->getID(astContext_)), 
 			RangeToString(astContext_, stmt->getSourceRange()));
 		
 		// Apparently only statements have children.
 		for (auto it = stmt->child_begin(); it != stmt->child_end(); ++it)
 		{
-			if (*it)
+			if (*it && nodeMapping_->find(it->getID(astContext_)) != nodeMapping_->end())
 			{
-				graph.InsertDependency((*nodeMapping_)[stmt->getID(astContext_)],
-					(*nodeMapping_)[it->getID(astContext_)]);
+				graph.InsertDependency(nodeMapping_->at(stmt->getID(astContext_)),
+					nodeMapping_->at(it->getID(astContext_)));
 			}
 		}
 		
