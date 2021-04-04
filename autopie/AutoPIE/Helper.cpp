@@ -15,20 +15,7 @@ clang::SourceRange GetSourceRange(const clang::Stmt& s)
 
 std::string RangeToString(clang::ASTContext& astContext, clang::SourceRange range)
 {
-	const auto startLineNumber = astContext.getSourceManager().getSpellingLineNumber(range.getBegin());
-	const auto endLineNumber = astContext.getSourceManager().getSpellingLineNumber(range.getEnd());
-
-	const auto endTokenLoc = astContext.getSourceManager().getSpellingLoc(range.getEnd());
-
-	const auto startLoc = astContext.getSourceManager().getSpellingLoc(range.getBegin());
-	const auto endLoc = clang::Lexer::getLocForEndOfToken(endTokenLoc, 0, astContext.getSourceManager(), clang::LangOptions());
-
-	range = clang::SourceRange(startLoc, endLoc);
-
-	clang::Rewriter localRewriter;
-	localRewriter.setSourceMgr(astContext.getSourceManager(), astContext.getLangOpts());
-
-	return GetSourceText(range, astContext.getSourceManager()).str();
+	return GetSourceText(GetPrintableRange(range, astContext.getSourceManager()), astContext.getSourceManager()).str();
 }
 
 int GetChildrenCount(clang::Stmt* st)
@@ -159,6 +146,16 @@ bool IsValid(BitMask& bitMask, DependencyGraph& dependencies)
 	return true;
 }
 
+clang::SourceRange GetPrintableRange(const clang::SourceRange range, const clang::SourceManager& sm)
+{
+	const clang::LangOptions lo;
+
+	const auto startLoc = sm.getSpellingLoc(range.getBegin());
+	const auto lastTokenLoc = sm.getSpellingLoc(range.getEnd());
+	const auto endLoc = clang::Lexer::getLocForEndOfToken(lastTokenLoc, 0, sm, lo);
+	return clang::SourceRange{ startLoc, endLoc };
+}
+
 /**
  * Gets the portion of the code that corresponds to given SourceRange exactly as
  * the range is given.
@@ -183,13 +180,8 @@ llvm::StringRef GetSourceTextRaw(const clang::SourceRange range, const clang::So
  * Gets the portion of the code that corresponds to given SourceRange, including the
  * last token. Returns expanded macros.
  */
-llvm::StringRef GetSourceText(clang::SourceRange range, const clang::SourceManager& sm)
+llvm::StringRef GetSourceText(const clang::SourceRange range, const clang::SourceManager& sm)
 {
-	const clang::LangOptions lo;
-
-	const auto startLoc = sm.getSpellingLoc(range.getBegin());
-	const auto lastTokenLoc = sm.getSpellingLoc(range.getEnd());
-	const auto endLoc = clang::Lexer::getLocForEndOfToken(lastTokenLoc, 0, sm, lo);
-	const auto printableRange = clang::SourceRange{ startLoc, endLoc };
+	const auto printableRange = GetPrintableRange(range, sm);
 	return GetSourceTextRaw(printableRange, sm);
 }

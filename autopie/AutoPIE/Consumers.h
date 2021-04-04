@@ -15,8 +15,25 @@ public:
 
 	void HandleTranslationUnit(clang::ASTContext& context, const std::string& fileName, const BitMask& bitMask) const
 	{
-		visitor_->Reset(fileName, bitMask);
+		auto rewriter = std::make_shared<clang::Rewriter>(context.getSourceManager(), context.getLangOpts());
+		
+		visitor_->Reset(bitMask, rewriter);
 		visitor_->TraverseDecl(context.getTranslationUnitDecl());
+
+		llvm::outs() << "Variant after iteration:\n";
+		rewriter->getEditBuffer(context.getSourceManager().getMainFileID()).write(llvm::errs());
+		llvm::outs() << "\n";
+
+		std::error_code errorCode;
+		llvm::raw_fd_ostream outFile(fileName, errorCode, llvm::sys::fs::F_None);
+
+		rewriter->getEditBuffer(context.getSourceManager().getMainFileID()).write(outFile);
+		outFile.close();
+	}
+
+	void SetSkippedNodes(SkippedMapRef skippedNodes)
+	{
+		visitor_->SetSkippedNodes(skippedNodes);
 	}
 };
 
@@ -52,6 +69,11 @@ public:
 	{
 		return mappingVisitor_->graph;
 	}
+
+	SkippedMapRef GetSkippedNodes() const
+	{
+		return mappingVisitor_->GetSkippedNodes();
+	}
 };
 
 class VariantGenerationConsumer final : public clang::ASTConsumer
@@ -60,14 +82,16 @@ class VariantGenerationConsumer final : public clang::ASTConsumer
 	VariantPrintingASTConsumer printingConsumer_;
 
 public:
-	VariantGenerationConsumer(clang::CompilerInstance* ci, GlobalContext& context)
-		: mappingConsumer_(DependencyMappingASTConsumer(ci, context)), printingConsumer_(ci, context)
-	{}
+	VariantGenerationConsumer(clang::CompilerInstance* ci, GlobalContext& context) :
+		mappingConsumer_(ci, context), printingConsumer_(ci, context)
+	{ }
 	
 	void HandleTranslationUnit(clang::ASTContext& context) override
 	{
 		mappingConsumer_.HandleTranslationUnit(context);
 		const auto numberOfCodeUnits = mappingConsumer_.GetCodeUnitsCount();
+
+		printingConsumer_.SetSkippedNodes(mappingConsumer_.GetSkippedNodes());
 
 		// Udelat bitfield velikosti N.
 		// Zjistit si k nemu nejaka pravidla (ktere bity jsou nadrazene, ktere patri pod ne).
@@ -87,14 +111,14 @@ public:
 
 			if (IsValid(bitMask, dependencies))
 			{
+				variantsCount++;
+				
 				if (variantsCount % 50 == 0)
 				{
 					llvm::outs() << "Done " << variantsCount << " variants.\n";
 				}
-
-				variantsCount++;
 				
-				auto fileName = std::to_string(variantsCount) + "_tempFile.cpp";
+				auto fileName = "temp/" + std::to_string(variantsCount) + "_tempFile.cpp";
 				printingConsumer_.HandleTranslationUnit(context, fileName, bitMask);
 			}
 		}

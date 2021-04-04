@@ -2,6 +2,7 @@
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Rewrite/Core/Rewriter.h>
+#include <utility>
 
 #include "Helper.h"
 #include "Context.h"
@@ -16,111 +17,113 @@ using NodeMappingRef = std::shared_ptr<std::unordered_map<int, int>>;
 using VariantPrintingASTVisitorRef = std::unique_ptr<VariantPrintingASTVisitor>;
 using MappingASTVisitorRef = std::unique_ptr<MappingASTVisitor>;
 using DependencyASTVisitorRef = std::unique_ptr<DependencyASTVisitor>;
+using RewriterRef = std::shared_ptr<clang::Rewriter>;
+using SkippedMapRef = std::shared_ptr<std::unordered_map<int, bool>>;
 
 // Traverses the AST and removes a selected statement set by the CurrentLine number.
 class VariantPrintingASTVisitor : public clang::RecursiveASTVisitor<VariantPrintingASTVisitor>
 {
-	clang::ASTContext& astContext;
-	GlobalContext& globalContext;
+	clang::ASTContext& astContext_;
+	GlobalContext& globalContext_;
 
-	BitMask bitMask;
-	int currentNode = 0;
-	std::string outputFile;
-
-	void Print(const clang::SourceRange range) const
-	{
-		/*
-		const auto startLineNumber = astContext.getSourceManager().getSpellingLineNumber(range.getBegin());
-		const auto endLineNumber = astContext.getSourceManager().getSpellingLineNumber(range.getEnd());
-
-		const auto endTokenLoc = astContext.getSourceManager().getSpellingLoc(range.getEnd());
-
-		const auto startLoc = astContext.getSourceManager().getSpellingLoc(range.getBegin());
-		const auto endLoc = clang::Lexer::getLocForEndOfToken(endTokenLoc, 0, astContext.getSourceManager(), clang::LangOptions());
-
-		range = clang::SourceRange(startLoc, endLoc);
-
-		clang::Rewriter localRewriter;
-		localRewriter.setSourceMgr(astContext.getSourceManager(), astContext.getLangOpts());
-
-		auto s = GetSourceText(range, astContext.getSourceManager());
-		*/
-		
-		llvm::outs() << RangeToString(astContext, range);
+	BitMask bitMask_;
+	int currentNode_ = 0;
+	RewriterRef rewriter_;
+	SkippedMapRef skippedNodes_;
+	
+	void RemoveFromSource(const clang::SourceRange range) const
+	{		
+		//llvm::outs() << RangeToString(astContext_, range);
 		
 		//llvm::outs() << localRewriter.getRewrittenText(range) << "\n";
 		//llvm::outs() << range.printToString(astContext.getSourceManager()) << "\n";
 
-		//globalContext->globalRewriter.RemoveText(range);
+		if (rewriter_)
+		{
+			rewriter_->RemoveText(GetPrintableRange(range, astContext_.getSourceManager()));
+		}
+		else
+		{
+			llvm::outs() << "ERROR: Rewriter not set in the VariantPrintingASTVisitor!\n";
+		}
+		
 	}
 	
 public:
 	VariantPrintingASTVisitor(clang::CompilerInstance* ci, GlobalContext& ctx)
-		: astContext(ci->getASTContext()), globalContext(ctx)
+		: astContext_(ci->getASTContext()), globalContext_(ctx)
 	{
-		globalContext.globalRewriter = clang::Rewriter();
-		globalContext.globalRewriter.setSourceMgr(astContext.getSourceManager(),
-			astContext.getLangOpts());
+		globalContext_.globalRewriter = clang::Rewriter();
+		globalContext_.globalRewriter.setSourceMgr(astContext_.getSourceManager(),
+			astContext_.getLangOpts());
+	}
+
+	void Reset(const BitMask& mask, RewriterRef& rewriter)
+	{
+		currentNode_ = 0;
+		bitMask_ = mask;
+		rewriter_ = rewriter;
+	}
+
+	void SetSkippedNodes(SkippedMapRef skippedNodes)
+	{
+		skippedNodes_ = std::move(skippedNodes);
+	}
+	
+	bool shouldTraversePostOrder() const
+	{
+		return true;
 	}
 
 	virtual bool VisitDecl(clang::Decl* decl)
 	{
-		if (bitMask[currentNode])
+		if (skippedNodes_->find(currentNode_) == skippedNodes_->end())
 		{
-			const auto range = decl->getSourceRange();
+			if (!bitMask_[currentNode_])
+			{
+				const auto range = decl->getSourceRange();
 
-			Print(range);
+				RemoveFromSource(range);
+			}
+			
+			currentNode_++;
 		}
 		
-		currentNode++;
 		return true;
 	}
 
-	virtual bool VisitExpr(clang::Expr* expr)
+	bool VisitCallExpr(clang::CallExpr* expr)
 	{
-		if (bitMask[currentNode])
+		if (skippedNodes_->find(currentNode_) == skippedNodes_->end())
 		{
-			const auto range = expr->getSourceRange();
+			if (!bitMask_[currentNode_])
+			{
+				const auto range = expr->getSourceRange();
 
-			Print(range);
+				RemoveFromSource(range);
+			}
+
+			currentNode_++;
 		}
-	
-		currentNode++;
+		
 		return true;
 	}
 	
 	virtual bool VisitStmt(clang::Stmt* stmt)
 	{
-		if (bitMask[currentNode])
+		if (skippedNodes_->find(currentNode_) == skippedNodes_->end())
 		{
-			const auto range = stmt->getSourceRange();
+			if (!bitMask_[currentNode_])
+			{
+				const auto range = stmt->getSourceRange();
 
-			Print(range);
-		}
-	
-		currentNode++;
-		return true;
-	}
-	
-	/*
-	virtual bool VisitForStmt(clang::ForStmt* stmt)
-	{
-		if (bitMask[currentNode])
-		{
-			const auto range = stmt->getSourceRange();
-			Print(range);
+				RemoveFromSource(range);
+			}
+
+			currentNode_++;
 		}
 
-		currentNode++;
 		return true;
-	}
-	*/
-	
-	void Reset(const std::string& fileName, const BitMask& mask)
-	{
-		currentNode = 0;
-		bitMask = mask;
-		outputFile = fileName;
 	}
 };
 
@@ -129,12 +132,14 @@ class MappingASTVisitor : public clang::RecursiveASTVisitor<MappingASTVisitor>
 	clang::ASTContext& astContext_;
 	NodeMappingRef nodeMapping_;
 	std::unordered_map<std::string, bool> snippetSet_;
+	SkippedMapRef skippedNodes_ = std::make_shared<std::unordered_map<int, bool>>();
 
 	void InsertMapping(int astId, int myId, const std::string& snippet)
 	{
 		if (snippetSet_.find(snippet) != snippetSet_.end())
 		{
 			// This node's code has already been processed.
+			skippedNodes_->insert(std::pair<int, bool>(codeUnitsCount, true));
 			return;
 		}
 		
@@ -144,11 +149,12 @@ class MappingASTVisitor : public clang::RecursiveASTVisitor<MappingASTVisitor>
 		{
 			snippetSet_[snippet] = true;
 			graph.InsertCodeSnippetForDebugging(codeUnitsCount, snippet);
-
+			
 			codeUnitsCount++;
 		}
 		else
 		{
+			skippedNodes_->insert(std::pair<int, bool>(codeUnitsCount, true));
 			llvm::outs() << "Could not insert (" << astId << ", " << myId << ") to the map.\n";
 		}
 	}
@@ -161,6 +167,11 @@ public:
 		: astContext_(ci->getASTContext()), nodeMapping_(mapping)
 	{}
 
+	SkippedMapRef GetSkippedNodes()
+	{
+		return skippedNodes_;
+	}
+	
 	bool shouldTraversePostOrder() const
 	{
 		return true;
@@ -175,7 +186,7 @@ public:
 			llvm::outs() << "Node " << codeUnitsCount << ": Type " << decl->getDeclKindName() << "\n";
 			InsertMapping(decl->getID(), codeUnitsCount, RangeToString(astContext_, decl->getSourceRange()));
 		}
-
+		
 		return true;
 	}
 
@@ -185,7 +196,7 @@ public:
 		{
 			InsertMapping(expr->getID(astContext_), codeUnitsCount, RangeToString(astContext_, expr->getSourceRange()));
 		}
-		
+				
 		return true;
 	}
 
@@ -214,17 +225,4 @@ public:
 		
 		return true;
 	}
-
-	/*
-	virtual bool VisitForStmt(clang::ForStmt* stmt)
-	{
-		if (nodeMapping_->find(stmt->getID(astContext_)) == nodeMapping_->end())
-		{
-			InsertMapping(stmt->getID(astContext_), codeUnitsCount);
-			codeUnitsCount++;
-		}
-
-		return true;
-	}
-	*/
 };
