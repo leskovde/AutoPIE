@@ -41,10 +41,8 @@ public:
 		mappingVisitor_->TraverseDecl(context.getTranslationUnitDecl());
 
 		llvm::outs() << "DEBUG: AST nodes counted: " << mappingVisitor_->codeUnitsCount << ", AST nodes actual: " << nodeMapping_->size() << "\n";
-		
-		dependencyVisitor_->TraverseDecl(context.getTranslationUnitDecl());
 
-		dependencyVisitor_->graph.PrintGraphForDebugging();
+		mappingVisitor_->graph.PrintGraphForDebugging();
 	}
 
 	[[nodiscard]] int GetCodeUnitsCount() const
@@ -54,7 +52,7 @@ public:
 
 	DependencyGraph GetDependencyGraph() const
 	{
-		return dependencyVisitor_->graph;
+		return mappingVisitor_->graph;
 	}
 };
 
