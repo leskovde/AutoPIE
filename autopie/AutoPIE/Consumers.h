@@ -24,14 +24,12 @@ class DependencyMappingASTConsumer final : public clang::ASTConsumer
 {
 	NodeMappingRef nodeMapping_;
 	MappingASTVisitorRef mappingVisitor_;
-	DependencyASTVisitorRef dependencyVisitor_;
 
 public:
 	DependencyMappingASTConsumer(clang::CompilerInstance* ci, GlobalContext& context)
 	{
 		nodeMapping_ = std::make_shared<NodeMapping>();
 		mappingVisitor_ = std::make_unique<MappingASTVisitor>(ci, nodeMapping_);
-		dependencyVisitor_ = std::make_unique<DependencyASTVisitor>(ci, context, nodeMapping_);
 	}
 
 	void HandleTranslationUnit(clang::ASTContext& context) override
