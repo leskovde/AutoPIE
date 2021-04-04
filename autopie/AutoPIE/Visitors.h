@@ -128,12 +128,26 @@ class MappingASTVisitor : public clang::RecursiveASTVisitor<MappingASTVisitor>
 {
 	clang::ASTContext& astContext_;
 	NodeMappingRef nodeMapping_;
+	std::unordered_map<std::string, bool> snippetSet_;
 
-	void InsertMapping(int astId, int myId) const
-	{		
+	void InsertMapping(int astId, int myId, const std::string& snippet)
+	{
+		if (snippetSet_.find(snippet) != snippetSet_.end())
+		{
+			// This node's code has already been processed.
+			return;
+		}
+		
 		auto const success = nodeMapping_->insert(std::pair<int, int>(astId, myId)).second;
 
-		if (!success)
+		if (success)
+		{
+			snippetSet_[snippet] = true;
+			graph.InsertCodeSnippetForDebugging(codeUnitsCount, snippet);
+
+			codeUnitsCount++;
+		}
+		else
 		{
 			llvm::outs() << "Could not insert (" << astId << ", " << myId << ") to the map.\n";
 		}
@@ -159,9 +173,7 @@ public:
 		if (nodeMapping_->find(decl->getID()) == nodeMapping_->end())
 		{
 			llvm::outs() << "Node " << codeUnitsCount << ": Type " << decl->getDeclKindName() << "\n";
-			InsertMapping(decl->getID(), codeUnitsCount);
-			graph.InsertCodeSnippetForDebugging(codeUnitsCount, RangeToString(astContext_, decl->getSourceRange()));
-			codeUnitsCount++;
+			InsertMapping(decl->getID(), codeUnitsCount, RangeToString(astContext_, decl->getSourceRange()));
 		}
 
 		return true;
@@ -171,9 +183,7 @@ public:
 	{
 		if (nodeMapping_->find(expr->getID(astContext_)) == nodeMapping_->end())
 		{
-			InsertMapping(expr->getID(astContext_), codeUnitsCount);
-			graph.InsertCodeSnippetForDebugging(codeUnitsCount, RangeToString(astContext_, expr->getSourceRange()));
-			codeUnitsCount++;
+			InsertMapping(expr->getID(astContext_), codeUnitsCount, RangeToString(astContext_, expr->getSourceRange()));
 		}
 		
 		return true;
@@ -190,22 +200,16 @@ public:
 		if (nodeMapping_->find(stmt->getID(astContext_)) == nodeMapping_->end())
 		{
 			llvm::outs() << "Node " << codeUnitsCount << ": Type " << stmt->getStmtClassName() << "\n";
-			InsertMapping(stmt->getID(astContext_), codeUnitsCount);
-
-			graph.InsertCodeSnippetForDebugging(nodeMapping_->at(stmt->getID(astContext_)),
-				RangeToString(astContext_, stmt->getSourceRange()));
+			InsertMapping(stmt->getID(astContext_), codeUnitsCount, RangeToString(astContext_, stmt->getSourceRange()));
 
 			// Apparently only statements have children.
 			for (auto it = stmt->child_begin(); it != stmt->child_end(); ++it)
 			{
 				if (*it && nodeMapping_->find(it->getID(astContext_)) != nodeMapping_->end())
 				{
-					graph.InsertDependency(nodeMapping_->at(stmt->getID(astContext_)),
-						nodeMapping_->at(it->getID(astContext_)));
+					graph.InsertDependency(codeUnitsCount, nodeMapping_->at(it->getID(astContext_)));
 				}
-			}
-			
-			codeUnitsCount++;
+			}			
 		}
 		
 		return true;

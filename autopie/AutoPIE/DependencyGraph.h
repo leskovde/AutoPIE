@@ -5,12 +5,8 @@ class DependencyGraph
 {
 	std::unordered_map<int, std::vector<int>> edges_;
 	std::unordered_map<int, std::string> debugCodeSnippets_;
-
+	
 public:
-	DependencyGraph()
-	{
-		edges_ = std::unordered_map<int, std::vector<int>>();
-	}
 
 	void InsertDependency(const int parent, const int child)
 	{
