@@ -48,6 +48,8 @@ bool IsValid(BitMask& bitMask, DependencyGraph& dependencies);
 
 clang::SourceRange GetPrintableRange(clang::SourceRange range, const clang::SourceManager& sm);
 
+std::string RangeToString(clang::ASTContext& astContext, clang::SourceRange range);
+
 llvm::StringRef GetSourceTextRaw(clang::SourceRange range, const clang::SourceManager& sm);
 
 llvm::StringRef GetSourceText(clang::SourceRange range, const clang::SourceManager& sm);

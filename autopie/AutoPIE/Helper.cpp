@@ -15,7 +15,7 @@ clang::SourceRange GetSourceRange(const clang::Stmt& s)
 
 std::string RangeToString(clang::ASTContext& astContext, clang::SourceRange range)
 {
-	return GetSourceText(GetPrintableRange(range, astContext.getSourceManager()), astContext.getSourceManager()).str();
+	return GetSourceText(range, astContext.getSourceManager()).str();
 }
 
 int GetChildrenCount(clang::Stmt* st)
@@ -183,5 +183,5 @@ llvm::StringRef GetSourceTextRaw(const clang::SourceRange range, const clang::So
 llvm::StringRef GetSourceText(const clang::SourceRange range, const clang::SourceManager& sm)
 {
 	const auto printableRange = GetPrintableRange(range, sm);
-	return GetSourceTextRaw(printableRange, sm);
+	return GetSourceTextRaw(GetPrintableRange(printableRange, sm), sm);
 }

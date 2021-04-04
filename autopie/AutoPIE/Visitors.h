@@ -40,7 +40,9 @@ class VariantPrintingASTVisitor : public clang::RecursiveASTVisitor<VariantPrint
 
 		if (rewriter_)
 		{
+			llvm::outs() << "Removing the following snippet:\n" << RangeToString(astContext_, range);
 			rewriter_->RemoveText(GetPrintableRange(range, astContext_.getSourceManager()));
+			llvm::outs() << "\n";
 		}
 		else
 		{
