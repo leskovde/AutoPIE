@@ -185,3 +185,25 @@ llvm::StringRef GetSourceText(const clang::SourceRange range, const clang::Sourc
 	const auto printableRange = GetPrintableRange(GetPrintableRange(range, sm), sm);
 	return GetSourceTextRaw(printableRange, sm);
 }
+
+std::string RemoveFileExtensions(const std::string& fileName)
+{
+	return fileName.substr(0, fileName.find_last_of("."));
+}
+
+std::string EscapeQuotes(const std::string& text)
+{
+	auto result = std::string();
+
+	for (auto character : text)
+	{
+		if (character == '\"')
+		{
+			result.push_back('\\');
+		}
+
+		result.push_back(character);
+	}
+
+	return result;
+}

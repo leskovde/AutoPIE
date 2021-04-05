@@ -41,9 +41,10 @@ class DependencyMappingASTConsumer final : public clang::ASTConsumer
 {
 	NodeMappingRef nodeMapping_;
 	MappingASTVisitorRef mappingVisitor_;
+	GlobalContext& globalContext_;
 
 public:
-	DependencyMappingASTConsumer(clang::CompilerInstance* ci, GlobalContext& context)
+	DependencyMappingASTConsumer(clang::CompilerInstance* ci, GlobalContext& context) : globalContext_(context)
 	{
 		nodeMapping_ = std::make_shared<NodeMapping>();
 		mappingVisitor_ = std::make_unique<MappingASTVisitor>(ci, nodeMapping_);
@@ -58,6 +59,11 @@ public:
 		llvm::outs() << "DEBUG: AST nodes counted: " << mappingVisitor_->codeUnitsCount << ", AST nodes actual: " << nodeMapping_->size() << "\n";
 
 		mappingVisitor_->graph.PrintGraphForDebugging();
+
+		if (globalContext_.parsedInput.dumpDot)
+		{
+			mappingVisitor_->graph.DumpDot(globalContext_.parsedInput.errorLocation.fileName);
+		}
 	}
 
 	[[nodiscard]] int GetCodeUnitsCount() const

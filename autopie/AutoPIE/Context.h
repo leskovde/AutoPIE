@@ -70,7 +70,7 @@ public:
 
 class GlobalContext
 {
-	GlobalContext(): parsedInput(InputData("", Location("", 0), 0.0))
+	GlobalContext(): parsedInput(InputData("", Location("", 0), 0.0, false))
 	{
 		llvm::errs() << "DEBUG: GlobalContext - New default constructor call.\n";
 	}

@@ -21,12 +21,13 @@ struct Location
 
 struct InputData
 {
-	std::string errorMessage;
-	Location errorLocation;
-	double reductionRatio;
+	const std::string errorMessage;
+	const Location errorLocation;
+	const double reductionRatio;
+	const bool dumpDot;
 
-	InputData(const std::string& message, const Location& location, const double ratio) :
-		errorMessage(message), errorLocation(location), reductionRatio(ratio)
+	InputData(const std::string& message, const Location& location, const double ratio, const bool dump) :
+		errorMessage(message), errorLocation(location), reductionRatio(ratio), dumpDot(dump)
 	{}
 };
 
@@ -39,6 +40,10 @@ int GetChildrenCount(clang::Stmt* st);
 std::string ExecCommand(const char* cmd);
 
 bool ClearTempDirectory(bool prompt);
+
+std::string RemoveFileExtensions(const std::string& fileName);
+
+std::string EscapeQuotes(const std::string& text);
 
 bool IsFull(BitMask& bitMask);
 

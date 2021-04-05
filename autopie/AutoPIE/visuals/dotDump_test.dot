@@ -1,0 +1,55 @@
+digraph g {
+forcelabels=true;
+0[label="const char* str,", xlabel="Node number: 0"];
+1[label="int x)", xlabel="Node number: 1"];
+2[label="printf(str, x);", xlabel="Node number: 2"];
+3[label="{ 
+	x += 3;
+	printf(str, x);
+}", xlabel="Node number: 3"];
+4[label="void printf(const char* str, int x) 
+{ 
+	x += 3;
+	printf(str, x);
+}", xlabel="Node number: 4"];
+5[label="int argc,", xlabel="Node number: 5"];
+6[label="char** argv)", xlabel="Node number: 6"];
+7[label="int i = 0;", xlabel="Node number: 7"];
+9[label="const int k = 0xffff;", xlabel="Node number: 9"];
+11[label="int j = 0;", xlabel="Node number: 11"];
+13[label="{
+		i++;
+	}", xlabel="Node number: 13"];
+14[label="for (int j = 0; j < k; j++) {
+		i++;
+	}", xlabel="Node number: 14"];
+15[label="printf(\"Result: %d\n\", i);", xlabel="Node number: 15"];
+16[label="{
+	int i = 0;
+	
+	const int k = 0xffff;
+
+	for (int j = 0; j < k; j++) {
+		i++;
+	}
+
+	printf(\"Result: %d\n\", i);
+}", xlabel="Node number: 16"];
+17[label="int
+main (int argc, char** argv) {
+	int i = 0;
+	
+	const int k = 0xffff;
+
+	for (int j = 0; j < k; j++) {
+		i++;
+	}
+
+	printf(\"Result: %d\n\", i);
+}", xlabel="Node number: 17"];
+18[label="", xlabel="Node number: 18"];
+4 -> 2;
+15 -> 13;
+17 -> 14;
+17 -> 15;
+}

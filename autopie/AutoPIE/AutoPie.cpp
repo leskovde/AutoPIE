@@ -45,6 +45,11 @@ static cl::opt<double> ReductionRatio("ratio",
 	cl::init(1.0),
 	cl::cat(Args));
 
+static cl::opt<bool> DumpDot("dump-dot",
+	cl::desc("(Specifies whether a GraphViz file containing relationships of code units should be created.)"),
+	cl::init(false),
+	cl::cat(Args));
+
 bool Validate(const char* const userInputError, const std::filesystem::directory_entry& entry)
 {
 	outs() << "ENTRY: " << entry.path().string() << "\n";
@@ -91,7 +96,7 @@ int main(int argc, const char** argv)
 		return 0;
 	}
 
-	auto parsedInput = InputData(ErrorMessage, Location(SourceFile, LineNumber), ReductionRatio);
+	auto parsedInput = InputData(ErrorMessage, Location(SourceFile, LineNumber), ReductionRatio, DumpDot);
 
 	// Prompt the user to clear the temp directory.
 	if (!ClearTempDirectory(false))

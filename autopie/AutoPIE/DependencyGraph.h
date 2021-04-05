@@ -1,5 +1,7 @@
 #pragma once
 #include <queue>
+#include <fstream>
+#include "Helper.h"
 
 class DependencyGraph
 {
@@ -55,6 +57,32 @@ public:
 		}
 		
 		llvm::outs() << "-------------------------------------------------------------\n";
+	}
+
+	void DumpDot(const std::string& fileName) const
+	{
+		// TODO: Trim file names (they include full path instead of just the name).
+		//auto dotFileName = "visuals/dotDump_" + RemoveFileExtensions(fileName) + ".dot";
+		auto dotFileName = "visuals/dotDump_test.dot";
+		auto ofs = std::ofstream(dotFileName);
+
+		ofs << "digraph g {\nforcelabels=true;\n";
+
+		for (auto it = debugCodeSnippets_.cbegin(); it != debugCodeSnippets_.cend(); ++it)
+		{
+			ofs << it->first << "[label=\"" << EscapeQuotes(it->second)
+				<< "\", xlabel=\"Node number: " << it->first << "\"];\n";
+		}
+
+		for (auto it = edges_.cbegin(); it != edges_.cend(); ++it)
+		{
+			for (auto child : it->second)
+			{
+				ofs << it->first << " -> " << child << ";\n";
+			}
+		}
+
+		ofs << "}\n";
 	}
 
 	std::vector<int> GetDependentNodes(const int startingNode)
