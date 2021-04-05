@@ -1,13 +1,29 @@
 #pragma once
 #include <queue>
 #include <fstream>
+#include <utility>
 #include "Helper.h"
+
+struct Node
+{
+	int astId;
+	int number;
+	std::string codeSnippet;
+	std::string nodeTypeName;
+
+	Node() : astId(0), number(0), codeSnippet(""), nodeTypeName("")
+	{}
+	
+	Node(const int astId, const int traversalOrderNumber, std::string code, std::string type) :
+		astId(astId), number(traversalOrderNumber), codeSnippet(std::move(code)), nodeTypeName(std::move(type))
+	{}
+};
 
 class DependencyGraph
 {
 	std::unordered_map<int, std::vector<int>> edges_;
 	std::unordered_map<int, std::vector<int>> inverseEdges_;
-	std::unordered_map<int, std::string> debugCodeSnippets_;
+	std::unordered_map<int, Node> debugNodeData_;
 	
 public:
 
@@ -37,10 +53,10 @@ public:
 		it->second.push_back(parent);
 	}
 
-	void InsertCodeSnippetForDebugging(const int node, const std::string& snippet)
+	void InsertNodeDataForDebugging(int traversalOrderNumber, const int astId, const std::string& snippet, const std::string& type)
 	{
-		const auto success = debugCodeSnippets_.insert(std::pair<int, std::string>(node, snippet)).second;
-
+		const auto success = debugNodeData_.insert(std::pair<int, Node>(traversalOrderNumber, Node(astId, traversalOrderNumber, snippet, type))).second;
+		
 		if (!success)
 		{
 			llvm::outs() << "DEBUG: Could not add a snippet to the mapping. The snippet:\n" << snippet << "\n";
@@ -51,9 +67,9 @@ public:
 	{
 		llvm::outs() << "--------------- Dependency graph and its code ---------------\n";
 
-		for (auto it = debugCodeSnippets_.cbegin(); it != debugCodeSnippets_.cend(); ++it)
+		for (auto it = debugNodeData_.cbegin(); it != debugNodeData_.cend(); ++it)
 		{
-			llvm::outs() << "Node " << it->first << ":\n" << it->second << "\n";
+			llvm::outs() << "Node " << it->first << ":\n" << it->second.codeSnippet << "\n";
 		}
 		
 		llvm::outs() << "-------------------------------------------------------------\n";
@@ -66,12 +82,13 @@ public:
 		auto dotFileName = "visuals/dotDump_test.dot";
 		auto ofs = std::ofstream(dotFileName);
 
-		ofs << "digraph g {\nforcelabels=true;\n";
+		ofs << "digraph g {\nforcelabels=true;\nrankdir=TD;\n";
 
-		for (auto it = debugCodeSnippets_.cbegin(); it != debugCodeSnippets_.cend(); ++it)
+		for (auto it = debugNodeData_.cbegin(); it != debugNodeData_.cend(); ++it)
 		{
-			ofs << it->first << "[label=\"" << EscapeQuotes(it->second)
-				<< "\", xlabel=\"Node number: " << it->first << "\"];\n";
+			ofs << it->first << "[label=\"" << EscapeQuotes(it->second.codeSnippet)
+				<< "\", xlabel=\"No. " << it->first << " (" << it->second.astId
+				<< "), " << it->second.nodeTypeName << "\"];\n";
 		}
 
 		for (auto it = edges_.cbegin(); it != edges_.cend(); ++it)

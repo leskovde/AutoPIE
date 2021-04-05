@@ -150,27 +150,17 @@ class MappingASTVisitor : public clang::RecursiveASTVisitor<MappingASTVisitor>
 	std::unordered_map<std::string, bool> snippetSet_;
 	SkippedMapRef skippedNodes_ = std::make_shared<std::unordered_map<int, bool>>();
 
-	void InsertMapping(int astId, int myId, const std::string& snippet)
+	bool InsertMapping(int astId, int myId, const std::string& snippet)
 	{
-		if (snippetSet_.find(snippet) != snippetSet_.end())
+		if (snippetSet_.find(snippet) != snippetSet_.end() || nodeMapping_->find(astId) != nodeMapping_->end())
 		{
 			// This node's code has already been processed.
-			skippedNodes_->insert(std::pair<int, bool>(codeUnitsCount, true));			
-			return;
-		}
-
-		auto const success = nodeMapping_->insert(std::pair<int, int>(astId, myId)).second;
-
-		if (success)
-		{
-			snippetSet_[snippet] = true;
-			graph.InsertCodeSnippetForDebugging(codeUnitsCount, snippet);
-		}
-		else
-		{
 			skippedNodes_->insert(std::pair<int, bool>(codeUnitsCount, true));
-			llvm::outs() << "Could not insert (" << astId << ", " << myId << ") to the map.\n";
+			
+			return false;
 		}
+
+		return nodeMapping_->insert(std::pair<int, int>(astId, myId)).second;
 	}
 
 public:
@@ -195,8 +185,18 @@ public:
 	{
 		if (nodeMapping_->find(decl->getID()) == nodeMapping_->end())
 		{
-			llvm::outs() << "Node " << codeUnitsCount << ": Type " << decl->getDeclKindName() << "\n";
-			InsertMapping(decl->getID(), codeUnitsCount, RangeToString(astContext_, decl->getSourceRange()));
+			const auto id = decl->getID();
+			const auto typeName = decl->getDeclKindName();
+			const auto codeSnippet = RangeToString(astContext_, decl->getSourceRange());
+			
+			llvm::outs() << "Node " << codeUnitsCount << ": Type " << typeName << "\n";
+			
+			if (InsertMapping(id, codeUnitsCount, codeSnippet))
+			{
+				snippetSet_[codeSnippet] = true;
+				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName);
+			}
+			
 			codeUnitsCount++;
 		}
 		else
@@ -208,10 +208,19 @@ public:
 	}
 
 	bool VisitCallExpr(clang::CallExpr* expr)
-	{
+	{	
 		if (nodeMapping_->find(expr->getID(astContext_)) == nodeMapping_->end())
 		{
-			InsertMapping(expr->getID(astContext_), codeUnitsCount, RangeToString(astContext_, expr->getSourceRange()));
+			const auto id = expr->getID(astContext_);
+			const auto typeName = expr->getStmtClassName();
+			const auto codeSnippet = RangeToString(astContext_, expr->getSourceRange());
+			
+			if (InsertMapping(id, codeUnitsCount, codeSnippet))
+			{
+				snippetSet_[codeSnippet] = true;
+				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName);
+			}
+
 			codeUnitsCount++;
 		}
 		else
@@ -232,9 +241,18 @@ public:
 		
 		if (nodeMapping_->find(stmt->getID(astContext_)) == nodeMapping_->end())
 		{
-			llvm::outs() << "Node " << codeUnitsCount << ": Type " << stmt->getStmtClassName() << "\n";
-			InsertMapping(stmt->getID(astContext_), codeUnitsCount, RangeToString(astContext_, stmt->getSourceRange()));
-
+			const auto id = stmt->getID(astContext_);
+			const auto typeName = stmt->getStmtClassName();
+			const auto codeSnippet = RangeToString(astContext_, stmt->getSourceRange());
+			
+			llvm::outs() << "Node " << codeUnitsCount << ": Type " << typeName << "\n";
+			
+			if (InsertMapping(id, codeUnitsCount, codeSnippet))
+			{
+				snippetSet_[codeSnippet] = true;
+				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName);
+			}
+			
 			// Apparently only statements have children.
 			for (auto it = stmt->child_begin(); it != stmt->child_end(); ++it)
 			{

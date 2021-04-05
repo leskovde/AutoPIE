@@ -1,29 +1,30 @@
 digraph g {
 forcelabels=true;
-0[label="const char* str,", xlabel="Node number: 0"];
-1[label="int x)", xlabel="Node number: 1"];
-2[label="printf(str, x);", xlabel="Node number: 2"];
+rankdir=TD;
+0[label="const char* str,", xlabel="No. 0 (561), ParmVar"];
+1[label="int x)", xlabel="No. 1 (577), ParmVar"];
+2[label="printf(str, x);", xlabel="No. 2 (681), CallExpr"];
 3[label="{ 
 	x += 3;
 	printf(str, x);
-}", xlabel="Node number: 3"];
+}", xlabel="No. 3 (693), CompoundStmt"];
 4[label="void printf(const char* str, int x) 
 { 
 	x += 3;
 	printf(str, x);
-}", xlabel="Node number: 4"];
-5[label="int argc,", xlabel="Node number: 5"];
-6[label="char** argv)", xlabel="Node number: 6"];
-7[label="int i = 0;", xlabel="Node number: 7"];
-9[label="const int k = 0xffff;", xlabel="Node number: 9"];
-11[label="int j = 0;", xlabel="Node number: 11"];
+}", xlabel="No. 4 (604), Function"];
+5[label="int argc,", xlabel="No. 5 (700), ParmVar"];
+6[label="char** argv)", xlabel="No. 6 (723), ParmVar"];
+7[label="int i = 0;", xlabel="No. 7 (776), Var"];
+9[label="const int k = 0xffff;", xlabel="No. 9 (800), Var"];
+11[label="int j = 0;", xlabel="No. 11 (833), Var"];
 13[label="{
 		i++;
-	}", xlabel="Node number: 13"];
+	}", xlabel="No. 13 (890), CompoundStmt"];
 14[label="for (int j = 0; j < k; j++) {
 		i++;
-	}", xlabel="Node number: 14"];
-15[label="printf(\"Result: %d\n\", i);", xlabel="Node number: 15"];
+	}", xlabel="No. 14 (893), ForStmt"];
+15[label="printf(\"Result: %d\n\", i);", xlabel="No. 15 (942), CallExpr"];
 16[label="{
 	int i = 0;
 	
@@ -34,7 +35,7 @@ forcelabels=true;
 	}
 
 	printf(\"Result: %d\n\", i);
-}", xlabel="Node number: 16"];
+}", xlabel="No. 16 (954), CompoundStmt"];
 17[label="int
 main (int argc, char** argv) {
 	int i = 0;
@@ -46,8 +47,8 @@ main (int argc, char** argv) {
 	}
 
 	printf(\"Result: %d\n\", i);
-}", xlabel="Node number: 17"];
-18[label="", xlabel="Node number: 18"];
+}", xlabel="No. 17 (751), Function"];
+18[label="", xlabel="No. 18 (1), TranslationUnit"];
 3 -> 2;
 14 -> 13;
 16 -> 14;
