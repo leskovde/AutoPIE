@@ -155,9 +155,7 @@ class MappingASTVisitor : public clang::RecursiveASTVisitor<MappingASTVisitor>
 		if (snippetSet_.find(snippet) != snippetSet_.end())
 		{
 			// This node's code has already been processed.
-			skippedNodes_->insert(std::pair<int, bool>(codeUnitsCount, true));
-			codeUnitsCount++;
-			
+			skippedNodes_->insert(std::pair<int, bool>(codeUnitsCount, true));			
 			return;
 		}
 
@@ -167,15 +165,12 @@ class MappingASTVisitor : public clang::RecursiveASTVisitor<MappingASTVisitor>
 		{
 			snippetSet_[snippet] = true;
 			graph.InsertCodeSnippetForDebugging(codeUnitsCount, snippet);
-			
 		}
 		else
 		{
 			skippedNodes_->insert(std::pair<int, bool>(codeUnitsCount, true));
 			llvm::outs() << "Could not insert (" << astId << ", " << myId << ") to the map.\n";
 		}
-		
-		codeUnitsCount++;
 	}
 
 public:
@@ -202,6 +197,11 @@ public:
 		{
 			llvm::outs() << "Node " << codeUnitsCount << ": Type " << decl->getDeclKindName() << "\n";
 			InsertMapping(decl->getID(), codeUnitsCount, RangeToString(astContext_, decl->getSourceRange()));
+			codeUnitsCount++;
+		}
+		else
+		{
+			llvm::outs() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
 		}
 		
 		return true;
@@ -212,6 +212,11 @@ public:
 		if (nodeMapping_->find(expr->getID(astContext_)) == nodeMapping_->end())
 		{
 			InsertMapping(expr->getID(astContext_), codeUnitsCount, RangeToString(astContext_, expr->getSourceRange()));
+			codeUnitsCount++;
+		}
+		else
+		{
+			llvm::outs() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
 		}
 				
 		return true;
@@ -237,7 +242,13 @@ public:
 				{
 					graph.InsertDependency(codeUnitsCount, nodeMapping_->at(it->getID(astContext_)));
 				}
-			}			
+			}
+			
+			codeUnitsCount++;
+		}
+		else
+		{
+			llvm::outs() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
 		}
 		
 		return true;

@@ -48,8 +48,8 @@ main (int argc, char** argv) {
 	printf(\"Result: %d\n\", i);
 }", xlabel="Node number: 17"];
 18[label="", xlabel="Node number: 18"];
-4 -> 2;
-15 -> 13;
-17 -> 14;
-17 -> 15;
+3 -> 2;
+14 -> 13;
+16 -> 14;
+16 -> 15;
 }
