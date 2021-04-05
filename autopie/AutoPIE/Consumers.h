@@ -31,9 +31,9 @@ public:
 		outFile.close();
 	}
 
-	void SetSkippedNodes(SkippedMapRef skippedNodes)
+	void SetData(SkippedMapRef skippedNodes, DependencyGraph graph)
 	{
-		visitor_->SetSkippedNodes(skippedNodes);
+		visitor_->SetData(skippedNodes, graph);
 	}
 };
 
@@ -91,7 +91,7 @@ public:
 		mappingConsumer_.HandleTranslationUnit(context);
 		const auto numberOfCodeUnits = mappingConsumer_.GetCodeUnitsCount();
 
-		printingConsumer_.SetSkippedNodes(mappingConsumer_.GetSkippedNodes());
+		printingConsumer_.SetData(mappingConsumer_.GetSkippedNodes(), mappingConsumer_.GetDependencyGraph());
 
 		// Udelat bitfield velikosti N.
 		// Zjistit si k nemu nejaka pravidla (ktere bity jsou nadrazene, ktere patri pod ne).

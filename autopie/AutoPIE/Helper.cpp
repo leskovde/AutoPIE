@@ -13,7 +13,7 @@ clang::SourceRange GetSourceRange(const clang::Stmt& s)
 	return { s.getBeginLoc(), s.getEndLoc() };
 }
 
-std::string RangeToString(clang::ASTContext& astContext, clang::SourceRange range)
+std::string RangeToString(clang::ASTContext& astContext, const clang::SourceRange range)
 {
 	return GetSourceText(range, astContext.getSourceManager()).str();
 }
@@ -164,11 +164,11 @@ clang::SourceRange GetPrintableRange(const clang::SourceRange range, const clang
  * (such as clang::Expr::getSourceRange) might actually point to the first character
  * (the "location") of the last token of the expression, rather than the character
  * past-the-end of the expression like clang::Lexer::getSourceText expects.
- * get_source_text_raw() does not take this into account. Use get_source_text()
+ * GetSourceTextRaw() does not take this into account. Use GetSourceText()
  * instead if you want to get the source text including the last token.
  *
  * @warning This function does not obtain the source of a macro/preprocessor expansion.
- * Use get_source_text() for that.
+ * Use GetSourceText() for that.
  */
 llvm::StringRef GetSourceTextRaw(const clang::SourceRange range, const clang::SourceManager& sm)
 {
@@ -182,6 +182,6 @@ llvm::StringRef GetSourceTextRaw(const clang::SourceRange range, const clang::So
  */
 llvm::StringRef GetSourceText(const clang::SourceRange range, const clang::SourceManager& sm)
 {
-	const auto printableRange = GetPrintableRange(range, sm);
-	return GetSourceTextRaw(GetPrintableRange(printableRange, sm), sm);
+	const auto printableRange = GetPrintableRange(GetPrintableRange(range, sm), sm);
+	return GetSourceTextRaw(printableRange, sm);
 }

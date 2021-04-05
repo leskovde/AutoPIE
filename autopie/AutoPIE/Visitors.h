@@ -29,6 +29,7 @@ class VariantPrintingASTVisitor : public clang::RecursiveASTVisitor<VariantPrint
 	BitMask bitMask_;
 	int currentNode_ = 0;
 	RewriterRef rewriter_;
+	DependencyGraph graph_;
 	SkippedMapRef skippedNodes_;
 	
 	void RemoveFromSource(const clang::SourceRange range) const
@@ -37,18 +38,39 @@ class VariantPrintingASTVisitor : public clang::RecursiveASTVisitor<VariantPrint
 		
 		//llvm::outs() << localRewriter.getRewrittenText(range) << "\n";
 		//llvm::outs() << range.printToString(astContext.getSourceManager()) << "\n";
-
+		
 		if (rewriter_)
 		{
-			llvm::outs() << "Removing the following snippet:\n" << RangeToString(astContext_, range);
-			rewriter_->RemoveText(GetPrintableRange(range, astContext_.getSourceManager()));
+			llvm::outs() << "Removing node " << currentNode_ << ":\n" << RangeToString(astContext_, range);
+			rewriter_->RemoveText(GetPrintableRange(GetPrintableRange(range, astContext_.getSourceManager()),
+				astContext_.getSourceManager()));
 			llvm::outs() << "\n";
 		}
 		else
 		{
 			llvm::outs() << "ERROR: Rewriter not set in the VariantPrintingASTVisitor!\n";
 		}
-		
+	}
+
+	bool ShouldBeRemoved()
+	{
+		if (!bitMask_[currentNode_])
+		{
+			// The bit is 0 => the node should not be in the result.
+			// However, if the parent is also set to 0, there will be an error when removing both.
+			// Check for this case and remove the node only when all parents are set to 1.
+			for(auto parent : graph_.GetParentNodes(currentNode_))
+			{
+				if (!bitMask_[parent])
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		return false;
 	}
 	
 public:
@@ -67,9 +89,10 @@ public:
 		rewriter_ = rewriter;
 	}
 
-	void SetSkippedNodes(SkippedMapRef skippedNodes)
+	void SetData(SkippedMapRef skippedNodes, DependencyGraph& graph)
 	{
 		skippedNodes_ = std::move(skippedNodes);
+		graph_ = graph;
 	}
 	
 	bool shouldTraversePostOrder() const
@@ -79,51 +102,42 @@ public:
 
 	virtual bool VisitDecl(clang::Decl* decl)
 	{
-		if (skippedNodes_->find(currentNode_) == skippedNodes_->end())
+		if (skippedNodes_->find(currentNode_) == skippedNodes_->end() && ShouldBeRemoved())
 		{
-			if (!bitMask_[currentNode_])
-			{
-				const auto range = decl->getSourceRange();
+			const auto range = decl->getSourceRange();
 
-				RemoveFromSource(range);
-			}
-			
-			currentNode_++;
+			RemoveFromSource(range);
 		}
+		
+		currentNode_++;
 		
 		return true;
 	}
 
 	bool VisitCallExpr(clang::CallExpr* expr)
 	{
-		if (skippedNodes_->find(currentNode_) == skippedNodes_->end())
+		if (skippedNodes_->find(currentNode_) == skippedNodes_->end() && ShouldBeRemoved())
 		{
-			if (!bitMask_[currentNode_])
-			{
-				const auto range = expr->getSourceRange();
+			const auto range = expr->getSourceRange();
 
-				RemoveFromSource(range);
-			}
-
-			currentNode_++;
+			RemoveFromSource(range);
 		}
+
+		currentNode_++;
 		
 		return true;
 	}
 	
 	virtual bool VisitStmt(clang::Stmt* stmt)
 	{
-		if (skippedNodes_->find(currentNode_) == skippedNodes_->end())
+		if (skippedNodes_->find(currentNode_) == skippedNodes_->end() && ShouldBeRemoved())
 		{
-			if (!bitMask_[currentNode_])
-			{
-				const auto range = stmt->getSourceRange();
+			const auto range = stmt->getSourceRange();
 
-				RemoveFromSource(range);
-			}
-
-			currentNode_++;
+			RemoveFromSource(range);
 		}
+
+		currentNode_++;
 
 		return true;
 	}
@@ -142,9 +156,11 @@ class MappingASTVisitor : public clang::RecursiveASTVisitor<MappingASTVisitor>
 		{
 			// This node's code has already been processed.
 			skippedNodes_->insert(std::pair<int, bool>(codeUnitsCount, true));
+			codeUnitsCount++;
+			
 			return;
 		}
-		
+
 		auto const success = nodeMapping_->insert(std::pair<int, int>(astId, myId)).second;
 
 		if (success)
@@ -152,13 +168,14 @@ class MappingASTVisitor : public clang::RecursiveASTVisitor<MappingASTVisitor>
 			snippetSet_[snippet] = true;
 			graph.InsertCodeSnippetForDebugging(codeUnitsCount, snippet);
 			
-			codeUnitsCount++;
 		}
 		else
 		{
 			skippedNodes_->insert(std::pair<int, bool>(codeUnitsCount, true));
 			llvm::outs() << "Could not insert (" << astId << ", " << myId << ") to the map.\n";
 		}
+		
+		codeUnitsCount++;
 	}
 
 public:
@@ -181,8 +198,6 @@ public:
 	
 	bool VisitDecl(clang::Decl* decl)
 	{
-		// TODO: Create a more sophisticated mapping that filters duplicates.
-		// E.g. VarDecl and DeclStmt share the same source code - filter based on source code.
 		if (nodeMapping_->find(decl->getID()) == nodeMapping_->end())
 		{
 			llvm::outs() << "Node " << codeUnitsCount << ": Type " << decl->getDeclKindName() << "\n";

@@ -72,49 +72,6 @@ bool Validate(const char* const userInputError, const std::filesystem::directory
 	return false;
 }
 
-/*
-unsigned long GenerateVariants(GlobalContext* context, clang::tooling::CommonOptionsParser& op, const int originalSourceSize)
-{
-	unsigned long variantCount = 0;
-	
-	if (context->searchStack.empty())
-	{
-		outs() << "DEBUG: Global context contains 0 variants - the input file has not been queued.\n";
-	}
-	
-	while (!context->searchStack.empty())
-	{
-		auto currentFile = context->searchStack.top();
-		context->searchStack.pop();
-
-		if (variantCount % 50 == 0)
-		{
-			outs() << "Done " << variantCount << " variants. Current stack size: " << context->searchStack.size() << "\n";
-		}
-		
-		variantCount++;
-
-		const auto variantSize = GetStatementCount(*context, op.getCompilations(), currentFile);
-
-		if (static_cast<double>(variantSize) / originalSourceSize < context->parsedInput.reductionRatio)
-		{
-			continue;
-		}
-
-		// TODO: Start from here.
-
-		// Remove each statement once and push a new file without that statement onto the stack (done inside the FrontEndAction).
-		for (auto i = 1; i <= variantSize; i++)
-		{
-			outs() << "\tIteration: " << std::to_string(context->iteration) << " (targeting statement no. " << i << " )\n\n";
-			ReduceStatement(*context, op.getCompilations(), currentFile, i);
-		}
-	}
-
-	return variantCount;
-}
-*/
-
 /**
  * Generates a minimal program variant by naively removing statements.
  * 

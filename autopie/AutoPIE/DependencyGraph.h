@@ -4,6 +4,7 @@
 class DependencyGraph
 {
 	std::unordered_map<int, std::vector<int>> edges_;
+	std::unordered_map<int, std::vector<int>> inverseEdges_;
 	std::unordered_map<int, std::string> debugCodeSnippets_;
 	
 public:
@@ -23,6 +24,15 @@ public:
 		}
 
 		it->second.push_back(child);
+
+		it = inverseEdges_.find(child);
+
+		if (it == inverseEdges_.end())
+		{
+			it = inverseEdges_.insert(std::pair<int, std::vector<int>>(child, std::vector<int>())).first;
+		}
+
+		it->second.push_back(parent);
 	}
 
 	void InsertCodeSnippetForDebugging(const int node, const std::string& snippet)
@@ -72,5 +82,12 @@ public:
 		}
 
 		return allDependencies;
+	}
+
+	std::vector<int> GetParentNodes(const int startingNode)
+	{
+		const auto it = inverseEdges_.find(startingNode);
+		
+		return it != inverseEdges_.end() ? it->second : std::vector<int>();
 	}
 };
