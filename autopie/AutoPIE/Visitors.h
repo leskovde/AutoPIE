@@ -102,6 +102,12 @@ public:
 
 	virtual bool VisitDecl(clang::Decl* decl)
 	{
+		if (llvm::isa<clang::TranslationUnitDecl>(decl))
+		{
+			// Ignore the translation unit decl since it won't be manipulated with.
+			return true;
+		}
+		
 		if (skippedNodes_->find(currentNode_) == skippedNodes_->end() && ShouldBeRemoved())
 		{
 			const auto range = decl->getSourceRange();
@@ -183,6 +189,12 @@ public:
 	
 	bool VisitDecl(clang::Decl* decl)
 	{
+		if (llvm::isa<clang::TranslationUnitDecl>(decl))
+		{
+			// Ignore the translation unit decl since it won't be manipulated with.
+			return true;
+		}
+		
 		if (nodeMapping_->find(decl->getID()) == nodeMapping_->end())
 		{
 			const auto id = decl->getID();
@@ -194,7 +206,17 @@ public:
 			if (InsertMapping(id, codeUnitsCount, codeSnippet))
 			{
 				snippetSet_[codeSnippet] = true;
-				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName);
+				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, "crimson");
+
+				// Turns out declarations also have children.
+				// TODO: Handle structs, enums, etc. by getting DeclContext and using specific methods.
+				// http://clang-developers.42468.n3.nabble.com/How-to-traverse-all-children-FieldDecl-from-parent-CXXRecordDecl-td4045698.html
+				const auto child = decl->getBody();
+				
+				if (child && nodeMapping_->find(child->getID(astContext_)) != nodeMapping_->end())
+				{
+					graph.InsertDependency(codeUnitsCount, nodeMapping_->at(child->getID(astContext_)));
+				}
 			}
 			
 			codeUnitsCount++;
@@ -218,7 +240,7 @@ public:
 			if (InsertMapping(id, codeUnitsCount, codeSnippet))
 			{
 				snippetSet_[codeSnippet] = true;
-				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName);
+				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, "goldenrod");
 			}
 
 			codeUnitsCount++;
@@ -250,15 +272,15 @@ public:
 			if (InsertMapping(id, codeUnitsCount, codeSnippet))
 			{
 				snippetSet_[codeSnippet] = true;
-				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName);
-			}
+				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, "darkorchid");
 			
-			// Apparently only statements have children.
-			for (auto it = stmt->child_begin(); it != stmt->child_end(); ++it)
-			{
-				if (*it && nodeMapping_->find(it->getID(astContext_)) != nodeMapping_->end())
+				// Apparently only statements have children.
+				for (auto it = stmt->child_begin(); it != stmt->child_end(); ++it)
 				{
-					graph.InsertDependency(codeUnitsCount, nodeMapping_->at(it->getID(astContext_)));
+					if (*it && nodeMapping_->find(it->getID(astContext_)) != nodeMapping_->end())
+					{
+						graph.InsertDependency(codeUnitsCount, nodeMapping_->at(it->getID(astContext_)));
+					}
 				}
 			}
 			

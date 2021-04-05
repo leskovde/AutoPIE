@@ -4,18 +4,21 @@
 #include <utility>
 #include "Helper.h"
 
+
+
 struct Node
 {
 	int astId;
 	int number;
+	std::string dumpColor;
 	std::string codeSnippet;
 	std::string nodeTypeName;
 
-	Node() : astId(0), number(0), codeSnippet(""), nodeTypeName("")
+	Node() : astId(0), number(0), dumpColor("black"), codeSnippet(""), nodeTypeName("")
 	{}
 	
-	Node(const int astId, const int traversalOrderNumber, std::string code, std::string type) :
-		astId(astId), number(traversalOrderNumber), codeSnippet(std::move(code)), nodeTypeName(std::move(type))
+	Node(const int astId, const int traversalOrderNumber, std::string color, std::string code, std::string type) :
+		astId(astId), number(traversalOrderNumber), dumpColor(std::move(color)), codeSnippet(std::move(code)), nodeTypeName(std::move(type))
 	{}
 };
 
@@ -53,9 +56,9 @@ public:
 		it->second.push_back(parent);
 	}
 
-	void InsertNodeDataForDebugging(int traversalOrderNumber, const int astId, const std::string& snippet, const std::string& type)
+	void InsertNodeDataForDebugging(int traversalOrderNumber, const int astId, const std::string& snippet, const std::string& type, const std::string& color)
 	{
-		const auto success = debugNodeData_.insert(std::pair<int, Node>(traversalOrderNumber, Node(astId, traversalOrderNumber, snippet, type))).second;
+		const auto success = debugNodeData_.insert(std::pair<int, Node>(traversalOrderNumber, Node(astId, traversalOrderNumber, color, snippet, type))).second;
 		
 		if (!success)
 		{
@@ -88,7 +91,7 @@ public:
 		{
 			ofs << it->first << "[label=\"" << EscapeQuotes(it->second.codeSnippet)
 				<< "\", xlabel=\"No. " << it->first << " (" << it->second.astId
-				<< "), " << it->second.nodeTypeName << "\"];\n";
+				<< "), " << it->second.nodeTypeName << "\", color=\"" << it->second.dumpColor << "\"];\n";
 		}
 
 		for (auto it = edges_.cbegin(); it != edges_.cend(); ++it)
