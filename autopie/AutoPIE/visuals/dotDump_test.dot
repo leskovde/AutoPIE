@@ -1,31 +1,27 @@
 digraph g {
 forcelabels=true;
 rankdir=TD;
-0[label="const char* str,", xlabel="No. 0 (561), ParmVar", color="crimson"];
-1[label="int x)", xlabel="No. 1 (577), ParmVar", color="crimson"];
-2[label="printf(str, x);", xlabel="No. 2 (681), CallExpr", color="goldenrod"];
-3[label="{ 
+0[label="printf(str, x);", xlabel="No. 0 (681), CallExpr", color="goldenrod"];
+1[label="{ 
 	x += 3;
 	printf(str, x);
-}", xlabel="No. 3 (693), CompoundStmt", color="darkorchid"];
-4[label="void printf(const char* str, int x) 
+}", xlabel="No. 1 (693), CompoundStmt", color="darkorchid"];
+2[label="void printf(const char* str, int x) 
 { 
 	x += 3;
 	printf(str, x);
-}", xlabel="No. 4 (604), Function", color="crimson"];
-5[label="int argc,", xlabel="No. 5 (700), ParmVar", color="crimson"];
-6[label="char** argv)", xlabel="No. 6 (723), ParmVar", color="crimson"];
-7[label="int i = 0;", xlabel="No. 7 (776), Var", color="crimson"];
-9[label="const int k = 0xffff;", xlabel="No. 9 (800), Var", color="crimson"];
-11[label="int j = 0;", xlabel="No. 11 (833), Var", color="crimson"];
-13[label="{
+}", xlabel="No. 2 (604), Function", color="crimson"];
+3[label="int i = 0;", xlabel="No. 3 (794), DeclStmt", color="darkorchid"];
+4[label="const int k = 0xffff;", xlabel="No. 4 (827), DeclStmt", color="darkorchid"];
+5[label="int j = 0;", xlabel="No. 5 (851), DeclStmt", color="darkorchid"];
+6[label="{
 		i++;
-	}", xlabel="No. 13 (890), CompoundStmt", color="darkorchid"];
-14[label="for (int j = 0; j < k; j++) {
+	}", xlabel="No. 6 (890), CompoundStmt", color="darkorchid"];
+7[label="for (int j = 0; j < k; j++) {
 		i++;
-	}", xlabel="No. 14 (893), ForStmt", color="darkorchid"];
-15[label="printf(\"Result: %d\n\", i);", xlabel="No. 15 (942), CallExpr", color="goldenrod"];
-16[label="{
+	}", xlabel="No. 7 (893), ForStmt", color="darkorchid"];
+8[label="printf(\"Result: %d\n\", i);", xlabel="No. 8 (942), CallExpr", color="goldenrod"];
+9[label="{
 	int i = 0;
 	
 	const int k = 0xffff;
@@ -35,8 +31,8 @@ rankdir=TD;
 	}
 
 	printf(\"Result: %d\n\", i);
-}", xlabel="No. 16 (954), CompoundStmt", color="darkorchid"];
-17[label="int
+}", xlabel="No. 9 (954), CompoundStmt", color="darkorchid"];
+10[label="int
 main (int argc, char** argv) {
 	int i = 0;
 	
@@ -47,11 +43,14 @@ main (int argc, char** argv) {
 	}
 
 	printf(\"Result: %d\n\", i);
-}", xlabel="No. 17 (751), Function", color="crimson"];
-3 -> 2;
-4 -> 3;
-14 -> 13;
-16 -> 14;
-16 -> 15;
-17 -> 16;
+}", xlabel="No. 10 (751), Function", color="crimson"];
+9 -> 3;
+9 -> 4;
+9 -> 7;
+9 -> 8;
+1 -> 0;
+10 -> 9;
+2 -> 1;
+7 -> 5;
+7 -> 6;
 }

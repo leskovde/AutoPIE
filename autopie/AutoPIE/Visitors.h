@@ -102,9 +102,10 @@ public:
 
 	virtual bool VisitDecl(clang::Decl* decl)
 	{
-		if (llvm::isa<clang::TranslationUnitDecl>(decl))
+		if (llvm::isa<clang::TranslationUnitDecl>(decl) || llvm::isa<clang::VarDecl>(decl))
 		{
 			// Ignore the translation unit decl since it won't be manipulated with.
+			// VarDecl have a DeclStmt counterpart that is easier to work with => avoid duplicates.
 			return true;
 		}
 		
@@ -136,6 +137,12 @@ public:
 	
 	virtual bool VisitStmt(clang::Stmt* stmt)
 	{
+		if (llvm::isa<clang::Expr>(stmt))
+		{
+			// Ignore expressions in general since they tend to be too small.
+			return true;
+		}
+		
 		if (skippedNodes_->find(currentNode_) == skippedNodes_->end() && ShouldBeRemoved())
 		{
 			const auto range = stmt->getSourceRange();
@@ -189,9 +196,11 @@ public:
 	
 	bool VisitDecl(clang::Decl* decl)
 	{
-		if (llvm::isa<clang::TranslationUnitDecl>(decl))
+		// TODO: Decide how to handle Decl subclasses with Stmt counterparts (e.g., VarDecl and DeclStmt) - handle all possible options.
+		if (llvm::isa<clang::TranslationUnitDecl>(decl) || llvm::isa<clang::VarDecl>(decl))
 		{
 			// Ignore the translation unit decl since it won't be manipulated with.
+			// VarDecl have a DeclStmt counterpart that is easier to work with => avoid duplicates.
 			return true;
 		}
 		

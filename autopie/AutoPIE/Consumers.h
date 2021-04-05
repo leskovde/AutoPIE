@@ -99,11 +99,6 @@ public:
 
 		printingConsumer_.SetData(mappingConsumer_.GetSkippedNodes(), mappingConsumer_.GetDependencyGraph());
 
-		// Udelat bitfield velikosti N.
-		// Zjistit si k nemu nejaka pravidla (ktere bity jsou nadrazene, ktere patri pod ne).
-		// Podle pravidel generovat bitmasky.
-		// Podle bitmasky projit visitorem AST a vypsat ho.
-
 		auto bitMask = BitMask(numberOfCodeUnits);
 		auto dependencies = mappingConsumer_.GetDependencyGraph();
 
