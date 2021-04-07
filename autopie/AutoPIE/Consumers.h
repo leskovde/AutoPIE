@@ -47,7 +47,7 @@ public:
 	DependencyMappingASTConsumer(clang::CompilerInstance* ci, GlobalContext& context) : globalContext_(context)
 	{
 		nodeMapping_ = std::make_shared<NodeMapping>();
-		mappingVisitor_ = std::make_unique<MappingASTVisitor>(ci, nodeMapping_);
+		mappingVisitor_ = std::make_unique<MappingASTVisitor>(ci, nodeMapping_, globalContext_.parsedInput.errorLocation.lineNumber);
 	}
 
 	void HandleTranslationUnit(clang::ASTContext& context) override
@@ -104,14 +104,14 @@ public:
 
 		llvm::outs() << "Maximum expected variants: " << pow(2, numberOfCodeUnits) << "\n";
 
-		const auto concreteTestCase = BitMask{ true, true, true,  true, false, false, false, false, true, true, true};
-		bitMask = concreteTestCase;
+		//const auto concreteTestCase = BitMask{ true, true, true,  true, false, false, false, false, true, true, true};
+		//bitMask = concreteTestCase;
 		
 		auto variantsCount = 0;
 		
-		//while (!IsFull(bitMask))
+		while (!IsFull(bitMask))
 		{
-			//Increment(bitMask);
+			Increment(bitMask);
 
 			if (IsValid(bitMask, dependencies))
 			{
@@ -121,10 +121,14 @@ public:
 				{
 					llvm::outs() << "Done " << variantsCount << " variants.\n";
 				}
+
+				llvm::outs() << "DEBUG: Processing valid bitmask " << Stringify(bitMask) << "\n";
 				
 				auto fileName = "temp/" + std::to_string(variantsCount) + "_tempFile.cpp";
 				printingConsumer_.HandleTranslationUnit(context, fileName, bitMask);
 			}
 		}
+
+		llvm::outs() << "Done " << variantsCount << " variants.\n";
 	}
 };

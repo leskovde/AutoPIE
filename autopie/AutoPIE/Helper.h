@@ -45,6 +45,8 @@ std::string RemoveFileExtensions(const std::string& fileName);
 
 std::string EscapeQuotes(const std::string& text);
 
+std::string Stringify(BitMask& bitMask);
+
 bool IsFull(BitMask& bitMask);
 
 void Increment(BitMask& bitMask);

@@ -4,8 +4,6 @@
 #include <utility>
 #include "Helper.h"
 
-
-
 struct Node
 {
 	int astId;
@@ -24,12 +22,18 @@ struct Node
 
 class DependencyGraph
 {
+	std::vector<int> criterion_;
+	std::unordered_map<int, Node> debugNodeData_;
 	std::unordered_map<int, std::vector<int>> edges_;
 	std::unordered_map<int, std::vector<int>> inverseEdges_;
-	std::unordered_map<int, Node> debugNodeData_;
 	
 public:
 
+	void AddCriterionNode(const int node)
+	{
+		criterion_.push_back(node);
+	}
+	
 	void InsertDependency(const int parent, const int child)
 	{
 		if (parent == child)
@@ -137,5 +141,10 @@ public:
 		const auto it = inverseEdges_.find(startingNode);
 		
 		return it != inverseEdges_.end() ? it->second : std::vector<int>();
+	}
+
+	bool IsInCriterion(const int node)
+	{
+		return std::find(criterion_.begin(), criterion_.end(), node) != criterion_.end();
 	}
 };

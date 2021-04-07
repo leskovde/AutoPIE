@@ -76,7 +76,7 @@ bool ClearTempDirectory(const bool prompt = false)
 	return true;
 }
 
-static std::string Stringify(BitMask& bitMask)
+std::string Stringify(BitMask& bitMask)
 {
 	std::string bits;
 
@@ -112,20 +112,18 @@ void Increment(BitMask& bitMask)
 {
 	// TODO: Write unit tests for this function (and the all variant generation).
 	
-	for (size_t i = bitMask.size() - 1; i >= 0; i--)
+	for (size_t i = bitMask.size(); i > 0; i--)
 	{
-		if (bitMask[i])
+		if (bitMask[i - 1])
 		{
-			bitMask[i].flip();
+			bitMask[i - 1].flip();
 		}
 		else
 		{
-			bitMask[i].flip();
+			bitMask[i - 1].flip();
 			break;
 		}
 	}
-	
-	llvm::outs() << "DEBUG: After inc: " << Stringify(bitMask) << "\n";
 }
 
 bool IsValid(BitMask& bitMask, DependencyGraph& dependencies)
@@ -134,6 +132,12 @@ bool IsValid(BitMask& bitMask, DependencyGraph& dependencies)
 	{
 		if (!bitMask[i])
 		{
+			if (dependencies.IsInCriterion(i))
+			{
+				// Criterion nodes should be present.
+				return false;
+			}
+			
 			auto children = dependencies.GetDependentNodes(i);
 
 			for (auto child : children)

@@ -158,12 +158,13 @@ public:
 
 class MappingASTVisitor : public clang::RecursiveASTVisitor<MappingASTVisitor>
 {
-	clang::ASTContext& astContext_;
+	int errorLine_;
 	NodeMappingRef nodeMapping_;
+	clang::ASTContext& astContext_;
 	std::unordered_map<std::string, bool> snippetSet_;
 	SkippedMapRef skippedNodes_ = std::make_shared<std::unordered_map<int, bool>>();
 
-	bool InsertMapping(int astId, int myId, const std::string& snippet)
+	bool InsertMapping(const int astId, const std::string& snippet, const int line)
 	{
 		if (snippetSet_.find(snippet) != snippetSet_.end() || nodeMapping_->find(astId) != nodeMapping_->end())
 		{
@@ -173,15 +174,20 @@ class MappingASTVisitor : public clang::RecursiveASTVisitor<MappingASTVisitor>
 			return false;
 		}
 
-		return nodeMapping_->insert(std::pair<int, int>(astId, myId)).second;
+		if (errorLine_ == line)
+		{
+			graph.AddCriterionNode(codeUnitsCount);
+		}
+		
+		return nodeMapping_->insert(std::pair<int, int>(astId, codeUnitsCount)).second;
 	}
 
 public:
 	int codeUnitsCount = 0;
 	DependencyGraph graph = DependencyGraph();
 
-	MappingASTVisitor(clang::CompilerInstance* ci, const NodeMappingRef& mapping)
-		: astContext_(ci->getASTContext()), nodeMapping_(mapping)
+	MappingASTVisitor(clang::CompilerInstance* ci, NodeMappingRef mapping, const int errorLine)
+		: errorLine_(errorLine), nodeMapping_(std::move(mapping)), astContext_(ci->getASTContext())
 	{}
 
 	SkippedMapRef GetSkippedNodes()
@@ -209,10 +215,11 @@ public:
 			const auto id = decl->getID();
 			const auto typeName = decl->getDeclKindName();
 			const auto codeSnippet = RangeToString(astContext_, decl->getSourceRange());
+			const auto line = astContext_.getSourceManager().getSpellingLineNumber(decl->getBeginLoc());
 			
 			llvm::outs() << "Node " << codeUnitsCount << ": Type " << typeName << "\n";
 			
-			if (InsertMapping(id, codeUnitsCount, codeSnippet))
+			if (InsertMapping(id, codeSnippet, line))
 			{
 				snippetSet_[codeSnippet] = true;
 				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, "crimson");
@@ -245,8 +252,9 @@ public:
 			const auto id = expr->getID(astContext_);
 			const auto typeName = expr->getStmtClassName();
 			const auto codeSnippet = RangeToString(astContext_, expr->getSourceRange());
-			
-			if (InsertMapping(id, codeUnitsCount, codeSnippet))
+			const auto line = astContext_.getSourceManager().getSpellingLineNumber(expr->getBeginLoc());
+
+			if (InsertMapping(id, codeSnippet, line))
 			{
 				snippetSet_[codeSnippet] = true;
 				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, "goldenrod");
@@ -275,10 +283,11 @@ public:
 			const auto id = stmt->getID(astContext_);
 			const auto typeName = stmt->getStmtClassName();
 			const auto codeSnippet = RangeToString(astContext_, stmt->getSourceRange());
-			
+			const auto line = astContext_.getSourceManager().getSpellingLineNumber(stmt->getBeginLoc());
+
 			llvm::outs() << "Node " << codeUnitsCount << ": Type " << typeName << "\n";
 			
-			if (InsertMapping(id, codeUnitsCount, codeSnippet))
+			if (InsertMapping(id, codeSnippet, line))
 			{
 				snippetSet_[codeSnippet] = true;
 				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, "darkorchid");

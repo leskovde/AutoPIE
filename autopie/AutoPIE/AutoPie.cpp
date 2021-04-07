@@ -112,8 +112,6 @@ int main(int argc, const char** argv)
 
 	return 0;
 	
-	// TODO: Prevent duplicate program variants during generation => both search and verification speedup.
-
 	outs() << "\n============================================================\n";
 	outs() << "VERIFICATION\n";
 
