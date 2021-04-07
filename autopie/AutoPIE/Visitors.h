@@ -56,7 +56,7 @@ class VariantPrintingASTVisitor : public clang::RecursiveASTVisitor<VariantPrint
 	{
 		if (!bitMask_[currentNode_])
 		{
-			// The bit is 0 => the node should not be in the result.
+			// The bit is 0 => the node should not be present in the result.
 			// However, if the parent is also set to 0, there will be an error when removing both.
 			// Check for this case and remove the node only when all parents are set to 1.
 			for(auto parent : graph_.GetParentNodes(currentNode_))

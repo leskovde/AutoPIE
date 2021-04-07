@@ -103,12 +103,15 @@ public:
 		auto dependencies = mappingConsumer_.GetDependencyGraph();
 
 		llvm::outs() << "Maximum expected variants: " << pow(2, numberOfCodeUnits) << "\n";
+
+		const auto concreteTestCase = BitMask{ true, true, true,  true, false, false, false, false, true, true, true};
+		bitMask = concreteTestCase;
 		
 		auto variantsCount = 0;
 		
-		while (!IsFull(bitMask))
+		//while (!IsFull(bitMask))
 		{
-			Increment(bitMask);
+			//Increment(bitMask);
 
 			if (IsValid(bitMask, dependencies))
 			{

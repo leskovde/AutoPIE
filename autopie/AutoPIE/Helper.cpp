@@ -132,13 +132,18 @@ bool IsValid(BitMask& bitMask, DependencyGraph& dependencies)
 {
 	for (size_t i = 0; i < bitMask.size(); i++)
 	{
-		auto children = dependencies.GetDependentNodes(i);
-
-		for (auto child : children)
+		if (!bitMask[i])
 		{
-			if (bitMask[i] != bitMask[child])
+			auto children = dependencies.GetDependentNodes(i);
+
+			for (auto child : children)
 			{
-				return false;
+				// Missing parent statement requires missing
+				// children as well.
+				if (bitMask[child])
+				{
+					return false;
+				}
 			}
 		}
 	}
