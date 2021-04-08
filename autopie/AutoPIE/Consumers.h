@@ -103,9 +103,6 @@ public:
 		auto dependencies = mappingConsumer_.GetDependencyGraph();
 
 		llvm::outs() << "Maximum expected variants: " << pow(2, numberOfCodeUnits) << "\n";
-
-		//const auto concreteTestCase = BitMask{ true, true, true,  true, false, false, false, false, true, true, true};
-		//bitMask = concreteTestCase;
 		
 		auto variantsCount = 0;
 		
@@ -124,7 +121,7 @@ public:
 
 				llvm::outs() << "DEBUG: Processing valid bitmask " << Stringify(bitMask) << "\n";
 				
-				auto fileName = "temp/" + std::to_string(variantsCount) + "_tempFile.cpp";
+				auto fileName = "temp/" + std::to_string(variantsCount) + "_tempFile.c";
 				printingConsumer_.HandleTranslationUnit(context, fileName, bitMask);
 			}
 		}

@@ -1,15 +1,15 @@
 digraph g {
 forcelabels=true;
 rankdir=TD;
-0[label="printf(str, x);", xlabel="No. 0 (681), CallExpr", color="goldenrod"];
+0[label="print(str, x);", xlabel="No. 0 (681), CallExpr", color="goldenrod"];
 1[label="{ 
 	x += 3;
-	printf(str, x);
+	print(str, x);
 }", xlabel="No. 1 (693), CompoundStmt", color="darkorchid"];
-2[label="void printf(const char* str, int x) 
+2[label="void print(const char* str, int x) 
 { 
 	x += 3;
-	printf(str, x);
+	print(str, x);
 }", xlabel="No. 2 (604), Function", color="crimson"];
 3[label="int i = 0;", xlabel="No. 3 (794), DeclStmt", color="darkorchid"];
 4[label="const int k = 0xffff;", xlabel="No. 4 (827), DeclStmt", color="darkorchid"];
@@ -20,7 +20,7 @@ rankdir=TD;
 7[label="for (int j = 0; j < k; j++) {
 		i++;
 	}", xlabel="No. 7 (893), ForStmt", color="darkorchid"];
-8[label="printf(\"Result: %d\n\", i);", xlabel="No. 8 (942), CallExpr", color="goldenrod"];
+8[label="print(\"Result: %d\n\", i);", xlabel="No. 8 (942), CallExpr", color="goldenrod"];
 9[label="{
 	int i = 0;
 	
@@ -30,7 +30,7 @@ rankdir=TD;
 		i++;
 	}
 
-	printf(\"Result: %d\n\", i);
+	print(\"Result: %d\n\", i);
 }", xlabel="No. 9 (954), CompoundStmt", color="darkorchid"];
 10[label="int
 main (int argc, char** argv) {
@@ -42,7 +42,7 @@ main (int argc, char** argv) {
 		i++;
 	}
 
-	printf(\"Result: %d\n\", i);
+	print(\"Result: %d\n\", i);
 }", xlabel="No. 10 (751), Function", color="crimson"];
 9 -> 3;
 9 -> 4;

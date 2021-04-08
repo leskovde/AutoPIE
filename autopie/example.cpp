@@ -1,7 +1,7 @@
-void printf(const char* str, int x) 
+void print(const char* str, int x) 
 { 
 	x += 3;
-	printf(str, x);
+	print(str, x);
 }
 
 int
@@ -14,5 +14,5 @@ main (int argc, char** argv) {
 		i++;
 	}
 
-	printf("Result: %d\n", i);
+	print("Result: %d\n", i);
 }
