@@ -23,6 +23,7 @@
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SwapByteOrder.h"
+#include "llvm/Support/Program.h"
 
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/ASTConsumer.h>
@@ -43,6 +44,8 @@
 #include <clang/Lex/PreprocessorOptions.h>
 #include <clang/Parse/ParseAST.h>
 #include <clang/Sema/Sema.h>
+#include <clang/Driver/Driver.h>
+#include <clang/Driver/Compilation.h>
 
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/Module.h"
@@ -125,11 +128,39 @@ bool Validate(const char* const userInputError, const std::filesystem::directory
 	return false;
 }
 
+int Compile(const char* fileName)
+{
+	auto output = "temp/a.exe";
+	auto clangPath = sys::findProgramByName("clang");
 
+	const auto arguments = std::vector<const char*>{clangPath->c_str(), "-v", "-o", "temp/seg.out", fileName};
+
+	clang::DiagnosticOptions diagnosticOptions;
+	const auto textDiagnosticPrinter = std::make_unique<clang::TextDiagnosticPrinter>(outs(), &diagnosticOptions);
+	IntrusiveRefCntPtr<clang::DiagnosticIDs> diagIDs;
+
+	auto diagnosticsEngine = std::make_unique<clang::DiagnosticsEngine>(diagIDs, &diagnosticOptions, textDiagnosticPrinter.get());
+
+	clang::driver::Driver driver(arguments[0], sys::getDefaultTargetTriple(), *diagnosticsEngine.release());
+
+	const auto compilation = std::unique_ptr<clang::driver::Compilation>(driver.BuildCompilation(arguments));
+
+	driver.PrintActions(*compilation);
+	
+	auto result = 0;
+	SmallVector<std::pair<int, const clang::driver::Command*>, 16> failingCommands;
+
+	if (compilation)
+	{
+		result = driver.ExecuteCompilation(*compilation, failingCommands);
+	}
+
+	return result;
+}
 
 Module* CompileInMemory(const char* fileName)
 {
-	const std::vector<const char*> rawArguments = { fileName };
+	const std::vector<const char*> rawArguments = { "c", fileName };
 	const ArrayRef<const char*> arguments = rawArguments;
 
 	clang::DiagnosticOptions diagnosticOptions;
@@ -165,6 +196,7 @@ Module* CompileInMemory(const char* fileName)
 	
 	if (!compilerInstance.ExecuteAction(*action))
 	{
+		outs() << "Oh no.\n";
 		// Failed to compile, and should display on cout the result of the compilation
 	}
 
