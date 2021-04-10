@@ -64,6 +64,10 @@
 #include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBError.h"
 #include "lldb/API/SBTarget.h"
+#include "lldb/API/SBListener.h"
+#include "lldb/API/SBProcess.h"
+#include "lldb/API/SBEvent.h"
+#include "lldb/API/SBThread.h"
 
 #include "Context.h"
 #include "Helper.h"
@@ -128,12 +132,29 @@ bool Validate(const char* const userInputError, const std::filesystem::directory
 	return false;
 }
 
-int Compile(const char* fileName)
+int Compile(const std::filesystem::directory_entry& entry)
 {
-	auto output = "temp/a.exe";
+	//const auto output = "temp/a.exe";
+	const auto input = entry.path().string();
+	const auto output = "temp\\" + entry.path().filename().replace_extension(".exe").string();
 	auto clangPath = sys::findProgramByName("clang");
 
-	const auto arguments = std::vector<const char*>{clangPath->c_str(), "-v", "-o", "temp/seg.out", fileName};
+	std::filesystem::file_time_type lastWrite;
+	/*
+	if (std::filesystem::exists(output))
+	{
+		try
+		{
+			//std::filesystem::remove(output);
+			lastWrite = std::filesystem::last_write_time(output);
+		}
+		catch (const std::filesystem::filesystem_error& error)
+		{
+			errs() << "Error while deleting an existing executable: " << error.what() << "\n";
+		}
+	}
+	*/
+	const auto arguments = std::vector<const char*>{clangPath->c_str(), /*"-v",*/ "-O0", "-g", "-o", output.c_str(), input.c_str()};
 
 	clang::DiagnosticOptions diagnosticOptions;
 	const auto textDiagnosticPrinter = std::make_unique<clang::TextDiagnosticPrinter>(outs(), &diagnosticOptions);
@@ -145,9 +166,9 @@ int Compile(const char* fileName)
 
 	const auto compilation = std::unique_ptr<clang::driver::Compilation>(driver.BuildCompilation(arguments));
 
-	driver.PrintActions(*compilation);
+	//driver.PrintActions(*compilation);
 	
-	auto result = 0;
+	auto result = 1; // Set the initial value to invalid, since we don't need those imposter vibes in our lives.
 	SmallVector<std::pair<int, const clang::driver::Command*>, 16> failingCommands;
 
 	if (compilation)
@@ -155,85 +176,28 @@ int Compile(const char* fileName)
 		result = driver.ExecuteCompilation(*compilation, failingCommands);
 	}
 
-	return result;
-}
+	outs() << "\n";
 
-Module* CompileInMemory(const char* fileName)
-{
-	const std::vector<const char*> rawArguments = { "c", fileName };
-	const ArrayRef<const char*> arguments = rawArguments;
-
-	clang::DiagnosticOptions diagnosticOptions;
-	auto textDiagnosticPrinter = std::make_unique<clang::TextDiagnosticPrinter>(outs(), &diagnosticOptions);
-	IntrusiveRefCntPtr<clang::DiagnosticIDs> diagIDs;
-
-	auto diagnosticsEngine = std::make_unique<clang::DiagnosticsEngine>(diagIDs, &diagnosticOptions, textDiagnosticPrinter.get());
-
-	clang::CompilerInstance compilerInstance;
-	auto& compilerInvocation = compilerInstance.getInvocation();
-
-	clang::CompilerInvocation::CreateFromArgs(compilerInvocation, rawArguments, *diagnosticsEngine.release());
-	
-	auto* languageOptions = compilerInvocation.getLangOpts();
-	auto& preprocessorOptions = compilerInvocation.getPreprocessorOpts();
-	auto& targetOptions = compilerInvocation.getTargetOpts();
-	auto& frontEndOptions = compilerInvocation.getFrontendOpts();
-	frontEndOptions.ShowStats = true;
-	auto& headerSearchOptions = compilerInvocation.getHeaderSearchOpts();
-	headerSearchOptions.Verbose = true;
-	auto& codeGenOptions = compilerInvocation.getCodeGenOpts();
-
-	//frontEndOptions.Inputs.clear();
-	//TODO: Different languages require different handling!
-	//frontEndOptions.Inputs.push_back(clang::FrontendInputFile(fileName, clang::InputKind(clang::Language::C)));
-
-	targetOptions.Triple = sys::getDefaultTargetTriple();
-	compilerInstance.createDiagnostics(textDiagnosticPrinter.get(), false);
-
-	LLVMContext context;
-
-	const std::unique_ptr<clang::CodeGenAction> action = std::make_unique<clang::EmitLLVMOnlyAction>(&context);
-	
-	if (!compilerInstance.ExecuteAction(*action))
+	if (!std::filesystem::exists(output))
 	{
-		outs() << "Oh no.\n";
-		// Failed to compile, and should display on cout the result of the compilation
+		result |= 1;
 	}
-
-	return nullptr;
 	
 	/*
-	const ArrayRef<const char*> arguments = { "-o", "temp/seg", fileName };
-	
-	const auto diagIDs = IntrusiveRefCntPtr<clang::DiagnosticIDs>(std::make_unique<clang::DiagnosticIDs>().get());
-	const auto diagOptions = IntrusiveRefCntPtr<clang::DiagnosticOptions>(std::make_unique<clang::DiagnosticOptions>().get());
-	const auto printer = std::make_unique<clang::TextDiagnosticPrinter>(errs(), diagOptions.get());
-	clang::DiagnosticsEngine diags(diagIDs, diagOptions, printer.get());
-
-	const auto invocation = std::make_shared<clang::CompilerInvocation>();
-	clang::CompilerInvocation::CreateFromArgs(*invocation, arguments, diags);
-
-	clang::CompilerInstance compiler;
-	compiler.setInvocation(invocation);
-	compiler.setDiagnostics(&diags);
-
-	if (!compiler.hasDiagnostics())
+	if (std::filesystem::exists(output))
 	{
-		return nullptr;
+		if (lastWrite == std::filesystem::last_write_time(output))
+		{
+			result |= 1;	
+		}
 	}
-
-	auto action = std::unique_ptr<clang::CodeGenAction>(std::make_unique<clang::EmitLLVMOnlyAction>());
-
-	if (!compiler.ExecuteAction(*action))
+	else
 	{
-		return nullptr;
+		result |= 1;
 	}
-
-	auto result = action->takeModule();
-	errs() << result.get();
-
-	return result.release();
 	*/
+	
+	return result;
 }
 
 class LLDBSentry {
@@ -247,6 +211,42 @@ public:
 		lldb::SBDebugger::Terminate();
 	}
 };
+
+
+std::string StateToString(const lldb::StateType st) {
+	switch (st) {
+	case lldb::eStateInvalid:		return "Invalid";
+	case lldb::eStateUnloaded:		return "Unloaded";
+	case lldb::eStateConnected:		return "Connected";
+	case lldb::eStateAttaching:		return "Attaching";
+	case lldb::eStateLaunching:		return "Launching";
+	case lldb::eStateStopped:		return "Stopped";
+	case lldb::eStateRunning:		return "Running";
+	case lldb::eStateStepping:		return "Stepping";
+	case lldb::eStateCrashed:		return "Crashed";
+	case lldb::eStateDetached:		return "Detached";
+	case lldb::eStateExited:		return "Exited";
+	case lldb::eStateSuspended:		return "Suspended";
+	default:						return "unknown";
+	}
+}
+
+std::string StopReasonToString(const lldb::StopReason sr) {
+	switch (sr) {
+	case lldb::eStopReasonInvalid:          return "Invalid";
+	case lldb::eStopReasonNone:             return "None";
+	case lldb::eStopReasonTrace:            return "Trace";
+	case lldb::eStopReasonBreakpoint:       return "Breakpoint";
+	case lldb::eStopReasonWatchpoint:       return "Watchpoint";
+	case lldb::eStopReasonSignal:           return "Signal";
+	case lldb::eStopReasonException:        return "Exception";
+	case lldb::eStopReasonExec:             return "Exec";
+	case lldb::eStopReasonPlanComplete:     return "Plan Complete";
+	case lldb::eStopReasonThreadExiting:    return "Thread Exiting";
+	case lldb::eStopReasonInstrumentation:  return "Instrumentation";
+	default:								return "unknown";
+	}
+}
 
 /**
  * Generates a minimal program variant by naively removing statements.
@@ -296,28 +296,239 @@ int main(int argc, const char** argv)
 		{
 			return a.file_size() < b.file_size();
 		});
-
-	const auto biggest = files.back();
-
-	auto compilation = Compile(biggest.path().string().c_str());
-	
-	outs() << std::boolalpha;
-	
+		
 	LLDBSentry sentry;
-	auto debugger(lldb::SBDebugger::Create());
-
-	if (!debugger.IsValid())
+	
+	for (const auto& entry : files)
 	{
-		errs() << "Debugger could not be created.\n";
-		return EXIT_FAILURE;
+		auto compilationExitCode = Compile(entry);
+		
+		if (compilationExitCode)
+		{
+			// File could not be compiled, continue.
+			continue;
+		}
+
+		auto debugger(lldb::SBDebugger::Create());
+
+		if (!debugger.IsValid())
+		{
+			errs() << "Debugger could not be created.\n";
+			return EXIT_FAILURE;
+		}
+
+		//debugger.SetAsync(false);
+
+		const char* arguments[] = { nullptr };
+
+		lldb::SBError error;
+		lldb::SBLaunchInfo launchInfo(arguments);
+
+		launchInfo.SetWorkingDirectory("./temp");
+		launchInfo.SetLaunchFlags(lldb::eLaunchFlagExec | lldb::eLaunchFlagDebug);
+	
+		const auto executable = "temp\\" + entry.path().filename().replace_extension(".exe").string();
+		outs() << "\nLLDB Target creation for " << executable << " ...\n";
+
+		auto target = debugger.CreateTarget(executable.c_str(), sys::getDefaultTargetTriple().c_str(), "", true, error);
+		
+		outs() << "error.Success()              = " << error.Success() << "\n";
+		outs() << "target.IsValid()             = " << target.IsValid() << "\n";
+		
+		outs() << "\nLLDB Process launch ...\n";
+
+		/*
+		auto process = target.Launch(listener,
+			nullptr,
+			nullptr,
+			nullptr,
+			"temp/lldbOut.txt",
+			"temp/lldbErr.txt",
+			"./temp",
+			lldb::eLaunchFlagExec | lldb::eLaunchFlagDebug,
+			false,
+			error);
+		*/
+		
+		auto process = target.Launch(launchInfo, error);
+		outs() << "error.Success()              = " << error.Success() << "\n";
+		outs() << "process.IsValid()            = " << process.IsValid() << "\n";
+		outs() << "process.GetProcessID()       = " << process.GetProcessID() << "\n";
+		outs() << "process.GetState()           = " << StateToString(process.GetState()) << "\n";
+		outs() << "process.GetNumThreads()      = " << process.GetNumThreads() << "\n";
+
+		auto listener = debugger.GetListener();
+		outs() << "listener.IsValid()           = " << listener.IsValid() << "\n";
+		
+		auto done = false;
+		
+		while (!done)
+		{
+			lldb::SBEvent event;
+			
+			/*
+			outs() << "listener.GetNextEvent()      = " << listener.GetNextEvent(event) << "\n";
+
+			while (process.GetState() == lldb::eStateAttaching || process.GetState() == lldb::eStateLaunching)
+			{
+				outs() << "listener.GetNextEvent()      = " << listener.GetNextEvent(event) << "\n";
+			}
+			*/
+
+			if (listener.WaitForEvent(10, event))
+			{
+				if (lldb::SBProcess::EventIsProcessEvent(event))
+				{
+					auto state = lldb::SBProcess::GetStateFromEvent(event);
+
+					if (state == lldb::eStateInvalid)
+					{
+						outs() << "Invalid process event: " << StateToString(state) << "\n";
+					}
+					else
+					{
+						outs() << "Process state event changed to: " << StateToString(state) << "\n";
+
+						if (state == lldb::eStateStopped)
+						{
+							outs() << "Stopped at a breakpoint.\n";
+							outs() << "LLDB Threading ...\n";
+
+							auto thread = process.GetSelectedThread();
+							outs() << "thread.IsValid()             = " << thread.IsValid() << "\n";
+							outs() << "thread.GetThreadID()         = " << thread.GetThreadID() << "\n";
+							outs() << "thread.GetName()             = " << (thread.GetName() ? thread.GetName() : "(null)") << "\n";
+							outs() << "thread.GetStopReason()       = " << StopReasonToString(thread.GetStopReason()) << "\n";
+							outs() << "thread.IsSuspended()         = " << thread.IsSuspended() << "\n";
+							outs() << "thread.IsStopped()           = " << thread.IsStopped() << "\n";
+							outs() << "process.GetState()           = " << StateToString(process.GetState()) << "\n";
+
+							if (thread.GetStopReason() == lldb::StopReason::eStopReasonException)
+							{
+								outs() << "An exception was hit, killing the process ...\n";
+								done = true;
+							}
+							
+							auto frame = thread.GetSelectedFrame();
+							outs() << "frame.IsValid()              = " << frame.IsValid() << "\n";
+
+							auto function = frame.GetFunction();
+
+							if (function.IsValid())
+							{
+								outs() << "function.GetDisplayName()   = " << (function.GetDisplayName() ? function.GetDisplayName() : "(null)") << "\n";
+							}
+
+							auto symbol = frame.GetSymbol();
+							outs() << "symbol.IsValid()             = " << symbol.IsValid() << "\n";
+
+							if (symbol.IsValid())
+							{
+								outs() << "symbol.GetDisplayName()      = " << symbol.GetDisplayName() << "\n";
+
+								auto symbolContext = frame.GetSymbolContext(lldb::eSymbolContextLineEntry);
+
+								outs() << "symbolContext.IsValid()      = " << symbolContext.IsValid() << "\n";
+
+								if (symbolContext.IsValid())
+								{
+									outs() << "symbolContext.GetFilename()  = " << symbolContext.GetLineEntry().GetFileSpec().GetFilename() << "\n";
+									outs() << "symbolContext.GetLine()      = " << symbolContext.GetLineEntry().GetLine() << "\n";
+									outs() << "symbolContext.GetColumn()    = " << symbolContext.GetLineEntry().GetColumn() << "\n";
+
+									// TODO: Confirm the location.
+								}
+							}
+
+							process.Continue();
+						}
+						else if (state == lldb::eStateExited)
+						{
+							outs() << "Process exited.\n";
+
+							auto description = process.GetExitDescription();
+
+							if (description)
+							{
+								outs() << "Exit status " << process.GetExitStatus() << ":" << description << "\n";
+							}
+							else
+							{
+								outs() << "Exit status " << process.GetExitStatus() << "\n";
+							}
+
+							done = true;
+						}
+						else if (state == lldb::eStateCrashed)
+						{
+							outs() << "Process crashed.\n";
+							done = true;
+						}
+						else if (state == lldb::eStateDetached)
+						{
+							outs() << "Process detached.\n";
+							done = true;
+						}
+						else if (state == lldb::eStateUnloaded)
+						{
+							errs() << "ERROR: Process unloaded!\n";
+							done = true;
+						}
+						else if (state == lldb::eStateConnected)
+						{
+							outs() << "Process connected.\n";
+						}
+						else if (state == lldb::eStateAttaching)
+						{
+							outs() << "Process attaching.\n";
+						}
+						else if (state == lldb::eStateLaunching)
+						{
+							outs() << "Process launching.\n";
+						}
+					}
+				}
+				else
+				{
+					outs() << "Event: " << lldb::SBEvent::GetCStringFromEvent(event) << "\n";
+				}
+			}
+			else
+			{
+				outs() << "Process event has not occured in the last 10 seconds, killing the process ...\n";
+				done = true;
+			}
+		}
+
+		process.Kill();
+		debugger.DeleteTarget(target);
+		lldb::SBDebugger::Destroy(debugger);
+		
+		/*
+		if (process.GetState() != lldb::eStateExited && !process.Kill().Success())
+		{
+			errs() << "LLDB could not kill the debugging process.\n";
+			return EXIT_FAILURE;
+		}
+		*/
+
+		/*
+		process.Kill();
+		process.Clear();
+		process.Destroy();
+		process.Detach();
+		debugger.DeleteTarget(target);
+		*/
 	}
+	
+	/*
+	auto exception = thread.GetCurrentException();
+	outs() << "exception.IsValid()              = " << exception.IsValid() << "\n";
+	outs() << "exception.GetTypeName()          = " << (exception.GetTypeName() ? exception.GetTypeName() : "(null)" ) << "\n";
+	outs() << "exception.GetDisplayTypeName()   = " << (exception.GetDisplayTypeName() ? exception.GetDisplayTypeName() : "(null)" ) << "\n";
+	outs() << "exception.GetLocation()          = " << (exception.GetLocation() ? exception.GetLocation() : "(null)") << "\n";
+	*/
 
-	outs() << "LLDB Target creation ...\n";
-
-	lldb::SBError error;
-	//auto target = debugger.CreateTarget()
-
-	outs() << "LLDB Process launch ...\n";
 	
 	return EXIT_SUCCESS;
 }
