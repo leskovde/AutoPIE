@@ -1,23 +1,33 @@
+#ifndef DEPENDENCYGRAPH_H
+#define DEPENDENCYGRAPH_H
 #pragma once
-#include <queue>
-#include <fstream>
-#include <utility>
 #include "Helper.h"
+
+#include <fstream>
+#include <queue>
+
+#include <utility>
 
 struct Node
 {
-	int astId;
-	int number;
+	int astId{0};
+	int number{0};
 	std::string dumpColor;
 	std::string codeSnippet;
 	std::string nodeTypeName;
 
-	Node() : astId(0), number(0), dumpColor("black"), codeSnippet(""), nodeTypeName("")
-	{}
+	Node() : 
+	dumpColor ("black"),
+	codeSnippet (""),
+	nodeTypeName ("")
+	{
+	}
 	
-	Node(const int astId, const int traversalOrderNumber, std::string color, std::string code, std::string type) :
-		astId(astId), number(traversalOrderNumber), dumpColor(std::move(color)), codeSnippet(std::move(code)), nodeTypeName(std::move(type))
-	{}
+	Node(const int astId, const int traversalOrderNumber, std::string color, std::string code,
+	     std::string type) : astId(astId), number(traversalOrderNumber), dumpColor(std::move(color)),
+	                         codeSnippet(std::move(code)), nodeTypeName(std::move(type))
+	{
+	}
 };
 
 class DependencyGraph
@@ -26,21 +36,21 @@ class DependencyGraph
 	std::unordered_map<int, Node> debugNodeData_;
 	std::unordered_map<int, std::vector<int>> edges_;
 	std::unordered_map<int, std::vector<int>> inverseEdges_;
-	
+
 public:
 
 	void AddCriterionNode(const int node)
 	{
 		criterion_.push_back(node);
 	}
-	
+
 	void InsertDependency(const int parent, const int child)
 	{
 		if (parent == child)
 		{
 			return;
 		}
-			
+
 		auto it = edges_.find(parent);
 
 		if (it == edges_.end())
@@ -60,10 +70,13 @@ public:
 		it->second.push_back(parent);
 	}
 
-	void InsertNodeDataForDebugging(int traversalOrderNumber, const int astId, const std::string& snippet, const std::string& type, const std::string& color)
+	void InsertNodeDataForDebugging(int traversalOrderNumber, const int astId, const std::string& snippet,
+	                                const std::string& type, const std::string& color)
 	{
-		const auto success = debugNodeData_.insert(std::pair<int, Node>(traversalOrderNumber, Node(astId, traversalOrderNumber, color, snippet, type))).second;
-		
+		const auto success = debugNodeData_.insert(std::pair<int, Node>(traversalOrderNumber,
+		                                                                Node(astId, traversalOrderNumber, color,
+		                                                                     snippet, type))).second;
+
 		if (!success)
 		{
 			llvm::outs() << "DEBUG: Could not add a snippet to the mapping. The snippet:\n" << snippet << "\n";
@@ -78,15 +91,15 @@ public:
 		{
 			llvm::outs() << "Node " << it->first << ":\n" << it->second.codeSnippet << "\n";
 		}
-		
+
 		llvm::outs() << "-------------------------------------------------------------\n";
 	}
 
-	void DumpDot(const std::string& fileName) const
+	void DumpDot(const std::string& /*fileName*/) const
 	{
-		// TODO: Trim file names (they include full path instead of just the name).
+		// TODO(Denis): Trim file names (they include full path instead of just the name).
 		//auto dotFileName = "visuals/dotDump_" + RemoveFileExtensions(fileName) + ".dot";
-		auto dotFileName = "visuals/dotDump_test.dot";
+		const auto dotFileName = "visuals/dotDump_test.dot";
 		auto ofs = std::ofstream(dotFileName);
 
 		ofs << "digraph g {\nforcelabels=true;\nrankdir=TD;\n";
@@ -120,7 +133,7 @@ public:
 		{
 			auto currentNode = nodeQ.front();
 			nodeQ.pop();
-			
+
 			auto it = edges_.find(currentNode);
 
 			if (it != edges_.end())
@@ -139,7 +152,7 @@ public:
 	std::vector<int> GetParentNodes(const int startingNode)
 	{
 		const auto it = inverseEdges_.find(startingNode);
-		
+
 		return it != inverseEdges_.end() ? it->second : std::vector<int>();
 	}
 
@@ -148,3 +161,4 @@ public:
 		return std::find(criterion_.begin(), criterion_.end(), node) != criterion_.end();
 	}
 };
+#endif

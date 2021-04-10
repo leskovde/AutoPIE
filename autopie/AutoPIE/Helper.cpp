@@ -1,16 +1,16 @@
-#include <clang/Basic/SourceLocation.h>
-#include <clang/AST/Stmt.h>
-#include <stdexcept>
-
-#include "Helper.h"
-#include "DependencyGraph.h"
-#include <clang/Basic/SourceManager.h>
-#include <clang/Rewrite/Core/Rewriter.h>
 #include <clang/AST/ASTContext.h>
+#include <clang/AST/Stmt.h>
+#include <clang/Basic/SourceLocation.h>
+#include <clang/Basic/SourceManager.h>
+
+#include <filesystem>
+
+#include "DependencyGraph.h"
+#include "Helper.h"
 
 clang::SourceRange GetSourceRange(const clang::Stmt& s)
 {
-	return { s.getBeginLoc(), s.getEndLoc() };
+	return {s.getBeginLoc(), s.getEndLoc()};
 }
 
 std::string RangeToString(clang::ASTContext& astContext, const clang::SourceRange range)
@@ -18,43 +18,7 @@ std::string RangeToString(clang::ASTContext& astContext, const clang::SourceRang
 	return GetSourceText(range, astContext.getSourceManager()).str();
 }
 
-int GetChildrenCount(clang::Stmt* st)
-{
-	int childrenCount = 0;
-
-	for (auto it = st->children().begin(); it != st->children().end(); ++it)
-	{
-		childrenCount++;
-	}
-
-	for (auto child : st->children())
-	{
-		childrenCount += GetChildrenCount(child);
-	}
-
-	return childrenCount;
-}
-
-std::string ExecCommand(const char* cmd)
-{
-	std::array<char, 128> buffer;
-	std::string result;
-	const std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cmd, "r"), _pclose);
-
-	if (!pipe)
-	{
-		throw std::runtime_error("PIPE ERROR: _popen() failed!");
-	}
-
-	while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
-	{
-		result += buffer.data();
-	}
-
-	return result;
-}
-
-bool ClearTempDirectory(const bool prompt = false)
+bool ClearTempDirectory(const bool prompt)
 {
 	if (prompt && std::filesystem::exists("temp/"))
 	{
@@ -80,7 +44,7 @@ std::string Stringify(BitMask& bitMask)
 {
 	std::string bits;
 
-	for (auto bit : bitMask)
+	for (const auto& bit : bitMask)
 	{
 		if (bit)
 		{
@@ -110,9 +74,9 @@ bool IsFull(BitMask& bitMask)
 
 void Increment(BitMask& bitMask)
 {
-	// TODO: Write unit tests for this function (and the all variant generation).
-	
-	for (size_t i = bitMask.size(); i > 0; i--)
+	// TODO(Denis): Write unit tests for this function (and the all variant generation).
+
+	for (auto i = bitMask.size(); i > 0; i--)
 	{
 		if (bitMask[i - 1])
 		{
@@ -137,7 +101,7 @@ bool IsValid(BitMask& bitMask, DependencyGraph& dependencies)
 				// Criterion nodes should be present.
 				return false;
 			}
-			
+
 			auto children = dependencies.GetDependentNodes(i);
 
 			for (auto child : children)
@@ -162,7 +126,7 @@ clang::SourceRange GetPrintableRange(const clang::SourceRange range, const clang
 	const auto startLoc = sm.getSpellingLoc(range.getBegin());
 	const auto lastTokenLoc = sm.getSpellingLoc(range.getEnd());
 	const auto endLoc = clang::Lexer::getLocForEndOfToken(lastTokenLoc, 0, sm, lo);
-	return clang::SourceRange{ startLoc, endLoc };
+	return clang::SourceRange{startLoc, endLoc};
 }
 
 /**
@@ -184,7 +148,6 @@ llvm::StringRef GetSourceTextRaw(const clang::SourceRange range, const clang::So
 	return clang::Lexer::getSourceText(clang::CharSourceRange::getCharRange(range), sm, clang::LangOptions());
 }
 
-
 /**
  * Gets the portion of the code that corresponds to given SourceRange, including the
  * last token. Returns expanded macros.
@@ -197,7 +160,7 @@ llvm::StringRef GetSourceText(const clang::SourceRange range, const clang::Sourc
 
 std::string RemoveFileExtensions(const std::string& fileName)
 {
-	return fileName.substr(0, fileName.find_last_of("."));
+	return fileName.substr(0, fileName.find_last_of('.'));
 }
 
 std::string EscapeQuotes(const std::string& text)

@@ -1,7 +1,11 @@
+#ifndef CONTEXT_H
+#define CONTEXT_H
 #pragma once
-#include <clang/Rewrite/Core/Rewriter.h>
-#include <stack>
+
+#include "clang/Rewrite/Core/Rewriter.h"
+
 #include <iostream>
+
 #include "Helper.h"
 
 class CountVisitorContext
@@ -14,7 +18,7 @@ public:
 	{
 		totalStatementCount = 0;
 	}
-	
+
 	explicit CountVisitorContext(const int lineCount)
 	{
 		totalStatementCount = lineCount;
@@ -30,7 +34,7 @@ public:
 		totalStatementCount = 0;
 	}
 
-	int GetTotalStatementCount() const
+	[[nodiscard]] int GetTotalStatementCount() const
 	{
 		return totalStatementCount;
 	}
@@ -46,7 +50,7 @@ public:
 	{
 		targetStatementNumber = 1;
 	}
-	
+
 	explicit StatementReductionContext(const int target)
 	{
 		targetStatementNumber = target;
@@ -56,13 +60,13 @@ public:
 	{
 		sourceChanged = true;
 	}
-	
-	bool GetSourceStatus() const
+
+	[[nodiscard]] bool GetSourceStatus() const
 	{
 		return sourceChanged;
 	}
 
-	int GetTargetStatementNumber() const
+	[[nodiscard]] int GetTargetStatementNumber() const
 	{
 		return targetStatementNumber;
 	}
@@ -83,19 +87,15 @@ public:
 	StatementReductionContext statementReductionContext;
 
 	// Variant generation properties.
-	int iteration = 0;
 	InputData parsedInput;
-	std::stack<std::string> searchStack;
 
-	GlobalContext(InputData& input, const std::string& source) : parsedInput(input)
+	GlobalContext(InputData& input, const std::string& /*source*/) : parsedInput(input)
 	{
 		globalRewriter = clang::Rewriter();
 		countVisitorContext = CountVisitorContext();
 		statementReductionContext = StatementReductionContext();
 
-		searchStack = std::stack<std::string>();
-		searchStack.push(source);
-
 		llvm::errs() << "DEBUG: GlobalContext - New non-default constructor call.\n";
 	}
 };
+#endif

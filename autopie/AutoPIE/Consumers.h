@@ -1,22 +1,28 @@
+#ifndef CONSUMERS_H
+#define CONSUMERS_H
 #pragma once
+
 #include <clang/AST/ASTConsumer.h>
 
-#include "Visitors.h"
+#include <utility>
+
 #include "DependencyGraph.h"
+#include "Visitors.h"
 
 class VariantPrintingASTConsumer final : public clang::ASTConsumer
 {
 	VariantPrintingASTVisitorRef visitor_;
 
 public:
-	VariantPrintingASTConsumer(clang::CompilerInstance* ci, GlobalContext& context)
-		: visitor_(std::make_unique<VariantPrintingASTVisitor>(ci, context))
-	{}
+	VariantPrintingASTConsumer(clang::CompilerInstance* ci, GlobalContext& context) : visitor_(
+		std::make_unique<VariantPrintingASTVisitor>(ci, context))
+	{
+	}
 
 	void HandleTranslationUnit(clang::ASTContext& context, const std::string& fileName, const BitMask& bitMask) const
 	{
 		auto rewriter = std::make_shared<clang::Rewriter>(context.getSourceManager(), context.getLangOpts());
-		
+
 		visitor_->Reset(bitMask, rewriter);
 		visitor_->TraverseDecl(context.getTranslationUnitDecl());
 
@@ -31,9 +37,9 @@ public:
 		outFile.close();
 	}
 
-	void SetData(SkippedMapRef skippedNodes, DependencyGraph graph)
+	void SetData(SkippedMapRef skippedNodes, DependencyGraph graph) const
 	{
-		visitor_->SetData(skippedNodes, graph);
+		visitor_->SetData(std::move(skippedNodes), graph);
 	}
 };
 
@@ -47,16 +53,18 @@ public:
 	DependencyMappingASTConsumer(clang::CompilerInstance* ci, GlobalContext& context) : globalContext_(context)
 	{
 		nodeMapping_ = std::make_shared<NodeMapping>();
-		mappingVisitor_ = std::make_unique<MappingASTVisitor>(ci, nodeMapping_, globalContext_.parsedInput.errorLocation.lineNumber);
+		mappingVisitor_ = std::make_unique<MappingASTVisitor>(ci, nodeMapping_,
+		                                                      globalContext_.parsedInput.errorLocation.lineNumber);
 	}
 
 	void HandleTranslationUnit(clang::ASTContext& context) override
 	{
-		// TODO: Handle specific node types instead of just Stmt, Decl and Expr.
-		
+		// TODO(Denis): Handle specific node types instead of just Stmt, Decl and Expr.
+
 		mappingVisitor_->TraverseDecl(context.getTranslationUnitDecl());
 
-		llvm::outs() << "DEBUG: AST nodes counted: " << mappingVisitor_->codeUnitsCount << ", AST nodes actual: " << nodeMapping_->size() << "\n";
+		llvm::outs() << "DEBUG: AST nodes counted: " << mappingVisitor_->codeUnitsCount << ", AST nodes actual: " <<
+			nodeMapping_->size() << "\n";
 
 		mappingVisitor_->graph.PrintGraphForDebugging();
 
@@ -71,12 +79,12 @@ public:
 		return nodeMapping_->size();
 	}
 
-	DependencyGraph GetDependencyGraph() const
+	[[nodiscard]] DependencyGraph GetDependencyGraph() const
 	{
 		return mappingVisitor_->graph;
 	}
 
-	SkippedMapRef GetSkippedNodes() const
+	[[nodiscard]] SkippedMapRef GetSkippedNodes() const
 	{
 		return mappingVisitor_->GetSkippedNodes();
 	}
@@ -88,10 +96,11 @@ class VariantGenerationConsumer final : public clang::ASTConsumer
 	VariantPrintingASTConsumer printingConsumer_;
 
 public:
-	VariantGenerationConsumer(clang::CompilerInstance* ci, GlobalContext& context) :
-		mappingConsumer_(ci, context), printingConsumer_(ci, context)
-	{ }
-	
+	VariantGenerationConsumer(clang::CompilerInstance* ci, GlobalContext& context) : mappingConsumer_(ci, context),
+	                                                                                 printingConsumer_(ci, context)
+	{
+	}
+
 	void HandleTranslationUnit(clang::ASTContext& context) override
 	{
 		mappingConsumer_.HandleTranslationUnit(context);
@@ -103,9 +112,9 @@ public:
 		auto dependencies = mappingConsumer_.GetDependencyGraph();
 
 		llvm::outs() << "Maximum expected variants: " << pow(2, numberOfCodeUnits) << "\n";
-		
+
 		auto variantsCount = 0;
-		
+
 		while (!IsFull(bitMask))
 		{
 			Increment(bitMask);
@@ -113,14 +122,14 @@ public:
 			if (IsValid(bitMask, dependencies))
 			{
 				variantsCount++;
-				
+
 				if (variantsCount % 50 == 0)
 				{
 					llvm::outs() << "Done " << variantsCount << " variants.\n";
 				}
 
 				llvm::outs() << "DEBUG: Processing valid bitmask " << Stringify(bitMask) << "\n";
-				
+
 				auto fileName = "temp/" + std::to_string(variantsCount) + "_tempFile.c";
 				printingConsumer_.HandleTranslationUnit(context, fileName, bitMask);
 			}
@@ -129,3 +138,4 @@ public:
 		llvm::outs() << "Done " << variantsCount << " variants.\n";
 	}
 };
+#endif

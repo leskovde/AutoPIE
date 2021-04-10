@@ -1,12 +1,16 @@
+#ifndef VISITORS_H
+#define VISITORS_H
 #pragma once
+
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Rewrite/Core/Rewriter.h>
+
 #include <utility>
 
-#include "Helper.h"
 #include "Context.h"
 #include "DependencyGraph.h"
+#include "Helper.h"
 
 class VariantPrintingASTVisitor;
 class MappingASTVisitor;
@@ -31,19 +35,19 @@ class VariantPrintingASTVisitor : public clang::RecursiveASTVisitor<VariantPrint
 	RewriterRef rewriter_;
 	DependencyGraph graph_;
 	SkippedMapRef skippedNodes_;
-	
+
 	void RemoveFromSource(const clang::SourceRange range) const
-	{		
+	{
 		//llvm::outs() << RangeToString(astContext_, range);
-		
+
 		//llvm::outs() << localRewriter.getRewrittenText(range) << "\n";
 		//llvm::outs() << range.printToString(astContext.getSourceManager()) << "\n";
-		
+
 		if (rewriter_)
 		{
 			llvm::outs() << "Removing node " << currentNode_ << ":\n" << RangeToString(astContext_, range);
 			rewriter_->RemoveText(GetPrintableRange(GetPrintableRange(range, astContext_.getSourceManager()),
-				astContext_.getSourceManager()));
+			                                        astContext_.getSourceManager()));
 			llvm::outs() << "\n";
 		}
 		else
@@ -59,7 +63,7 @@ class VariantPrintingASTVisitor : public clang::RecursiveASTVisitor<VariantPrint
 			// The bit is 0 => the node should not be present in the result.
 			// However, if the parent is also set to 0, there will be an error when removing both.
 			// Check for this case and remove the node only when all parents are set to 1.
-			for(auto parent : graph_.GetParentNodes(currentNode_))
+			for (auto parent : graph_.GetParentNodes(currentNode_))
 			{
 				if (!bitMask_[parent])
 				{
@@ -72,14 +76,14 @@ class VariantPrintingASTVisitor : public clang::RecursiveASTVisitor<VariantPrint
 
 		return false;
 	}
-	
+
 public:
-	VariantPrintingASTVisitor(clang::CompilerInstance* ci, GlobalContext& ctx)
-		: astContext_(ci->getASTContext()), globalContext_(ctx)
+	VariantPrintingASTVisitor(clang::CompilerInstance* ci, GlobalContext& ctx) : astContext_(ci->getASTContext()),
+	                                                                             globalContext_(ctx)
 	{
 		globalContext_.globalRewriter = clang::Rewriter();
 		globalContext_.globalRewriter.setSourceMgr(astContext_.getSourceManager(),
-			astContext_.getLangOpts());
+		                                           astContext_.getLangOpts());
 	}
 
 	void Reset(const BitMask& mask, RewriterRef& rewriter)
@@ -94,8 +98,8 @@ public:
 		skippedNodes_ = std::move(skippedNodes);
 		graph_ = graph;
 	}
-	
-	bool shouldTraversePostOrder() const
+
+	static bool shouldTraversePostOrder()
 	{
 		return true;
 	}
@@ -108,16 +112,16 @@ public:
 			// VarDecl have a DeclStmt counterpart that is easier to work with => avoid duplicates.
 			return true;
 		}
-		
+
 		if (skippedNodes_->find(currentNode_) == skippedNodes_->end() && ShouldBeRemoved())
 		{
 			const auto range = decl->getSourceRange();
 
 			RemoveFromSource(range);
 		}
-		
+
 		currentNode_++;
-		
+
 		return true;
 	}
 
@@ -131,10 +135,10 @@ public:
 		}
 
 		currentNode_++;
-		
+
 		return true;
 	}
-	
+
 	virtual bool VisitStmt(clang::Stmt* stmt)
 	{
 		if (llvm::isa<clang::Expr>(stmt))
@@ -142,7 +146,7 @@ public:
 			// Ignore expressions in general since they tend to be too small.
 			return true;
 		}
-		
+
 		if (skippedNodes_->find(currentNode_) == skippedNodes_->end() && ShouldBeRemoved())
 		{
 			const auto range = stmt->getSourceRange();
@@ -170,7 +174,7 @@ class MappingASTVisitor : public clang::RecursiveASTVisitor<MappingASTVisitor>
 		{
 			// This node's code has already been processed.
 			skippedNodes_->insert(std::pair<int, bool>(codeUnitsCount, true));
-			
+
 			return false;
 		}
 
@@ -178,7 +182,7 @@ class MappingASTVisitor : public clang::RecursiveASTVisitor<MappingASTVisitor>
 		{
 			graph.AddCriterionNode(codeUnitsCount);
 		}
-		
+
 		return nodeMapping_->insert(std::pair<int, int>(astId, codeUnitsCount)).second;
 	}
 
@@ -186,67 +190,69 @@ public:
 	int codeUnitsCount = 0;
 	DependencyGraph graph = DependencyGraph();
 
-	MappingASTVisitor(clang::CompilerInstance* ci, NodeMappingRef mapping, const int errorLine)
-		: errorLine_(errorLine), nodeMapping_(std::move(mapping)), astContext_(ci->getASTContext())
-	{}
+	MappingASTVisitor(clang::CompilerInstance* ci, NodeMappingRef mapping, const int errorLine) : errorLine_(errorLine),
+	                                                                                              nodeMapping_(std::move(mapping)),
+	                                                                                              astContext_(ci->getASTContext())
+	{
+	}
 
-	SkippedMapRef GetSkippedNodes()
+	[[nodiscard]] SkippedMapRef GetSkippedNodes() const
 	{
 		return skippedNodes_;
 	}
-	
-	bool shouldTraversePostOrder() const
+
+	[[nodiscard]] static bool shouldTraversePostOrder()
 	{
 		return true;
 	}
-	
+
 	bool VisitDecl(clang::Decl* decl)
 	{
-		// TODO: Decide how to handle Decl subclasses with Stmt counterparts (e.g., VarDecl and DeclStmt) - handle all possible options.
+		// TODO(Denis): Decide how to handle Decl subclasses with Stmt counterparts (e.g., VarDecl and DeclStmt) - handle all possible options.
 		if (llvm::isa<clang::TranslationUnitDecl>(decl) || llvm::isa<clang::VarDecl>(decl))
 		{
 			// Ignore the translation unit decl since it won't be manipulated with.
 			// VarDecl have a DeclStmt counterpart that is easier to work with => avoid duplicates.
 			return true;
 		}
-		
+
 		if (nodeMapping_->find(decl->getID()) == nodeMapping_->end())
 		{
 			const auto id = decl->getID();
 			const auto typeName = decl->getDeclKindName();
 			const auto codeSnippet = RangeToString(astContext_, decl->getSourceRange());
 			const auto line = astContext_.getSourceManager().getSpellingLineNumber(decl->getBeginLoc());
-			
+
 			llvm::outs() << "Node " << codeUnitsCount << ": Type " << typeName << "\n";
-			
+
 			if (InsertMapping(id, codeSnippet, line))
 			{
 				snippetSet_[codeSnippet] = true;
 				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, "crimson");
 
 				// Turns out declarations also have children.
-				// TODO: Handle structs, enums, etc. by getting DeclContext and using specific methods.
+				// TODO(Denis): Handle structs, enums, etc. by getting DeclContext and using specific methods.
 				// http://clang-developers.42468.n3.nabble.com/How-to-traverse-all-children-FieldDecl-from-parent-CXXRecordDecl-td4045698.html
 				const auto child = decl->getBody();
-				
-				if (child && nodeMapping_->find(child->getID(astContext_)) != nodeMapping_->end())
+
+				if (child != nullptr && nodeMapping_->find(child->getID(astContext_)) != nodeMapping_->end())
 				{
 					graph.InsertDependency(codeUnitsCount, nodeMapping_->at(child->getID(astContext_)));
 				}
 			}
-			
+
 			codeUnitsCount++;
 		}
 		else
 		{
 			llvm::outs() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
 		}
-		
+
 		return true;
 	}
 
 	bool VisitCallExpr(clang::CallExpr* expr)
-	{	
+	{
 		if (nodeMapping_->find(expr->getID(astContext_)) == nodeMapping_->end())
 		{
 			const auto id = expr->getID(astContext_);
@@ -266,7 +272,7 @@ public:
 		{
 			llvm::outs() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
 		}
-				
+
 		return true;
 	}
 
@@ -277,7 +283,7 @@ public:
 			// Ignore expressions in general since they tend to be too small.
 			return true;
 		}
-		
+
 		if (nodeMapping_->find(stmt->getID(astContext_)) == nodeMapping_->end())
 		{
 			const auto id = stmt->getID(astContext_);
@@ -286,29 +292,30 @@ public:
 			const auto line = astContext_.getSourceManager().getSpellingLineNumber(stmt->getBeginLoc());
 
 			llvm::outs() << "Node " << codeUnitsCount << ": Type " << typeName << "\n";
-			
+
 			if (InsertMapping(id, codeSnippet, line))
 			{
 				snippetSet_[codeSnippet] = true;
 				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, "darkorchid");
-			
+
 				// Apparently only statements have children.
 				for (auto it = stmt->child_begin(); it != stmt->child_end(); ++it)
 				{
-					if (*it && nodeMapping_->find(it->getID(astContext_)) != nodeMapping_->end())
+					if (*it != nullptr && nodeMapping_->find(it->getID(astContext_)) != nodeMapping_->end())
 					{
 						graph.InsertDependency(codeUnitsCount, nodeMapping_->at(it->getID(astContext_)));
 					}
 				}
 			}
-			
+
 			codeUnitsCount++;
 		}
 		else
 		{
 			llvm::outs() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
 		}
-		
+
 		return true;
 	}
 };
+#endif
