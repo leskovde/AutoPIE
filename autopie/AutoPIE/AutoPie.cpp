@@ -61,26 +61,12 @@ static cl::opt<bool> DumpDot("dump-dot",
 
 int Compile(const std::filesystem::directory_entry& entry)
 {
-	//const auto output = "temp/a.exe";
 	const auto input = entry.path().string();
 	const auto output = "temp\\" + entry.path().filename().replace_extension(".exe").string();
 	auto clangPath = sys::findProgramByName("clang");
 
 	std::filesystem::file_time_type lastWrite;
-	/*
-	if (std::filesystem::exists(output))
-	{
-		try
-		{
-			//std::filesystem::remove(output);
-			lastWrite = std::filesystem::last_write_time(output);
-		}
-		catch (const std::filesystem::filesystem_error& error)
-		{
-			errs() << "Error while deleting an existing executable: " << error.what() << "\n";
-		}
-	}
-	*/
+
 	const auto arguments = std::vector<const char*>{
 		clangPath->c_str(), /*"-v",*/ "-O0", "-g", "-o", output.c_str(), input.c_str()
 	};
@@ -113,20 +99,6 @@ int Compile(const std::filesystem::directory_entry& entry)
 		result |= 1;
 	}
 
-	/*
-	if (std::filesystem::exists(output))
-	{
-		if (lastWrite == std::filesystem::last_write_time(output))
-		{
-			result |= 1;	
-		}
-	}
-	else
-	{
-		result |= 1;
-	}
-	*/
-
 	return result;
 }
 
@@ -135,13 +107,13 @@ class LLDBSentry
 public:
 	LLDBSentry()
 	{
-		// Initialize LLDB
+		// Initialize LLDB.
 		lldb::SBDebugger::Initialize();
 	}
 
 	~LLDBSentry()
 	{
-		// Terminate LLDB
+		// Terminate LLDB.
 		lldb::SBDebugger::Terminate();
 	}
 };
@@ -243,8 +215,6 @@ int main(int argc, const char** argv)
 	clang::tooling::ClangTool tool(op.getCompilations(), context.parsedInput.errorLocation.fileName);
 	auto result = tool.run(CustomFrontendActionFactory(context).get());
 
-	//llvm_shutdown();
-
 	std::vector<std::filesystem::directory_entry> files;
 
 	for (const auto& entry : std::filesystem::directory_iterator("temp/"))
@@ -279,8 +249,6 @@ int main(int argc, const char** argv)
 			return EXIT_FAILURE;
 		}
 
-		//debugger.SetAsync(false);
-
 		const char* arguments[] = {nullptr};
 
 		lldb::SBError error;
@@ -299,19 +267,6 @@ int main(int argc, const char** argv)
 
 		outs() << "\nLLDB Process launch ...\n";
 
-		/*
-		auto process = target.Launch(listener,
-			nullptr,
-			nullptr,
-			nullptr,
-			"temp/lldbOut.txt",
-			"temp/lldbErr.txt",
-			"./temp",
-			lldb::eLaunchFlagExec | lldb::eLaunchFlagDebug,
-			false,
-			error);
-		*/
-
 		auto process = target.Launch(launchInfo, error);
 		outs() << "error.Success()              = " << static_cast<int>(error.Success()) << "\n";
 		outs() << "process.IsValid()            = " << static_cast<int>(process.IsValid()) << "\n";
@@ -327,15 +282,6 @@ int main(int argc, const char** argv)
 		while (!done)
 		{
 			lldb::SBEvent event;
-
-			/*
-			outs() << "listener.GetNextEvent()      = " << listener.GetNextEvent(event) << "\n";
-
-			while (process.GetState() == lldb::eStateAttaching || process.GetState() == lldb::eStateLaunching)
-			{
-				outs() << "listener.GetNextEvent()      = " << listener.GetNextEvent(event) << "\n";
-			}
-			*/
 
 			if (listener.WaitForEvent(360, event))
 			{
@@ -476,31 +422,7 @@ int main(int argc, const char** argv)
 		process.Kill();
 		debugger.DeleteTarget(target);
 		lldb::SBDebugger::Destroy(debugger);
-
-		/*
-		if (process.GetState() != lldb::eStateExited && !process.Kill().Success())
-		{
-			errs() << "LLDB could not kill the debugging process.\n";
-			return EXIT_FAILURE;
-		}
-		*/
-
-		/*
-		process.Kill();
-		process.Clear();
-		process.Destroy();
-		process.Detach();
-		debugger.DeleteTarget(target);
-		*/
 	}
-
-	/*
-	auto exception = thread.GetCurrentException();
-	outs() << "exception.IsValid()              = " << exception.IsValid() << "\n";
-	outs() << "exception.GetTypeName()          = " << (exception.GetTypeName() ? exception.GetTypeName() : "(null)" ) << "\n";
-	outs() << "exception.GetDisplayTypeName()   = " << (exception.GetDisplayTypeName() ? exception.GetDisplayTypeName() : "(null)" ) << "\n";
-	outs() << "exception.GetLocation()          = " << (exception.GetLocation() ? exception.GetLocation() : "(null)") << "\n";
-	*/
 
 	return EXIT_SUCCESS;
 }

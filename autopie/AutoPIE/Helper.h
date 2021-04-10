@@ -2,8 +2,6 @@
 #define HELPER_H
 #pragma once
 
-#include <clang/AST/ExternalASTSource.h>
-#include <clang/AST/Stmt.h>
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Lex/Lexer.h>
 

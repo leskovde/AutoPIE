@@ -4,8 +4,6 @@
 
 #include "clang/Rewrite/Core/Rewriter.h"
 
-#include <iostream>
-
 #include "Helper.h"
 
 class CountVisitorContext

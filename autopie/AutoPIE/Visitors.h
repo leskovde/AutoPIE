@@ -38,11 +38,6 @@ class VariantPrintingASTVisitor : public clang::RecursiveASTVisitor<VariantPrint
 
 	void RemoveFromSource(const clang::SourceRange range) const
 	{
-		//llvm::outs() << RangeToString(astContext_, range);
-
-		//llvm::outs() << localRewriter.getRewrittenText(range) << "\n";
-		//llvm::outs() << range.printToString(astContext.getSourceManager()) << "\n";
-
 		if (rewriter_)
 		{
 			llvm::outs() << "Removing node " << currentNode_ << ":\n" << RangeToString(astContext_, range);
