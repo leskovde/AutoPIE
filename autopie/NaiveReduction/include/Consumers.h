@@ -6,6 +6,7 @@
 
 #include <utility>
 
+#include "Context.h"
 #include "DependencyGraph.h"
 #include "Visitors.h"
 
@@ -18,8 +19,7 @@ class VariantPrintingASTConsumer final : public clang::ASTConsumer
 	VariantPrintingASTVisitorRef visitor_;
 
 public:
-	VariantPrintingASTConsumer(clang::CompilerInstance* ci, GlobalContext& context) : visitor_(
-		std::make_unique<VariantPrintingASTVisitor>(ci, context))
+	explicit VariantPrintingASTConsumer(clang::CompilerInstance* ci) : visitor_(std::make_unique<VariantPrintingASTVisitor>(ci))
 	{
 	}
 
@@ -146,7 +146,7 @@ class VariantGenerationConsumer final : public clang::ASTConsumer
 
 public:
 	VariantGenerationConsumer(clang::CompilerInstance* ci, GlobalContext& context) : mappingConsumer_(ci, context),
-	                                                                                 printingConsumer_(ci, context)
+	                                                                                 printingConsumer_(ci)
 	{
 	}
 

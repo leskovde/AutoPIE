@@ -310,8 +310,6 @@ int Compile(const std::filesystem::directory_entry& entry)
 	const auto output = TempFolder + entry.path().filename().replace_extension(".exe").string();
 	auto clangPath = llvm::sys::findProgramByName("clang");
 
-	std::filesystem::file_time_type lastWrite;
-
 	const auto arguments = std::vector<const char*>{
 		clangPath->c_str(), /*"-v",*/ "-O0", "-g", "-o", output.c_str(), input.c_str()
 	};

@@ -8,7 +8,6 @@
 
 #include <utility>
 
-#include "Context.h"
 #include "DependencyGraph.h"
 #include "Helper.h"
 
@@ -30,10 +29,9 @@ using SkippedMapRef = std::shared_ptr<std::unordered_map<int, bool>>;
  * The class requires additional setup using `SetData` and `Reset` methods to pass data
  * that could not be obtained during construction.
  */
-class VariantPrintingASTVisitor : public clang::RecursiveASTVisitor<VariantPrintingASTVisitor>
+class VariantPrintingASTVisitor final : public clang::RecursiveASTVisitor<VariantPrintingASTVisitor>
 {
 	clang::ASTContext& astContext_;
-	GlobalContext& globalContext_;
 
 	BitMask bitMask_;
 	int currentNode_ = 0; ///< The traversal order number.
@@ -95,12 +93,8 @@ class VariantPrintingASTVisitor : public clang::RecursiveASTVisitor<VariantPrint
 	}
 
 public:
-	VariantPrintingASTVisitor(clang::CompilerInstance* ci, GlobalContext& ctx) : astContext_(ci->getASTContext()),
-	                                                                             globalContext_(ctx)
+	explicit VariantPrintingASTVisitor(clang::CompilerInstance* ci) : astContext_(ci->getASTContext())
 	{
-		globalContext_.globalRewriter = clang::Rewriter();
-		globalContext_.globalRewriter.setSourceMgr(astContext_.getSourceManager(),
-		                                           astContext_.getLangOpts());
 	}
 
 	/**
@@ -143,7 +137,7 @@ public:
 	 * Skips selected node types based on their importance.\n
 	 * Removes valid nodes based on the provided bit mask and dependency graph.
 	 */
-	virtual bool VisitDecl(clang::Decl* decl)
+	bool VisitDecl(clang::Decl* decl)
 	{
 		if (llvm::isa<clang::TranslationUnitDecl>(decl) || llvm::isa<clang::VarDecl>(decl))
 		{
@@ -187,7 +181,7 @@ public:
 	 * Skips selected node types based on their importance.\n
 	 * Removes valid nodes based on the provided bit mask and dependency graph.
 	 */
-	virtual bool VisitStmt(clang::Stmt* stmt)
+	bool VisitStmt(clang::Stmt* stmt)
 	{
 		if (llvm::isa<clang::Expr>(stmt))
 		{
@@ -215,7 +209,7 @@ public:
  * Sets the traversal order (by creating a node mapping and a skipped nodes list) for any future visitors.\n
  * Creates the dependency graph.
  */
-class MappingASTVisitor : public clang::RecursiveASTVisitor<MappingASTVisitor>
+class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisitor>
 {
 	int errorLine_;
 	NodeMappingRef nodeMapping_;

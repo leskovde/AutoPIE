@@ -108,6 +108,11 @@ struct LLDBSentry
 	{
 		lldb::SBDebugger::Terminate();
 	}
+
+	// Rule of three.
+	
+	LLDBSentry(const LLDBSentry& other) = delete;
+	LLDBSentry& operator=(const LLDBSentry& other) = delete;
 };
 
 /**
@@ -146,6 +151,11 @@ int main(int argc, const char** argv)
 	clang::tooling::ClangTool tool(op.getCompilations(), context.parsedInput.errorLocation.fileName);
 	auto result = tool.run(CustomFrontendActionFactory(context).get());
 
+	if (result)
+	{
+		outs() << "The tool returned a non-standard value: " << result << "\n";
+	}
+	
 	// Collect the results.
 	std::vector<std::filesystem::directory_entry> files;
 	for (const auto& entry : std::filesystem::directory_iterator(TempFolder))
