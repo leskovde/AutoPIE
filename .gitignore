@@ -340,3 +340,17 @@ ASALocalRun/
 healthchecksdb
 /TheToolSolution/ClangDemo/tempFile.cpp
 /TheToolSolution/ClangDemo/temp
+/thesis/source/abstract.out
+*.aux
+/thesis/source/thesis.bbl
+/thesis/source/thesis.blg
+/thesis/source/thesis.lof
+/thesis/source/thesis.lot
+/thesis/source/thesis.out
+/thesis/source/thesis.toc
+/autopie/AutoPIE/temp
+/autopie/AutoPIE/visuals/concreteTestCase.png
+/autopie/AutoPIE/visuals/concreteTestCase.png
+/autopie/NaiveReduction/temp
+/autopie/NaiveReduction/visuals/concreteTestCase.png
+/autopie/NaiveReduction/ide/temp
