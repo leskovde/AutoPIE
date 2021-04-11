@@ -10,6 +10,10 @@
 
 std::unique_ptr<clang::tooling::FrontendActionFactory> CustomFrontendActionFactory(GlobalContext& context);
 
+/**
+ * Specifies the frontend action for generating source file variants.\n
+ * Currently creates a unifying consumer.
+ */
 class VariantGenerationAction final : public clang::ASTFrontendAction
 {
 	GlobalContext& globalContext;
