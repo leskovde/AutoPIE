@@ -1,7 +1,7 @@
 - [ ] **!!!** https://stackoverflow.com/questions/52220534/how-to-use-ast-for-both-custom-front-end-action-and-clang-static-analysis
 - [ ] HandleTopLevelDecl v ASTConsumer mozna muze pomoct s include fily, vice tady: https://eli.thegreenplace.net/2014/05/01/modern-source-to-source-transformation-with-clang-and-libtooling
-- [ ] FrontendActionFactory udajne poskytuje moznost predat data nove FrontendAction, viz: https://eli.thegreenplace.net/2014/05/01/modern-source-to-source-transformation-with-clang-and-libtooling
-- [ ] `--` se do argv uz nepocita! muzu to teda z komentaru a z kodu smazat a upravit argc a argv checky
+- [x] FrontendActionFactory udajne poskytuje moznost predat data nove FrontendAction, viz: https://eli.thegreenplace.net/2014/05/01/modern-source-to-source-transformation-with-clang-and-libtooling
+- [x] `--` se do argv uz nepocita! muzu to teda z komentaru a z kodu smazat a upravit argc a argv checky
 - [x] Eventualne migrovat gitlab na github pro release.
 - [ ] Zkusit propojit slicery s mym kodem prvne pres script, pak pres zdrojaky.
 - [ ] Udelat test pipeline - nejlineji az na linux, nejlepe nejak univerzalne pro unix i windows (mozna pomoci CMake)
@@ -15,8 +15,8 @@
 - [x] doplnit notes
 - [x] napsat shell script na propojeni obou sliceru
 - [ ] **rework zpusobu, kterym se odebira source code z AST - rewriter momentalne nedela to, co bych chtel, pridat decl a expr visitory, opravit include**
-- [ ] podivat se na bezne veci v AST sliceru (help, option handling, ...) a zkusit neco ukrast
-- [ ] zjistit, jak udelat pomoci CMake crossplatform cpp projekt
+- [x] podivat se na bezne veci v AST sliceru (help, option handling, ...) a zkusit neco ukrast
+- [x] ~~zjistit, jak udelat pomoci CMake crossplatform cpp projekt~~ (nerelevantni, projekt nebude fungovat na Windows kvuli LLDB)
 - [x] migrovat projekt na linux
 - [ ] napsat shell script na propojeni sliceru s projektem
 - [ ] udelat vizualizaci delta debuggingu, abych se ujistil, ze vse funguje spravne - pro kusy kodu udelat nodes, z nich sestrojit strom a ten pak vykreslit tak, aby slo videt, ktere nodes odstranuji
@@ -24,7 +24,7 @@
 - [ ] zkusit Holy Build Box / migrovat Giri na llvm 11
 - [x] pripravit test suite, osnova k textu (napr. ke kazde sekci mit 5 odrazek, co tam bude)
 - [ ] **zkontrolovat implementaci Delta Debuggingu podle pseudokodu v textu**
-- [ ] odebirat krome statementu i decl a expr
+- [x] odebirat krome statementu i decl a expr
 - [ ] pouzit static slicer v naivnim zpusobu pro urychleni
 - [ ] zkusit portnout giri na novejsi LLVM
 - [ ] zkusit heuristiku - urcit, zda je vyhodne pouzivat dynamicky slicer podle toho, jak moc se kod branchuje
@@ -32,3 +32,15 @@
 - [ ] vymyslet, jak minimalizovat cely program a ne jen main
 - [ ] udelat experimenty na soutezi SV-COMP
 - [ ] nechavat v redukovanem kodu relevantni konstanty (QoL, protoze slicing konstanty ignoruje)
+- [ ] opravit komentare a argumenty (usage a to, kde prijde argument `--`) ve vsech branches
+- [x] vytvorit strukturu projektu tak, aby slo branche mergovat do sebe
+- [ ] udelat setup script / nejaky jednoduchy installer pro cely tool (prerekvizity, build vsech binarek mych projektu)
+- [ ] update manualu v master / Naive_Dev
+- [ ] pridat do manualu info o setupu
+- [ ] udelat do makefilu target pro doxygen
+- [ ] odstranit klicovat slova `new` z listingu! nahradit je za reference nebo unique pointery
+- [ ] zmenit popis visitoru - visit funkce se volaji opacne, nez to mam v textu
+- [ ] do pseudokodu napsat podminku, ze se nesmi odebrat radka v kodu, ktera zpusobuje error
+- [ ] popsat, proc je v moji domene determinismus - spusteni typickeho programu nekolikrat probehne pokazde jinym zpusobem (co se tyce naplanovani instrukci atd.), ale dojde se ke stejnemu vysledku... chci minimalizovat nedeterminismus
+- [ ] premyslet o zpusobu prevedeni na bytecode (to uz umim pres` Compile()`) a ten pak prohnat pres pattern recognition
+- [ ] k introduction dopsat goals
