@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\src\Actions.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\AutoPie.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Helper.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\Visitors.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Actions.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Consumers.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Context.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\DependencyGraph.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Helper.h">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{54aa43ba-5de6-41d1-9a5b-2f867637a907}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{42f9446d-ae4d-400e-add9-99d309668d99}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

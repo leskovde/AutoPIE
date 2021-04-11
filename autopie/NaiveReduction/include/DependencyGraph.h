@@ -1,6 +1,7 @@
 #ifndef DEPENDENCYGRAPH_H
 #define DEPENDENCYGRAPH_H
 #pragma once
+
 #include "Helper.h"
 
 #include <fstream>

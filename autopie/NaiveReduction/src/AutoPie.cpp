@@ -23,9 +23,9 @@
 
 #include <filesystem>
 
-#include "Actions.h"
-#include "Context.h"
-#include "Helper.h"
+#include "../include/Actions.h"
+#include "../include/Context.h"
+#include "../include/Helper.h"
 
 using namespace llvm;
 

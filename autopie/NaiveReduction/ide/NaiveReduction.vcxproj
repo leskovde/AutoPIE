@@ -18,13 +18,26 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\Actions.cpp" />
+    <ClCompile Include="..\src\AutoPie.cpp" />
+    <ClCompile Include="..\src\Helper.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\Actions.h" />
+    <ClInclude Include="..\include\Consumers.h" />
+    <ClInclude Include="..\include\Context.h" />
+    <ClInclude Include="..\include\DependencyGraph.h" />
+    <ClInclude Include="..\include\Helper.h" />
+    <ClInclude Include="..\include\Visitors.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{64f7008f-7e55-46f8-81d0-be0003da0a77}</ProjectGuid>
+    <ProjectGuid>{FA4FEAFE-1896-4126-9190-E7C88997FB2D}</ProjectGuid>
     <RootNamespace>ClangDemo</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>AutoPIE</ProjectName>
+    <ProjectName>NaiveReduction</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -148,19 +161,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="Actions.cpp" />
-    <ClCompile Include="Helper.cpp" />
-    <ClCompile Include="AutoPie.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Actions.h" />
-    <ClInclude Include="Consumers.h" />
-    <ClInclude Include="Context.h" />
-    <ClInclude Include="DependencyGraph.h" />
-    <ClInclude Include="Helper.h" />
-    <ClInclude Include="Visitors.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

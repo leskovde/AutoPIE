@@ -5,8 +5,8 @@
 
 #include <filesystem>
 
-#include "DependencyGraph.h"
-#include "Helper.h"
+#include "../include/DependencyGraph.h"
+#include "../include/Helper.h"
 
 clang::SourceRange GetSourceRange(const clang::Stmt& s)
 {
