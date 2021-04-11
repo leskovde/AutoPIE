@@ -5,10 +5,22 @@
 # The link location should be the following: `/usr/local/lib/`,
 # The include location should be the following: `/usr/local/include/`
 
-CXX = g++
-OBJECTS = Context.o Helper.o TheTool.o
-CFLAGS = -std=c++17 -fno-rtti
+# Paths.
+SRC_PATH = src
+BUILD_PATH = build
+BIN_PATH = $(BUILD_PATH)/bin
+OBJ_PATH = $(BUILD_PATH)/obj
+DOCS_PATH = docs
 
+# Targets.
+TARGET = AutoPie
+SOURCES = $(wildcard $(SRC_PATH)/*.cpp)
+OBJECTS = $(SOURCES:%.cpp=$(OBJ_PATH)/%.o)
+DEPENDENCIES = $(OBJECTS:.o=.d)
+
+# Compiler flags.
+CXX = g++
+CFLAGS = -std=c++17 -fno-rtti
 CLANGLIBS = \
 		-lpthread \
 		-lRemarks -lclang-cpp -lclang \
@@ -24,19 +36,38 @@ CLANGLIBS = \
 		-lclangToolingASTDiff -lclangToolingCore -lclangToolingInclusions \
 		-lclangToolingRefactoring -lclangToolingSyntax -lclangTransformer
 
-all: TheTool
+all: build $(BIN_PATH)/$(TARGET)
 
-TheTool: $(OBJECTS) 
-	$(CXX) $(CFLAGS) -g -o $@ $(OBJECTS) $(CLANGLIBS) 
+$(OBJ_PATH)/%.o: %.cpp
+	@mkdir -p $(@D)
+	$(CXX) $(CFLAGS) $(CLANGLIBS) -c $< -MMD -o $@
 
-TheTool.o: TheTool.cpp
-	$(CXX) $(CFLAGS) -c -g TheTool.cpp $(CLANGLIBS)
+$(BIN_PATH)/$(TARGET): $(OBJECTS)
+	@mkdir -p $(@D)
+	$(CXX) $(CFLAGS) -o $(BIN_PATH)/$(TARGET) $^ $(CLANGLIBS)
 
-Context.o: Context.cpp Context.h
-	$(CXX) $(CFLAGS) -c -g Context.cpp $(CLANGLIBS)
+-include $(DEPENDENCIES)
 
-Helper.o: Helper.cpp Helper.h
-	$(CXX) $(CFLAGS) -c -g Helper.cpp $(CLANGLIBS)
+.PHONY: all build clean release docs info
+
+build:
+	@mkdir -p $(BIN_PATH)
+	@mkdir -p $(OBJ_PATH)
+
+release: CFLAGS += -O2
+release: all
 
 clean:
-	      rm -rf *.o *.ll TheTool
+	-@rm -rvf $(OBJ_PATH)/*
+	-@rm -rvf $(BIN_PATH)/*
+
+docs:
+	@doxygen $(DOCS_PATH)/Doxyfile
+
+info:
+	@echo "[*] Binaries in:    ${BIN_PATH}"
+	@echo "[*] Objects in:     ${OBJ_PATH}"
+	@echo "[*] Doxygen in:     ${DOCS_PATH}"
+	@echo "[*] Sources:        ${SOURCES}"
+	@echo "[*] Objects:        ${OBJECTS}"
+	@echo "[*] Dependencies:   ${DEPENDENCIES}"
