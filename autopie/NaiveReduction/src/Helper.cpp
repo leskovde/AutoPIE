@@ -20,9 +20,9 @@ std::string RangeToString(clang::ASTContext& astContext, const clang::SourceRang
 
 bool ClearTempDirectory(const bool prompt)
 {
-	if (prompt && std::filesystem::exists("temp/"))
+	if (prompt && std::filesystem::exists(TempFolder))
 	{
-		llvm::outs() << "WARNING: The path 'temp/' exists and is about to be cleared! Do you want to proceed? [Y/n] ";
+		llvm::outs() << "WARNING: The path " << TempFolder << " exists and is about to be cleared! Do you want to proceed? [Y/n] ";
 		const auto decision = std::getchar();
 		llvm::outs() << "\n";
 
@@ -32,10 +32,10 @@ bool ClearTempDirectory(const bool prompt)
 		}
 	}
 
-	llvm::outs() << "Clearing the 'temp/' directory...\n";
+	llvm::outs() << "Clearing the " << TempFolder << " directory...\n";
 
-	std::filesystem::remove_all("temp/");
-	std::filesystem::create_directory("temp");
+	std::filesystem::remove_all(TempFolder);
+	std::filesystem::create_directory(TempFolder);
 
 	return true;
 }

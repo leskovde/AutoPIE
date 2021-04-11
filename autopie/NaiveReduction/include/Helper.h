@@ -7,6 +7,9 @@
 
 #include <utility>
 
+inline const char* TempFolder = "../temp/";
+inline const char* VisualsFolder = "../visuals/";
+
 class DependencyGraph;
 
 using BitMask = std::vector<bool>;

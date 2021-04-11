@@ -62,7 +62,7 @@ static cl::opt<bool> DumpDot("dump-dot",
 int Compile(const std::filesystem::directory_entry& entry)
 {
 	const auto input = entry.path().string();
-	const auto output = "temp\\" + entry.path().filename().replace_extension(".exe").string();
+	const auto output = TempFolder + entry.path().filename().replace_extension(".exe").string();
 	auto clangPath = sys::findProgramByName("clang");
 
 	std::filesystem::file_time_type lastWrite;
@@ -217,7 +217,7 @@ int main(int argc, const char** argv)
 
 	std::vector<std::filesystem::directory_entry> files;
 
-	for (const auto& entry : std::filesystem::directory_iterator("temp/"))
+	for (const auto& entry : std::filesystem::directory_iterator(TempFolder))
 	{
 		files.emplace_back(entry);
 	}
@@ -254,10 +254,10 @@ int main(int argc, const char** argv)
 		lldb::SBError error;
 		lldb::SBLaunchInfo launchInfo(arguments);
 
-		launchInfo.SetWorkingDirectory("./temp");
+		launchInfo.SetWorkingDirectory(TempFolder);
 		launchInfo.SetLaunchFlags(lldb::eLaunchFlagExec | lldb::eLaunchFlagDebug);
 
-		const auto executable = "temp\\" + entry.path().filename().replace_extension(".exe").string();
+		const auto executable = TempFolder + entry.path().filename().replace_extension(".exe").string();
 		outs() << "\nLLDB Target creation for " << executable << " ...\n";
 
 		auto target = debugger.CreateTarget(executable.c_str(), sys::getDefaultTargetTriple().c_str(), "", true, error);

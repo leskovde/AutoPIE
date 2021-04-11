@@ -99,7 +99,7 @@ public:
 	void DumpDot(const std::string& /*fileName*/) const
 	{
 		// TODO(Denis): Trim file names (they include full path instead of just the name).
-		const auto dotFileName = "visuals/dotDump_test.dot";
+		const auto dotFileName = VisualsFolder + std::string("dotDump_test.dot");
 		auto ofs = std::ofstream(dotFileName);
 
 		ofs << "digraph g {\nforcelabels=true;\nrankdir=TD;\n";

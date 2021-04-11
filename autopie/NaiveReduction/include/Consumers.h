@@ -130,7 +130,7 @@ public:
 
 				llvm::outs() << "DEBUG: Processing valid bitmask " << Stringify(bitMask) << "\n";
 
-				auto fileName = "temp/" + std::to_string(variantsCount) + "_tempFile.c";
+				auto fileName = TempFolder + std::to_string(variantsCount) + "_tempFile.c";
 				printingConsumer_.HandleTranslationUnit(context, fileName, bitMask);
 			}
 		}
