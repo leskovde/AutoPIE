@@ -30,164 +30,99 @@
 using namespace llvm;
 
 static cl::OptionCategory Args("AutoPIE Options");
+
+/**
+ * Defines a --help option for the tool. Shows all available options and their descriptions.\n
+ * Although the variable is unused, it is still parsed in the CommonOptionsParser.
+ */
 static cl::extrahelp CommonHelp(clang::tooling::CommonOptionsParser::HelpMessage);
+
+/**
+ * Defines additional text to the CommonHelp. The text is shown when using --help.\n
+ * Although the variable is unused, it is still parsed in the CommonOptionsParser.
+ */
 static cl::extrahelp MoreHelp("\nMore help text...");
 
+/**
+ * Specifies the source file in which an error was found.\n
+ * The value is later used for location confirmation.
+ */
 static cl::opt<std::string> SourceFile("loc-file",
                                        cl::desc("(The name of the file in which the error occured.)"),
                                        cl::init(""),
                                        cl::cat(Args));
 
+/**
+ * Specifies the line number in the previously specified source file on which an error was found.\n
+ * The value is later used for location confirmation.
+ */
 static cl::opt<int> LineNumber("loc-line",
                                cl::desc("(The line number on which the error occured.)"),
                                cl::init(0),
                                cl::cat(Args));
 
+/**
+ * A description of a runtime error. The description should be reproducible, e.g., 'segmentation fault'.\n
+ * It is assumed that the description is a substring of the stack trace / exception message seen after launch.\n
+ * The value is later used for location confirmation.
+ */
 static cl::opt<std::string> ErrorMessage("error-message",
                                          cl::desc("(A part of the error message specifying the nature of the error.)"),
                                          cl::init(""),
                                          cl::cat(Args));
 
+// TODO: Implement reduction ratio to cut the variant search.
+/**
+ * Specifies the desired best-possible size of the output. Values are between 0 and 1, with 0 being the unreduced
+ * (original) file and 1 being an attempt to fully reduce the source file.\n
+ * The value is used to stop the variant search upon hitting a certain threshold.\n
+ * E.g., 0.75 => the output file will have (in the best scenario) roughly a quarter its size in bytes,
+ * with three quarters being removed.
+ */
 static cl::opt<double> ReductionRatio("ratio",
                                       cl::desc("(Limits the reduction to a specific ratio between 0 and 1.)"),
                                       cl::init(1.0),
                                       cl::cat(Args));
 
+/**
+ * If set to true, the program generates a .dot file containing a graph of code units.\n
+ * The file serves to visualize the term 'code units' and also shows dependencies in the source code.\n
+ * The value is used after the first few AST passes to check whether an output .dot file should be generated.
+ */
 static cl::opt<bool> DumpDot("dump-dot",
                              cl::desc(
 	                             "(Specifies whether a GraphViz file containing relationships of code units should be created.)"),
                              cl::init(false),
                              cl::cat(Args));
 
-int Compile(const std::filesystem::directory_entry& entry)
+/**
+ * Guards the LLDB module, destroying it upon existing the scope.
+ */
+struct LLDBSentry
 {
-	const auto input = entry.path().string();
-	const auto output = TempFolder + entry.path().filename().replace_extension(".exe").string();
-	auto clangPath = sys::findProgramByName("clang");
-
-	std::filesystem::file_time_type lastWrite;
-
-	const auto arguments = std::vector<const char*>{
-		clangPath->c_str(), /*"-v",*/ "-O0", "-g", "-o", output.c_str(), input.c_str()
-	};
-
-	clang::DiagnosticOptions diagnosticOptions;
-	const auto textDiagnosticPrinter = std::make_unique<clang::TextDiagnosticPrinter>(outs(), &diagnosticOptions);
-	IntrusiveRefCntPtr<clang::DiagnosticIDs> diagIDs;
-
-	auto diagnosticsEngine = std::make_unique<clang::DiagnosticsEngine>(diagIDs, &diagnosticOptions,
-	                                                                    textDiagnosticPrinter.get());
-
-	clang::driver::Driver driver(arguments[0], sys::getDefaultTargetTriple(), *diagnosticsEngine.release());
-
-	const auto compilation = std::unique_ptr<clang::driver::Compilation>(driver.BuildCompilation(arguments));
-
-	//driver.PrintActions(*compilation);
-
-	auto result = 1; // Set the initial value to invalid, since we don't need those imposter vibes in our lives.
-	SmallVector<std::pair<int, const clang::driver::Command*>, 16> failingCommands;
-
-	if (compilation)
-	{
-		result = driver.ExecuteCompilation(*compilation, failingCommands);
-	}
-
-	outs() << "\n";
-
-	if (!std::filesystem::exists(output))
-	{
-		result |= 1;
-	}
-
-	return result;
-}
-
-class LLDBSentry
-{
-public:
+	/**
+	 * Initializes the LLDB debugger.
+	 */
 	LLDBSentry()
 	{
-		// Initialize LLDB.
 		lldb::SBDebugger::Initialize();
 	}
 
+	/**
+	 * Destroys the LLDB debugger.
+	 */
 	~LLDBSentry()
 	{
-		// Terminate LLDB.
 		lldb::SBDebugger::Terminate();
 	}
 };
 
-std::string StateToString(const lldb::StateType st)
-{
-	switch (st)
-	{
-	case lldb::eStateInvalid:
-		return "Invalid";
-	case lldb::eStateUnloaded:
-		return "Unloaded";
-	case lldb::eStateConnected:
-		return "Connected";
-	case lldb::eStateAttaching:
-		return "Attaching";
-	case lldb::eStateLaunching:
-		return "Launching";
-	case lldb::eStateStopped:
-		return "Stopped";
-	case lldb::eStateRunning:
-		return "Running";
-	case lldb::eStateStepping:
-		return "Stepping";
-	case lldb::eStateCrashed:
-		return "Crashed";
-	case lldb::eStateDetached:
-		return "Detached";
-	case lldb::eStateExited:
-		return "Exited";
-	case lldb::eStateSuspended:
-		return "Suspended";
-	default:
-		return "unknown";
-	}
-}
-
-std::string StopReasonToString(const lldb::StopReason sr)
-{
-	switch (sr)
-	{
-	case lldb::eStopReasonInvalid:
-		return "Invalid";
-	case lldb::eStopReasonNone:
-		return "None";
-	case lldb::eStopReasonTrace:
-		return "Trace";
-	case lldb::eStopReasonBreakpoint:
-		return "Breakpoint";
-	case lldb::eStopReasonWatchpoint:
-		return "Watchpoint";
-	case lldb::eStopReasonSignal:
-		return "Signal";
-	case lldb::eStopReasonException:
-		return "Exception";
-	case lldb::eStopReasonExec:
-		return "Exec";
-	case lldb::eStopReasonPlanComplete:
-		return "Plan Complete";
-	case lldb::eStopReasonThreadExiting:
-		return "Thread Exiting";
-	case lldb::eStopReasonInstrumentation:
-		return "Instrumentation";
-	default:
-		return "unknown";
-	}
-}
-
 /**
  * Generates a minimal program variant by naively removing statements.
  * 
- * Call:
+ * Call:\n
  * > AutoPIE.exe [file with error] [line with error] [error description message] [reduction ratio] <source path 0> [... <source path N>] --
- * e.g. AutoPIE.exe --loc-file="example.cpp" --loc-line=17 --error-message="stack overflow" --ratio=0.5 example.cpp --
+ * e.g. AutoPIE.exe --loc-file="example.cpp" --loc-line=17 --error-message="segmentation fault" --ratio=0.5 example.cpp --
  */
 int main(int argc, const char** argv)
 {
@@ -212,11 +147,12 @@ int main(int argc, const char** argv)
 
 	auto context = GlobalContext(parsedInput, *op.getSourcePathList().begin());
 
+	// Run all Clang AST related actions.
 	clang::tooling::ClangTool tool(op.getCompilations(), context.parsedInput.errorLocation.fileName);
 	auto result = tool.run(CustomFrontendActionFactory(context).get());
 
+	// Collect the results.
 	std::vector<std::filesystem::directory_entry> files;
-
 	for (const auto& entry : std::filesystem::directory_iterator(TempFolder))
 	{
 		files.emplace_back(entry);
@@ -231,6 +167,7 @@ int main(int argc, const char** argv)
 
 	LLDBSentry sentry;
 
+	// Attempt to compile each file. If successful, run it in LLDB and validate the error message and location.
 	for (const auto& entry : files)
 	{
 		auto compilationExitCode = Compile(entry);
@@ -241,6 +178,10 @@ int main(int argc, const char** argv)
 			continue;
 		}
 
+		// Keep all LLDB logic written explicitly, not refactored in a function.
+		// The function could be called when the LLDBSentry is not initialized => unwanted behaviour.
+
+		// Create a debugger object - represents an instance of LLDB.
 		auto debugger(lldb::SBDebugger::Create());
 
 		if (!debugger.IsValid())
@@ -260,6 +201,8 @@ int main(int argc, const char** argv)
 		const auto executable = TempFolder + entry.path().filename().replace_extension(".exe").string();
 		outs() << "\nLLDB Target creation for " << executable << " ...\n";
 
+		// Create and launch a target - represents a debugging session of a single executable.
+		// Launching creates a new process in which the executable is ran.
 		auto target = debugger.CreateTarget(executable.c_str(), sys::getDefaultTargetTriple().c_str(), "", true, error);
 
 		outs() << "error.Success()              = " << static_cast<int>(error.Success()) << "\n";
@@ -279,11 +222,15 @@ int main(int argc, const char** argv)
 
 		auto done = false;
 
+		// The debugger is set to run asynchronously (debugger.GetAsync() => true).
+		// The communication is done via events. Listen for events broadcast by the forked process.
+		// Events are handled depending on the state of the process, the most important is `eStateStopped`
+		// (stopped at a breakpoint, such as an exception) and `eStateExited` (ran without errors).
 		while (!done)
 		{
 			lldb::SBEvent event;
 
-			if (listener.WaitForEvent(360, event))
+			if (listener.WaitForEvent(/*Waiting timeout:*/ 360 /*seconds.*/, event))
 			{
 				if (lldb::SBProcess::EventIsProcessEvent(event))
 				{
@@ -299,6 +246,9 @@ int main(int argc, const char** argv)
 
 						if (state == lldb::eStateStopped)
 						{
+							// The debugger stopped at a breakpoint. Since no breakpoints were set, this is most likely an exception.
+							// Analyze the current stack frame to determine the status and position of the error.
+							
 							outs() << "Stopped at a breakpoint.\n";
 							outs() << "LLDB Threading ...\n";
 
@@ -356,6 +306,7 @@ int main(int argc, const char** argv)
 									                                               .GetLineEntry().GetColumn() << "\n";
 
 									// TODO(Denis): Confirm the location.
+									// TODO: The location must be adjusted to the reduction - probably something that should be done inside a visitor.
 								}
 							}
 
@@ -424,5 +375,7 @@ int main(int argc, const char** argv)
 		lldb::SBDebugger::Destroy(debugger);
 	}
 
+	// TODO: Conclude the result, print statistics (reduction rate, time consumed, variants created, variants compiled, etc.).
+	
 	return EXIT_SUCCESS;
 }

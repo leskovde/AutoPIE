@@ -7,6 +7,10 @@
 
 #include "../include/DependencyGraph.h"
 #include "../include/Helper.h"
+#include <llvm/Support/Program.h>
+#include <clang/Frontend/TextDiagnosticPrinter.h>
+#include <clang/Driver/Driver.h>
+#include <llvm/Support/Host.h>
 
 clang::SourceRange GetSourceRange(const clang::Stmt& s)
 {
@@ -178,4 +182,111 @@ std::string EscapeQuotes(const std::string& text)
 	}
 
 	return result;
+}
+
+int Compile(const std::filesystem::directory_entry& entry)
+{
+	const auto input = entry.path().string();
+	const auto output = TempFolder + entry.path().filename().replace_extension(".exe").string();
+	auto clangPath = llvm::sys::findProgramByName("clang");
+
+	std::filesystem::file_time_type lastWrite;
+
+	const auto arguments = std::vector<const char*>{
+		clangPath->c_str(), /*"-v",*/ "-O0", "-g", "-o", output.c_str(), input.c_str()
+	};
+
+	clang::DiagnosticOptions diagnosticOptions;
+	const auto textDiagnosticPrinter = std::make_unique<clang::TextDiagnosticPrinter>(llvm::outs(), &diagnosticOptions);
+	llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diagIDs;
+
+	auto diagnosticsEngine = std::make_unique<clang::DiagnosticsEngine>(diagIDs, &diagnosticOptions,
+		textDiagnosticPrinter.get());
+
+	clang::driver::Driver driver(arguments[0], llvm::sys::getDefaultTargetTriple(), *diagnosticsEngine.release());
+
+	const auto compilation = std::unique_ptr<clang::driver::Compilation>(driver.BuildCompilation(arguments));
+
+	//driver.PrintActions(*compilation);
+
+	auto result = 1; // Set the initial value to invalid, since we don't need those imposter vibes in our lives.
+	llvm::SmallVector<std::pair<int, const clang::driver::Command*>, 16> failingCommands;
+
+	if (compilation)
+	{
+		result = driver.ExecuteCompilation(*compilation, failingCommands);
+	}
+
+	llvm::outs() << "\n";
+
+	if (!std::filesystem::exists(output))
+	{
+		result |= 1;
+	}
+
+	return result;
+}
+
+std::string StateToString(const lldb::StateType st)
+{
+	switch (st)
+	{
+	case lldb::eStateInvalid:
+		return "Invalid";
+	case lldb::eStateUnloaded:
+		return "Unloaded";
+	case lldb::eStateConnected:
+		return "Connected";
+	case lldb::eStateAttaching:
+		return "Attaching";
+	case lldb::eStateLaunching:
+		return "Launching";
+	case lldb::eStateStopped:
+		return "Stopped";
+	case lldb::eStateRunning:
+		return "Running";
+	case lldb::eStateStepping:
+		return "Stepping";
+	case lldb::eStateCrashed:
+		return "Crashed";
+	case lldb::eStateDetached:
+		return "Detached";
+	case lldb::eStateExited:
+		return "Exited";
+	case lldb::eStateSuspended:
+		return "Suspended";
+	default:
+		return "unknown";
+	}
+}
+
+std::string StopReasonToString(const lldb::StopReason sr)
+{
+	switch (sr)
+	{
+	case lldb::eStopReasonInvalid:
+		return "Invalid";
+	case lldb::eStopReasonNone:
+		return "None";
+	case lldb::eStopReasonTrace:
+		return "Trace";
+	case lldb::eStopReasonBreakpoint:
+		return "Breakpoint";
+	case lldb::eStopReasonWatchpoint:
+		return "Watchpoint";
+	case lldb::eStopReasonSignal:
+		return "Signal";
+	case lldb::eStopReasonException:
+		return "Exception";
+	case lldb::eStopReasonExec:
+		return "Exec";
+	case lldb::eStopReasonPlanComplete:
+		return "Plan Complete";
+	case lldb::eStopReasonThreadExiting:
+		return "Thread Exiting";
+	case lldb::eStopReasonInstrumentation:
+		return "Instrumentation";
+	default:
+		return "unknown";
+	}
 }

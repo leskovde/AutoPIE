@@ -6,6 +6,7 @@
 #include <clang/Lex/Lexer.h>
 
 #include <utility>
+#include <lldb/lldb-enumerations.h>
 
 inline const char* TempFolder = "../temp/";
 inline const char* VisualsFolder = "../visuals/";
@@ -66,4 +67,11 @@ clang::SourceRange GetPrintableRange(clang::SourceRange range, const clang::Sour
 llvm::StringRef GetSourceTextRaw(clang::SourceRange range, const clang::SourceManager& sm);
 
 llvm::StringRef GetSourceText(clang::SourceRange range, const clang::SourceManager& sm);
+
+int Compile(const std::filesystem::directory_entry& entry);
+
+std::string StateToString(lldb::StateType st);
+
+std::string StopReasonToString(lldb::StopReason sr);
+
 #endif
