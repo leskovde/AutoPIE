@@ -44,3 +44,4 @@
 - [ ] popsat, proc je v moji domene determinismus - spusteni typickeho programu nekolikrat probehne pokazde jinym zpusobem (co se tyce naplanovani instrukci atd.), ale dojde se ke stejnemu vysledku... chci minimalizovat nedeterminismus
 - [ ] premyslet o zpusobu prevedeni na bytecode (to uz umim pres` Compile()`) a ten pak prohnat pres pattern recognition
 - [ ] k introduction dopsat goals
+- [ ] zjistit si neco o C-Reduce a pripadne to i zminit v textu
