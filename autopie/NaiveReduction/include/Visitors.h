@@ -36,7 +36,7 @@ class VariantPrintingASTVisitor : public clang::RecursiveASTVisitor<VariantPrint
 	GlobalContext& globalContext_;
 
 	BitMask bitMask_;
-	int currentNode_ = 0;
+	int currentNode_ = 0; ///< The traversal order number.
 	RewriterRef rewriter_;
 	DependencyGraph graph_;
 	SkippedMapRef skippedNodes_;
@@ -252,7 +252,7 @@ class MappingASTVisitor : public clang::RecursiveASTVisitor<MappingASTVisitor>
 	}
 
 public:
-	int codeUnitsCount = 0;
+	int codeUnitsCount = 0; ///< The traversal order number.
 	DependencyGraph graph = DependencyGraph();
 
 	MappingASTVisitor(clang::CompilerInstance* ci, NodeMappingRef mapping, const int errorLine) : errorLine_(errorLine),

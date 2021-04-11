@@ -2,13 +2,16 @@
 #define DEPENDENCYGRAPH_H
 #pragma once
 
-#include "Helper.h"
-
 #include <fstream>
 #include <queue>
-
 #include <utility>
 
+#include "Helper.h"
+
+/**
+ * Represents a single code unit.\n
+ * Specifies the position in the AST, the underlying source code and debug information.
+ */
 struct Node
 {
 	int astId{0};
@@ -31,6 +34,12 @@ struct Node
 	}
 };
 
+/**
+ * Keeps the information about node relationships.\n
+ * Specifies the parent to children and child to parent dependencies of code units.\n
+ * Keeps nodes found on the error-inducing location.\n
+ * Uses additional debug information to dump or print the graph.
+ */
 class DependencyGraph
 {
 	std::vector<int> criterion_;
@@ -40,11 +49,22 @@ class DependencyGraph
 
 public:
 
+	/**
+	 * Adds a node to the error-inducing node container.
+	 *
+	 * @param node The traversal order number of the error-inducing node.
+	 */
 	void AddCriterionNode(const int node)
 	{
 		criterion_.push_back(node);
 	}
 
+	/**
+	 * Adds an edge between two nodes. The edge is bidirectional.
+	 *
+	 * @param parent The traversal order number of the parent.
+	 * @param child The traversal order number of the child.
+	 */
 	void InsertDependency(const int parent, const int child)
 	{
 		if (parent == child)
@@ -71,6 +91,15 @@ public:
 		it->second.push_back(parent);
 	}
 
+	/**
+	 * Adds additional data for debugging and pretty printing.
+	 *
+	 * @param traversalOrderNumber The node number.
+	 * @param astId The node's ID as returned by the `node->getId()` method.
+	 * @param snippet The node's underlying source code.
+	 * @param type The node's type (Stmt, Decl, Expr, ...) in a text form.
+	 * @param color The name of the GraphViz color in which the node should be dumped.
+	 */
 	void InsertNodeDataForDebugging(int traversalOrderNumber, const int astId, const std::string& snippet,
 	                                const std::string& type, const std::string& color)
 	{
@@ -84,6 +113,9 @@ public:
 		}
 	}
 
+	/**
+	 * Prints the dependency graph node by node into the console.
+	 */
 	void PrintGraphForDebugging() const
 	{
 		llvm::outs() << "--------------- Dependency graph and its code ---------------\n";
@@ -96,6 +128,13 @@ public:
 		llvm::outs() << "-------------------------------------------------------------\n";
 	}
 
+	/**
+	 * Prints the dependency graph to a GraphViz file.\n
+	 * The output is saved to the `visuals` directory, the file name corresponds to the input file's name,
+	 * the extension is changed to `.dot`.
+	 *
+	 * @param fileName The currently processed source file.
+	 */
 	void DumpDot(const std::string& /*fileName*/) const
 	{
 		// TODO(Denis): Trim file names (they include full path instead of just the name).
@@ -122,6 +161,13 @@ public:
 		ofs << "}\n";
 	}
 
+	/**
+	 * Searches in a BFS manner for all descendants of a given node.
+	 *
+	 * @param startingNode The node whose descendants are considered.
+	 * @return A container of nodes (specified by their traversal order number) that are dependent on
+	 * the given node.
+	 */
 	std::vector<int> GetDependentNodes(const int startingNode)
 	{
 		auto nodeQ = std::queue<int>();
@@ -149,6 +195,13 @@ public:
 		return allDependencies;
 	}
 
+	/**
+	 * Searches for all immediate parent nodes.
+	 *
+	 * @param startingNode The child whose parents will be searched for.
+	 * @return A container of nodes (specified by their traversal order number) that are
+	 * the direct parents of the given node. 
+	 */
 	std::vector<int> GetParentNodes(const int startingNode)
 	{
 		const auto it = inverseEdges_.find(startingNode);
@@ -156,6 +209,12 @@ public:
 		return it != inverseEdges_.end() ? it->second : std::vector<int>();
 	}
 
+	/**
+	 * Determines whether a node is on the error-inducing location.
+	 *
+	 * @param node The node to be checked.
+	 * @return True if the node's location is the error-inducing file and line, false otherwise.
+	 */
 	bool IsInCriterion(const int node)
 	{
 		return std::find(criterion_.begin(), criterion_.end(), node) != criterion_.end();

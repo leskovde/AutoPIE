@@ -89,7 +89,7 @@ static cl::opt<bool> DumpDot("dump-dot",
                              cl::cat(Args));
 
 /**
- * Guards the LLDB module, destroying it upon existing the scope.
+ * Guards the LLDB module, destroying it upon exiting the scope.
  */
 struct LLDBSentry
 {
@@ -129,7 +129,9 @@ int main(int argc, const char** argv)
 		return EXIT_FAILURE;
 	}
 
-	auto parsedInput = InputData(ErrorMessage, Location(SourceFile, LineNumber), ReductionRatio, DumpDot);
+	auto parsedInput = InputData(static_cast<std::basic_string<char>>(ErrorMessage),
+	                             Location(static_cast<std::basic_string<char>>(SourceFile), LineNumber), ReductionRatio,
+	                             DumpDot);
 
 	// Prompt the user to clear the temp directory.
 	if (!ClearTempDirectory(false))
