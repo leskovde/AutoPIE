@@ -119,8 +119,8 @@ struct LLDBSentry
  * Generates a minimal program variant by naively removing statements.
  * 
  * Call:\n
- * > AutoPIE.exe [file with error] [line with error] [error description message] [reduction ratio] <source path 0> [... <source path N>] --
- * e.g. AutoPIE.exe --loc-file="example.cpp" --loc-line=17 --error-message="segmentation fault" --ratio=0.5 example.cpp --
+ * > NaiveReduction.exe [file with error] [line with error] [error description message] [reduction ratio] <source path 0> [... <source path N>] --
+ * e.g. NaiveReduction.exe --loc-file="example.cpp" --loc-line=17 --error-message="segmentation fault" --ratio=0.5 example.cpp --
  */
 int main(int argc, const char** argv)
 {
