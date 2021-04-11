@@ -24,7 +24,12 @@ using DependencyASTVisitorRef = std::unique_ptr<DependencyASTVisitor>;
 using RewriterRef = std::shared_ptr<clang::Rewriter>;
 using SkippedMapRef = std::shared_ptr<std::unordered_map<int, bool>>;
 
-// Traverses the AST and removes a selected statement set by the CurrentLine number.
+/**
+ * Traverses the AST and removes statements set by a given bitmask.\n
+ * The current state of the source file is saved in a `Rewriter` instance.\n
+ * The class requires additional setup using `SetData` and `Reset` methods to pass data
+ * that could not be obtained during construction.
+ */
 class VariantPrintingASTVisitor : public clang::RecursiveASTVisitor<VariantPrintingASTVisitor>
 {
 	clang::ASTContext& astContext_;
@@ -36,6 +41,12 @@ class VariantPrintingASTVisitor : public clang::RecursiveASTVisitor<VariantPrint
 	DependencyGraph graph_;
 	SkippedMapRef skippedNodes_;
 
+	/**
+	 * Removes source code in a given range in the current rewriter.\n
+	 * The range is only removed if the rewriter instance is valid.
+	 *
+	 * @param range The source range to be removed.
+	 */
 	void RemoveFromSource(const clang::SourceRange range) const
 	{
 		if (rewriter_)
@@ -51,6 +62,17 @@ class VariantPrintingASTVisitor : public clang::RecursiveASTVisitor<VariantPrint
 		}
 	}
 
+	/**
+	 * Determines whether a node should be removed based on the dependency graph.\n
+	 * Since the traversal mode is set to postorder, it is possible that a snippet of source
+	 * code is removed twice.\n
+	 * E.g., a child's source range is removed first and then its parent's source range
+	 * (which includes the child's source range) is removed as well, resulting a runtime error.\n
+	 * This methods attempts to prevent these cases from happening by checking parent's bits
+	 * in the bit mask.
+	 *
+	 * @return True if the statement is safe to be removed, false otherwise.
+	 */
 	bool ShouldBeRemoved()
 	{
 		if (!bitMask_[currentNode_])
@@ -81,6 +103,13 @@ public:
 		                                           astContext_.getLangOpts());
 	}
 
+	/**
+	 * Initializes data for a single iteration (i.e., one complete AST pass).
+	 *
+	 * @param mask The bitmask for the upcoming iteration specifying which nodes should be removed.
+	 * @param rewriter The source code container from which nodes are removed. Each iteration requires
+	 * a new, untouched rewriter.
+	 */
 	void Reset(const BitMask& mask, RewriterRef& rewriter)
 	{
 		currentNode_ = 0;
@@ -88,17 +117,32 @@ public:
 		rewriter_ = rewriter;
 	}
 
+	/**
+	 * Initializes general data for all future passes.
+	 *
+	 * @param skippedNodes A container of AST nodes that should not be processed.
+	 * @param graph The node dependency graph based on which nodes are removed.
+	 */
 	void SetData(SkippedMapRef skippedNodes, DependencyGraph& graph)
 	{
 		skippedNodes_ = std::move(skippedNodes);
 		graph_ = graph;
 	}
 
-	static bool shouldTraversePostOrder()
+	/**
+	 * Overrides the parent traversal mode.\n
+	 * The traversal is changed from preorder to postorder.
+	 */
+	bool shouldTraversePostOrder() const
 	{
 		return true;
 	}
 
+	/**
+	 * Overrides the parent visit method.\n
+	 * Skips selected node types based on their importance.\n
+	 * Removes valid nodes based on the provided bit mask and dependency graph.
+	 */
 	virtual bool VisitDecl(clang::Decl* decl)
 	{
 		if (llvm::isa<clang::TranslationUnitDecl>(decl) || llvm::isa<clang::VarDecl>(decl))
@@ -120,6 +164,10 @@ public:
 		return true;
 	}
 
+	/**
+	 * Overrides the parent visit method.\n
+	 * Removes valid nodes based on the provided bit mask and dependency graph.
+	 */
 	bool VisitCallExpr(clang::CallExpr* expr)
 	{
 		if (skippedNodes_->find(currentNode_) == skippedNodes_->end() && ShouldBeRemoved())
@@ -134,6 +182,11 @@ public:
 		return true;
 	}
 
+	/**
+	 * Overrides the parent visit method.\n
+	 * Skips selected node types based on their importance.\n
+	 * Removes valid nodes based on the provided bit mask and dependency graph.
+	 */
 	virtual bool VisitStmt(clang::Stmt* stmt)
 	{
 		if (llvm::isa<clang::Expr>(stmt))
@@ -155,6 +208,13 @@ public:
 	}
 };
 
+/**
+ * Traverses the AST to analyze important nodes.\n
+ * Splits the source code into code units based on the traversed nodes and their corresponding source ranges.\n
+ * Creates a container of unimportant nodes that should be skipped during future traversals.\n
+ * Sets the traversal order (by creating a node mapping and a skipped nodes list) for any future visitors.\n
+ * Creates the dependency graph.
+ */
 class MappingASTVisitor : public clang::RecursiveASTVisitor<MappingASTVisitor>
 {
 	int errorLine_;
@@ -163,6 +223,16 @@ class MappingASTVisitor : public clang::RecursiveASTVisitor<MappingASTVisitor>
 	std::unordered_map<std::string, bool> snippetSet_;
 	SkippedMapRef skippedNodes_ = std::make_shared<std::unordered_map<int, bool>>();
 
+	/**
+	 * Maps an AST node based on its internal ID to the traversal order number on which the node was found.\n
+	 * Mapping is not set if a node with the same ID or the same source range was previously processed.\n
+	 * Any nodes present on the error-inducing line specified in the application's arguments are added
+	 * to a separate container in the graph.
+	 *
+	 * @param astId The node identifier as given by the clang `node->getId()` method.
+	 * @param snippet The source code corresponding to the processed node.
+	 * @param line The line of the starting location of the corresponding source code.
+	 */
 	bool InsertMapping(const int astId, const std::string& snippet, const int line)
 	{
 		if (snippetSet_.find(snippet) != snippetSet_.end() || nodeMapping_->find(astId) != nodeMapping_->end())
@@ -191,16 +261,31 @@ public:
 	{
 	}
 
+	/**
+	 * Getter for the skipped nodes container.
+	 *
+	 * @return A container of the found unimportant nodes, specified by their traversal order numbers.
+	 */
 	[[nodiscard]] SkippedMapRef GetSkippedNodes() const
 	{
 		return skippedNodes_;
 	}
 
-	[[nodiscard]] static bool shouldTraversePostOrder()
+	/**
+	 * Overrides the parent traversal mode.\n
+	 * The traversal is changed from preorder to postorder.
+	 */
+	bool shouldTraversePostOrder() const
 	{
 		return true;
 	}
 
+	/**
+	 * Overrides the parent visit method.\n
+	 * Skips selected node types based on their importance.\n
+	 * Determines whether the node is worth visiting and creates an ID to traversal order number mapping for the node.\n
+	 * Creates dependencies between the node and its children.
+	 */
 	bool VisitDecl(clang::Decl* decl)
 	{
 		// TODO(Denis): Decide how to handle Decl subclasses with Stmt counterparts (e.g., VarDecl and DeclStmt) - handle all possible options.
@@ -246,6 +331,10 @@ public:
 		return true;
 	}
 
+	/**
+	 * Overrides the parent visit method.\n
+	 * Determines whether the node is worth visiting and creates an ID to traversal order number mapping for the node.\n
+	 */
 	bool VisitCallExpr(clang::CallExpr* expr)
 	{
 		if (nodeMapping_->find(expr->getID(astContext_)) == nodeMapping_->end())
@@ -271,6 +360,12 @@ public:
 		return true;
 	}
 
+	/**
+	 * Overrides the parent visit method.\n
+	 * Skips selected node types based on their importance.\n
+	 * Determines whether the node is worth visiting and creates an ID to traversal order number mapping for the node.\n
+	 * Creates dependencies between the node and its children.
+	 */
 	bool VisitStmt(clang::Stmt* stmt)
 	{
 		if (llvm::isa<clang::Expr>(stmt))
