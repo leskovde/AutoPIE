@@ -23,7 +23,7 @@ CXX = g++
 CFLAGS = -std=c++17 -fno-rtti
 CLANGLIBS = \
 		-lpthread \
-		-lRemarks -lclang-cpp -lclang \
+		-lRemarks -llldb -lclang-cpp -lclang \
 		-lclangARCMigrate -lclangAST -lclangASTMatchers \
 		-lclangAnalysis -lclangBasic -lclangCodeGen -lclangCrossTU \
 		-lclangDependencyScanning -lclangDirectoryWatcher -lclangDriver \

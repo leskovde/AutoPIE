@@ -41,7 +41,7 @@ static cl::extrahelp MoreHelp("\nMore help text...");
  * The value is later used for location confirmation.
  */
 static cl::opt<std::string> SourceFile("loc-file",
-                                       cl::desc("(The name of the file in which the error occured.)"),
+                                       cl::desc("The name of the file in which the error occured."),
                                        cl::init(""),
                                        cl::cat(Args));
 
@@ -50,7 +50,7 @@ static cl::opt<std::string> SourceFile("loc-file",
  * The value is later used for location confirmation.
  */
 static cl::opt<int> LineNumber("loc-line",
-                               cl::desc("(The line number on which the error occured.)"),
+                               cl::desc("The line number on which the error occured."),
                                cl::init(0),
                                cl::cat(Args));
 
@@ -60,7 +60,7 @@ static cl::opt<int> LineNumber("loc-line",
  * The value is later used for location confirmation.
  */
 static cl::opt<std::string> ErrorMessage("error-message",
-                                         cl::desc("(A part of the error message specifying the nature of the error.)"),
+                                         cl::desc("A part of the error message specifying the nature of the error."),
                                          cl::init(""),
                                          cl::cat(Args));
 
@@ -73,7 +73,7 @@ static cl::opt<std::string> ErrorMessage("error-message",
  * with three quarters being removed.
  */
 static cl::opt<double> ReductionRatio("ratio",
-                                      cl::desc("(Limits the reduction to a specific ratio between 0 and 1.)"),
+                                      cl::desc("Limits the reduction to a specific ratio between 0 and 1."),
                                       cl::init(1.0),
                                       cl::cat(Args));
 
@@ -84,7 +84,7 @@ static cl::opt<double> ReductionRatio("ratio",
  */
 static cl::opt<bool> DumpDot("dump-dot",
                              cl::desc(
-	                             "(Specifies whether a GraphViz file containing relationships of code units should be created.)"),
+	                             "Specifies whether a GraphViz file containing relationships of code units should be created."),
                              cl::init(false),
                              cl::cat(Args));
 
