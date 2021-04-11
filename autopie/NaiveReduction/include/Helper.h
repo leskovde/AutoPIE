@@ -4,9 +4,10 @@
 
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Lex/Lexer.h>
-
-#include <utility>
 #include <lldb/lldb-enumerations.h>
+
+#include <filesystem>
+#include <utility>
 
 inline const char* TempFolder = "../temp/";
 inline const char* VisualsFolder = "../visuals/";

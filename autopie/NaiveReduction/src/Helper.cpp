@@ -2,15 +2,15 @@
 #include <clang/AST/Stmt.h>
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Basic/SourceManager.h>
+#include <clang/Driver/Driver.h>
+#include <clang/Frontend/TextDiagnosticPrinter.h>
+#include <llvm/Support/Host.h>
+#include <llvm/Support/Program.h>
 
 #include <filesystem>
 
 #include "../include/DependencyGraph.h"
 #include "../include/Helper.h"
-#include <llvm/Support/Program.h>
-#include <clang/Frontend/TextDiagnosticPrinter.h>
-#include <clang/Driver/Driver.h>
-#include <llvm/Support/Host.h>
 
 clang::SourceRange GetSourceRange(const clang::Stmt& s)
 {
