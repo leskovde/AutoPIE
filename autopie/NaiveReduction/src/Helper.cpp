@@ -1,27 +1,119 @@
+//===----------------------------------------------------------------------===//
+//
+/// Defines functions that would otherwise be static.
+/// Contributes to smaller .cpp files.
+//
+//===----------------------------------------------------------------------===//
+
 #include <clang/AST/ASTContext.h>
-#include <clang/AST/Stmt.h>
+#include <clang/Basic/Diagnostic.h>
+#include <clang/Basic/DiagnosticOptions.h>
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Basic/SourceManager.h>
+#include <clang/Driver/Compilation.h>
 #include <clang/Driver/Driver.h>
 #include <clang/Frontend/TextDiagnosticPrinter.h>
+
+#include <llvm/ADT/SmallVector.h>
+#include <llvm/Object/MachO.h>
 #include <llvm/Support/Host.h>
 #include <llvm/Support/Program.h>
+#include <llvm/Support/VirtualFileSystem.h>
 
 #include <filesystem>
 
 #include "../include/DependencyGraph.h"
 #include "../include/Helper.h"
 
-clang::SourceRange GetSourceRange(const clang::Stmt& s)
-{
-	return {s.getBeginLoc(), s.getEndLoc()};
-}
+//===----------------------------------------------------------------------===//
+//
+/// Source range helper functions.
+//
+//===----------------------------------------------------------------------===//
 
+//TODO: Rework range <---> source functions to work with StringRef instead of std::string.
+
+/**
+ * Extracts the underlying source code from source range.\n
+ * Uses other helper methods to extract text accurately.\n
+ * Expect the source range to be in its default form, i.e., returned by the `node->getSourceRange()` method.
+ *
+ * @param astContext The AST context used to get a `SourceManager` instance.
+ * @param range The source range from which the code should be extracted.
+ * @return The corresponding source code as a std::string.
+ */
 std::string RangeToString(clang::ASTContext& astContext, const clang::SourceRange range)
 {
 	return GetSourceText(range, astContext.getSourceManager()).str();
 }
 
+/**
+ * Corrects the given source range to a one that include all sensible tokens.\n
+ * Uses lexer information for more accurate end location.
+ *
+ * @param range The source range given by the `node->getSourceRange()` method.
+ * @param sm Source manager given by the AST context.
+ * @return The corrected source range.
+ */
+clang::SourceRange GetPrintableRange(const clang::SourceRange range, const clang::SourceManager& sm)
+{
+	const clang::LangOptions lo;
+
+	const auto startLoc = sm.getSpellingLoc(range.getBegin());
+	const auto lastTokenLoc = sm.getSpellingLoc(range.getEnd());
+	const auto endLoc = clang::Lexer::getLocForEndOfToken(lastTokenLoc, 0, sm, lo);
+	return clang::SourceRange{ startLoc, endLoc };
+}
+
+/**
+ * Gets the portion of the code that corresponds to given SourceRange exactly as
+ * the range is given.
+ *
+ * @warning The end location of the SourceRange returned by some Clang functions
+ * (such as clang::Expr::getSourceRange) might actually point to the first character
+ * (the "location") of the last token of the expression, rather than the character
+ * past-the-end of the expression like clang::Lexer::getSourceText expects.
+ * GetSourceTextRaw() does not take this into account. Use GetSourceText()
+ * instead if you want to get the source text including the last token.
+ *
+ * @warning This function does not obtain the source of a macro/preprocessor expansion.
+ * Use GetSourceText() for that.
+ *
+ * @param range The (perhaps corrected) source range to be processed.
+ * @param sm Source manager from the AST context.
+ * @return A reference to the string corresponding to the source range returned from lexer.
+ */
+llvm::StringRef GetSourceTextRaw(const clang::SourceRange range, const clang::SourceManager& sm)
+{
+	return clang::Lexer::getSourceText(clang::CharSourceRange::getCharRange(range), sm, clang::LangOptions());
+}
+
+/**
+ * Gets the portion of the code that corresponds to given SourceRange, including the
+ * last token. Returns expanded macros.
+ *
+ * @param range The (yet to be corrected) source range to be processed.
+ * @param sm Source manager from the AST context.
+ * @return A reference to the string corresponding to the corrected source range.
+ */
+llvm::StringRef GetSourceText(const clang::SourceRange range, const clang::SourceManager& sm)
+{
+	const auto printableRange = GetPrintableRange(GetPrintableRange(range, sm), sm);
+	return GetSourceTextRaw(printableRange, sm);
+}
+
+//===----------------------------------------------------------------------===//
+//
+/// File, path, and directory helper functions.
+//
+//===----------------------------------------------------------------------===//
+
+/**
+ * Clears the default temporary directory.\n
+ * (If prompted and answered positively,) removes all files inside the temp directory and recreates the directory.
+ *
+ * @param prompt Specifies whether the user should be prompted to confirm the directory deletion.
+ */
 bool ClearTempDirectory(const bool prompt)
 {
 	if (prompt && std::filesystem::exists(TempFolder))
@@ -44,6 +136,53 @@ bool ClearTempDirectory(const bool prompt)
 	return true;
 }
 
+/**
+ * Removes the extension from a path, i.e., the last found substring starting with a dot.
+ *
+ * @param filePath The path in a string form.
+ * @return The path stripped of the extension substring.
+ */
+std::string RemoveFileExtensions(const std::string& filePath)
+{
+	return filePath.substr(0, filePath.find_last_of('.'));
+}
+
+/**
+ * Adds an additional backslash character to each double-quote character.
+ *
+ * @param text The string in which double-quotes should be escaped.
+ * @return The modified string with additional backslashes.
+ */
+std::string EscapeQuotes(const std::string& text)
+{
+	auto result = std::string();
+
+	for (auto character : text)
+	{
+		if (character == '\"')
+		{
+			result.push_back('\\');
+		}
+
+		result.push_back(character);
+	}
+
+	return result;
+}
+
+//===----------------------------------------------------------------------===//
+//
+/// BitMask helper functions.
+//
+//===----------------------------------------------------------------------===//
+
+/**
+ * Converts the bit mask container to a string of zeroes and ones.\n
+ * Serves mainly for debugging and logging purposes.
+ *
+ * @param bitMask The bitmask to be converted to string.
+ * @return The string form of the bitmask, read from the most significant bit.
+ */
 std::string Stringify(BitMask& bitMask)
 {
 	std::string bits;
@@ -63,6 +202,12 @@ std::string Stringify(BitMask& bitMask)
 	return bits;
 }
 
+/**
+ * Determines whether the given bitmask is full of ones.
+ *
+ * @param bitMask The bitmask to be traversed.
+ * @return True if the bitmask contains only positive bits, false otherwise.
+ */
 bool IsFull(BitMask& bitMask)
 {
 	for (const auto& bit : bitMask)
@@ -76,9 +221,16 @@ bool IsFull(BitMask& bitMask)
 	return true;
 }
 
+/**
+ * Adds a single bit to the given bitmask, performing a binary addition.\n
+ * Carry-over bits are then incremented to the next more significant bit.\n
+ * Upon overflow, the bitmask is set to all zeroes.
+ *
+ * @param bitMask A reference to the bitmask to be incremented to.
+ */
 void Increment(BitMask& bitMask)
 {
-	// TODO(Denis): Write unit tests for this function (and the all variant generation).
+	// TODO(Denis): Write unit tests for this function (and the all variant generation), e.g. bitmask overflow.
 
 	for (auto i = bitMask.size(); i > 0; i--)
 	{
@@ -94,6 +246,17 @@ void Increment(BitMask& bitMask)
 	}
 }
 
+/**
+ * Determines whether the bitmask that represents a certain source file variant is valid.\n
+ * In order to be valid, it must satisfy the relationships given by the dependency graph.\n
+ * If a parent code unit is set zero, so must be its children.\n
+ * Code units on the error-inducing line must be present.
+ *
+ * @param bitMask The variant represent by a bitmask.
+ * @param dependencies The code unit relationship graph.
+ * @return True if the bitmask results in a valid source file variant in terms of code unit
+ * relationships.
+ */
 bool IsValid(BitMask& bitMask, DependencyGraph& dependencies)
 {
 	for (size_t i = 0; i < bitMask.size(); i++)
@@ -123,67 +286,24 @@ bool IsValid(BitMask& bitMask, DependencyGraph& dependencies)
 	return true;
 }
 
-clang::SourceRange GetPrintableRange(const clang::SourceRange range, const clang::SourceManager& sm)
-{
-	const clang::LangOptions lo;
-
-	const auto startLoc = sm.getSpellingLoc(range.getBegin());
-	const auto lastTokenLoc = sm.getSpellingLoc(range.getEnd());
-	const auto endLoc = clang::Lexer::getLocForEndOfToken(lastTokenLoc, 0, sm, lo);
-	return clang::SourceRange{startLoc, endLoc};
-}
+//===----------------------------------------------------------------------===//
+//
+/// Variant validation helper functions.
+//
+//===----------------------------------------------------------------------===//
 
 /**
- * Gets the portion of the code that corresponds to given SourceRange exactly as
- * the range is given.
+ * Attempts to compile a given source file entry.\n
+ * The compilation is done using clang, the source is being compiled to an executable using
+ * options that should guarantee debug symbols present in the output.\n
+ * The name of the output should correspond to the name of the source file. Its extension is
+ * replaced with `.exe`.\n
+ * The compilation is considered as a failed one if the compiler returns a non-zero exit code
+ * or if the output file was not created.
  *
- * @warning The end location of the SourceRange returned by some Clang functions
- * (such as clang::Expr::getSourceRange) might actually point to the first character
- * (the "location") of the last token of the expression, rather than the character
- * past-the-end of the expression like clang::Lexer::getSourceText expects.
- * GetSourceTextRaw() does not take this into account. Use GetSourceText()
- * instead if you want to get the source text including the last token.
- *
- * @warning This function does not obtain the source of a macro/preprocessor expansion.
- * Use GetSourceText() for that.
+ * @param entry The file system entry for a source code file.
+ * @return Zero if the code was successfully compiled, the compiler's different exit code otherwise.
  */
-llvm::StringRef GetSourceTextRaw(const clang::SourceRange range, const clang::SourceManager& sm)
-{
-	return clang::Lexer::getSourceText(clang::CharSourceRange::getCharRange(range), sm, clang::LangOptions());
-}
-
-/**
- * Gets the portion of the code that corresponds to given SourceRange, including the
- * last token. Returns expanded macros.
- */
-llvm::StringRef GetSourceText(const clang::SourceRange range, const clang::SourceManager& sm)
-{
-	const auto printableRange = GetPrintableRange(GetPrintableRange(range, sm), sm);
-	return GetSourceTextRaw(printableRange, sm);
-}
-
-std::string RemoveFileExtensions(const std::string& fileName)
-{
-	return fileName.substr(0, fileName.find_last_of('.'));
-}
-
-std::string EscapeQuotes(const std::string& text)
-{
-	auto result = std::string();
-
-	for (auto character : text)
-	{
-		if (character == '\"')
-		{
-			result.push_back('\\');
-		}
-
-		result.push_back(character);
-	}
-
-	return result;
-}
-
 int Compile(const std::filesystem::directory_entry& entry)
 {
 	const auto input = entry.path().string();
@@ -227,9 +347,15 @@ int Compile(const std::filesystem::directory_entry& entry)
 	return result;
 }
 
-std::string StateToString(const lldb::StateType st)
+/**
+ * Converts the LLDB's StateType enum to a string message.
+ *
+ * @param state The state to be converted.
+ * @return The message based on the matched state type. 'unknown' if the type was not recognized.
+ */
+std::string StateToString(const lldb::StateType state)
 {
-	switch (st)
+	switch (state)
 	{
 	case lldb::eStateInvalid:
 		return "Invalid";
@@ -260,9 +386,15 @@ std::string StateToString(const lldb::StateType st)
 	}
 }
 
-std::string StopReasonToString(const lldb::StopReason sr)
+/**
+ * Converts the LLDB's StopReason enum to a string message.
+ *
+ * @param reason The reason to be converted.
+ * @return The message based on the matched stop reason. 'unknown' if the reason was not recognized.
+ */
+std::string StopReasonToString(const lldb::StopReason reason)
 {
-	switch (sr)
+	switch (reason)
 	{
 	case lldb::eStopReasonInvalid:
 		return "Invalid";
