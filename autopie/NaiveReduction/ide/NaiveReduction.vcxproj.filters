@@ -30,6 +30,12 @@
     <ClInclude Include="..\include\Helper.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Streams.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Options.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

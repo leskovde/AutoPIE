@@ -22,6 +22,11 @@ inline const char* TempFolder = "./temp/";
  */
 inline const char* VisualsFolder = "./visuals/";
 
+/**
+ * Path to the logger's output file.
+ */
+inline const char* LogFile = "./autopie.log";
+
 class DependencyGraph;
 
 using BitMask = std::vector<bool>;

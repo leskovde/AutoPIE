@@ -29,6 +29,8 @@
     <ClInclude Include="..\include\Context.h" />
     <ClInclude Include="..\include\DependencyGraph.h" />
     <ClInclude Include="..\include\Helper.h" />
+    <ClInclude Include="..\include\Options.h" />
+    <ClInclude Include="..\include\Streams.h" />
     <ClInclude Include="..\include\Visitors.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
