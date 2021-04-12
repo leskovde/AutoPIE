@@ -37,11 +37,16 @@
 - [ ] udelat setup script / nejaky jednoduchy installer pro cely tool (prerekvizity, build vsech binarek mych projektu)
 - [ ] update manualu v master / Naive_Dev
 - [ ] pridat do manualu info o setupu
-- [ ] udelat do makefilu target pro doxygen
+- [x] udelat do makefilu target pro doxygen
 - [ ] odstranit klicovat slova `new` z listingu! nahradit je za reference nebo unique pointery
 - [ ] zmenit popis visitoru - visit funkce se volaji opacne, nez to mam v textu
 - [ ] do pseudokodu napsat podminku, ze se nesmi odebrat radka v kodu, ktera zpusobuje error
 - [ ] popsat, proc je v moji domene determinismus - spusteni typickeho programu nekolikrat probehne pokazde jinym zpusobem (co se tyce naplanovani instrukci atd.), ale dojde se ke stejnemu vysledku... chci minimalizovat nedeterminismus
-- [ ] premyslet o zpusobu prevedeni na bytecode (to uz umim pres` Compile()`) a ten pak prohnat pres pattern recognition
+- [ ] premyslet o zpusobu prevedeni na bytecode (to uz umim pres ` Compile()`) a ten pak prohnat pres pattern recognition
 - [ ] k introduction dopsat goals
 - [ ] zjistit si neco o C-Reduce a pripadne to i zminit v textu
+- [ ] vytvorit rozumne readme (s logem atd.), pridat ho na hlavni stranku doxygenu (https://stackoverflow.com/questions/9502426/how-to-make-an-introduction-page-with-doxygen)
+- [ ] pridat verbose option pro zapnuti debug vypisu do konzole (nejspis pomoci noveho outstreamu a operatoru `<<`)
+- [ ] pridat log option pro vypisovani do souboru misto do konzole (taky pres `<<` operator)
+- [ ] zkontrolovat, ze soubor a cislo radku dane uzivatelem opravdu existuje - vypsat sousedni radky a zvyraznit ten zadany na vstupu
+- [ ] zjistit, jaky jazyk je na vstupu a podle nej menit nektere prikazy (napr. kompilace)
