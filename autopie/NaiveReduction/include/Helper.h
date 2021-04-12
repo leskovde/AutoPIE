@@ -37,10 +37,10 @@ using BitMask = std::vector<bool>;
  */
 struct Location
 {
-	std::string fileName;
+	std::string filePath;
 	int lineNumber;
 
-	Location(std::string locFile, const int locLine) : fileName(std::move(locFile)), lineNumber(locLine)
+	Location(std::string locFile, const int locLine) : filePath(std::move(locFile)), lineNumber(locLine)
 	{
 	}
 };
@@ -111,6 +111,8 @@ bool IsValid(BitMask& bitMask, DependencyGraph& dependencies);
 //===----------------------------------------------------------------------===//
 
 int Compile(const std::filesystem::directory_entry& entry, clang::Language language);
+
+bool CheckLocationValidity(const std::string& filePath, long lineNumber);
 
 std::string StateToString(lldb::StateType state);
 

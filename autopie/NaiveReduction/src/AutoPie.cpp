@@ -146,9 +146,7 @@ int main(int argc, const char** argv)
 	}
 
 	auto context = GlobalContext(parsedInput, *op.getSourcePathList().begin());
-
-	// Run all Clang AST related actions.
-	clang::tooling::ClangTool tool(op.getCompilations(), context.parsedInput.errorLocation.fileName);
+	clang::tooling::ClangTool tool(op.getCompilations(), context.parsedInput.errorLocation.filePath);
 
 	auto inputLanguage = clang::Language::Unknown;
 	// Run a language check inside a separate scope so that all built ASTs get freed at the end.
@@ -168,7 +166,14 @@ int main(int argc, const char** argv)
 	}
 
 	assert(inputLanguage != clang::Language::Unknown);
+
+	if (!CheckLocationValidity(parsedInput.errorLocation.filePath, parsedInput.errorLocation.lineNumber))
+	{
+		errs() << "The specified error location is invalid!\nSource path: " << parsedInput.errorLocation.filePath
+			<< ", line: " << parsedInput.errorLocation.lineNumber << " could not be found.\n";
+	}
 	
+	// Run all Clang AST related actions.
 	auto result = tool.run(CustomFrontendActionFactory(context).get());
 	
 	if (result)

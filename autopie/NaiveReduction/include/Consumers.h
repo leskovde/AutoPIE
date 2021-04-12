@@ -100,7 +100,7 @@ public:
 
 		if (globalContext_.parsedInput.dumpDot)
 		{
-			mappingVisitor_->graph.DumpDot(globalContext_.parsedInput.errorLocation.fileName);
+			mappingVisitor_->graph.DumpDot(globalContext_.parsedInput.errorLocation.filePath);
 		}
 	}
 
