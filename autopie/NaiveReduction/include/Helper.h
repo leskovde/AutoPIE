@@ -3,6 +3,7 @@
 #pragma once
 
 #include <clang/Basic/SourceLocation.h>
+#include <clang/Basic/LangStandard.h>
 #include <clang/Lex/Lexer.h>
 #include <lldb/lldb-enumerations.h>
 
@@ -109,10 +110,12 @@ bool IsValid(BitMask& bitMask, DependencyGraph& dependencies);
 //
 //===----------------------------------------------------------------------===//
 
-int Compile(const std::filesystem::directory_entry& entry);
+int Compile(const std::filesystem::directory_entry& entry, clang::Language language);
 
 std::string StateToString(lldb::StateType state);
 
 std::string StopReasonToString(lldb::StopReason reason);
+
+std::string LanguageToString(clang::Language lang);
 
 #endif

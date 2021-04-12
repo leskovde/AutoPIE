@@ -149,8 +149,28 @@ int main(int argc, const char** argv)
 
 	// Run all Clang AST related actions.
 	clang::tooling::ClangTool tool(op.getCompilations(), context.parsedInput.errorLocation.fileName);
-	auto result = tool.run(CustomFrontendActionFactory(context).get());
 
+	auto inputLanguage = clang::Language::Unknown;
+	// Run a language check inside a separate scope so that all built ASTs get freed at the end.
+	{
+		std::vector<std::unique_ptr<clang::ASTUnit>> trees;
+		tool.buildASTs(trees);
+
+		if (trees.size() != 1)
+		{
+			errs() << "Although only one AST was expected, " << trees.size() << " ASTs have been built.\n";
+			return EXIT_FAILURE;
+		}
+		
+		inputLanguage = (*trees.begin())->getInputKind().getLanguage();
+		
+		outs() << "File: " << (*trees.begin())->getOriginalSourceFileName() << ", language: " << LanguageToString(inputLanguage) << "\n";
+	}
+
+	assert(inputLanguage != clang::Language::Unknown);
+	
+	auto result = tool.run(CustomFrontendActionFactory(context).get());
+	
 	if (result)
 	{
 		outs() << "The tool returned a non-standard value: " << result << "\n";
@@ -175,7 +195,7 @@ int main(int argc, const char** argv)
 	// Attempt to compile each file. If successful, run it in LLDB and validate the error message and location.
 	for (const auto& entry : files)
 	{
-		auto compilationExitCode = Compile(entry);
+		auto compilationExitCode = Compile(entry, inputLanguage);
 
 		if (compilationExitCode != 0)
 		{

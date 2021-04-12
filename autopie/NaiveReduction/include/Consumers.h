@@ -88,7 +88,7 @@ public:
 	 * @param context The AST context.
 	 */
 	void HandleTranslationUnit(clang::ASTContext& context) override
-	{
+	{		
 		// TODO(Denis): Handle specific node types instead of just Stmt, Decl and Expr.
 
 		mappingVisitor_->TraverseDecl(context.getTranslationUnitDecl());

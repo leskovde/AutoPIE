@@ -302,10 +302,13 @@ bool IsValid(BitMask& bitMask, DependencyGraph& dependencies)
  * or if the output file was not created.
  *
  * @param entry The file system entry for a source code file.
+ * @param language The programming language in which the source file is written.
  * @return Zero if the code was successfully compiled, the compiler's different exit code otherwise.
  */
-int Compile(const std::filesystem::directory_entry& entry)
+int Compile(const std::filesystem::directory_entry& entry, const clang::Language language)
 {
+	// TODO: Change arguments and clangPath based on the input language.
+	
 	const auto input = entry.path().string();
 	const auto output = TempFolder + entry.path().filename().replace_extension(".exe").string();
 	auto clangPath = llvm::sys::findProgramByName("clang");
@@ -380,7 +383,7 @@ std::string StateToString(const lldb::StateType state)
 	case lldb::eStateSuspended:
 		return "Suspended";
 	default:
-		return "unknown";
+		return "Unknown";
 	}
 }
 
@@ -417,6 +420,36 @@ std::string StopReasonToString(const lldb::StopReason reason)
 	case lldb::eStopReasonInstrumentation:
 		return "Instrumentation";
 	default:
-		return "unknown";
+		return "Unknown";
+	}
+}
+
+std::string LanguageToString(const clang::Language lang)
+{
+	switch (lang)
+	{
+	case clang::Language::Asm:
+		return "Assembly";
+	case clang::Language::C:
+		return "C";
+	case clang::Language::CUDA:
+		return "CUDA";
+	case clang::Language::CXX:
+		return "C++";
+	case clang::Language::HIP:
+		return "HIP";
+	case clang::Language::LLVM_IR:
+		return "LLVM IR";
+	case clang::Language::ObjC:
+		return "Objective-C";
+	case clang::Language::ObjCXX:
+		return "Objective-C++";
+	case clang::Language::OpenCL:
+		return "OpenCL";
+	case clang::Language::RenderScript:
+		return "RenderScript";
+	case clang::Language::Unknown:
+	default:
+		return "Unknown";
 	}
 }
