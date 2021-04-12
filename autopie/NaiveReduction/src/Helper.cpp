@@ -118,9 +118,9 @@ bool ClearTempDirectory(const bool prompt)
 {
 	if (prompt && std::filesystem::exists(TempFolder))
 	{
-		llvm::outs() << "WARNING: The path " << TempFolder << " exists and is about to be cleared! Do you want to proceed? [Y/n] ";
+		out::All() << "WARNING: The path " << TempFolder << " exists and is about to be cleared! Do you want to proceed? [Y/n] ";
 		const auto decision = std::getchar();
-		llvm::outs() << "\n";
+		out::All() << "\n";
 
 		if (decision == 'n' || decision == 'N')
 		{
@@ -128,7 +128,7 @@ bool ClearTempDirectory(const bool prompt)
 		}
 	}
 
-	llvm::outs() << "Clearing the " << TempFolder << " directory...\n";
+	out::All() << "Clearing the " << TempFolder << " directory...\n";
 
 	std::filesystem::remove_all(TempFolder);
 	std::filesystem::create_directory(TempFolder);
@@ -338,7 +338,7 @@ int Compile(const std::filesystem::directory_entry& entry, const clang::Language
 		result = driver.ExecuteCompilation(*compilation, failingCommands);
 	}
 
-	llvm::outs() << "\n";
+	out::Verb() << "\n";
 
 	if (!std::filesystem::exists(output))
 	{
@@ -389,14 +389,14 @@ bool CheckLocationValidity(const std::string& filePath, const long lineNumber)
 	const auto contextStart = lineNumber - contextSize > 0 ? lineNumber - contextSize : 1;
 	const auto contextEnd = lineNumber + contextSize < lines.size() ? lineNumber + contextSize : lines.size();
 
-	llvm::outs() << "===---------------- Context of the error-inducing line ------------------===\n";
+	out::All() << "===---------------- Context of the error-inducing line ------------------===\n";
 	
 	for (auto i = contextStart; i <= contextEnd; i++)
 	{
-		llvm::outs() << (i != lineNumber ? "    " : "[*] ") << i << ": " << lines[i - 1] << "\n";
+		out::All() << (i != lineNumber ? "    " : "[*] ") << i << ": " << lines[i - 1] << "\n";
 	}
 
-	llvm::outs() << "===----------------------------------------------------------------------===\n";
+	out::All() << "===----------------------------------------------------------------------===\n";
 
 	return true;
 }

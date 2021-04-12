@@ -49,14 +49,19 @@ class VariantPrintingASTVisitor final : public clang::RecursiveASTVisitor<Varian
 	{
 		if (rewriter_)
 		{
-			llvm::outs() << "Removing node " << currentNode_ << ":\n" << RangeToString(astContext_, range);
-			rewriter_->RemoveText(GetPrintableRange(GetPrintableRange(range, astContext_.getSourceManager()),
+			out::Verb() << "Removing node " << currentNode_ << ":\n" << RangeToString(astContext_, range);
+
+			if (Verbose)
+			{
+				rewriter_->RemoveText(GetPrintableRange(GetPrintableRange(range, astContext_.getSourceManager()),
 			                                        astContext_.getSourceManager()));
-			llvm::outs() << "\n";
+			}
+			
+			out::Verb() << "\n";
 		}
 		else
 		{
-			llvm::outs() << "ERROR: Rewriter not set in the VariantPrintingASTVisitor!\n";
+			llvm::errs() << "ERROR: Rewriter not set in the VariantPrintingASTVisitor!\n";
 		}
 	}
 
@@ -297,7 +302,7 @@ public:
 			const auto codeSnippet = RangeToString(astContext_, decl->getSourceRange());
 			const auto line = astContext_.getSourceManager().getSpellingLineNumber(decl->getBeginLoc());
 
-			llvm::outs() << "Node " << codeUnitsCount << ": Type " << typeName << "\n";
+			out::Verb() << "Node " << codeUnitsCount << ": Type " << typeName << "\n";
 
 			if (InsertMapping(id, codeSnippet, line))
 			{
@@ -319,7 +324,7 @@ public:
 		}
 		else
 		{
-			llvm::outs() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
+			out::Verb() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
 		}
 
 		return true;
@@ -348,7 +353,7 @@ public:
 		}
 		else
 		{
-			llvm::outs() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
+			out::Verb() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
 		}
 
 		return true;
@@ -375,7 +380,7 @@ public:
 			const auto codeSnippet = RangeToString(astContext_, stmt->getSourceRange());
 			const auto line = astContext_.getSourceManager().getSpellingLineNumber(stmt->getBeginLoc());
 
-			llvm::outs() << "Node " << codeUnitsCount << ": Type " << typeName << "\n";
+			out::Verb() << "Node " << codeUnitsCount << ": Type " << typeName << "\n";
 
 			if (InsertMapping(id, codeSnippet, line))
 			{
@@ -396,7 +401,7 @@ public:
 		}
 		else
 		{
-			llvm::outs() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
+			out::Verb() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
 		}
 
 		return true;

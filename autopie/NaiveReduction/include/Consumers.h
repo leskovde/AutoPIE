@@ -9,6 +9,7 @@
 #include "Context.h"
 #include "DependencyGraph.h"
 #include "Visitors.h"
+#include "Streams.h"
 
 /**
  * Prepares and dispatches the `VariantPrintingASTVisitor`, prints its output.\n
@@ -40,9 +41,14 @@ public:
 		visitor_->Reset(bitMask, rewriter);
 		visitor_->TraverseDecl(context.getTranslationUnitDecl());
 
-		llvm::outs() << "Variant after iteration:\n";
-		rewriter->getEditBuffer(context.getSourceManager().getMainFileID()).write(llvm::errs());
-		llvm::outs() << "\n";
+		out::Verb() << "Variant after iteration:\n";
+
+		if (Verbose)
+		{
+			rewriter->getEditBuffer(context.getSourceManager().getMainFileID()).write(llvm::errs());
+
+		}
+		out::Verb() << "\n";
 
 		std::error_code errorCode;
 		llvm::raw_fd_ostream outFile(fileName, errorCode, llvm::sys::fs::F_None);
@@ -93,10 +99,13 @@ public:
 
 		mappingVisitor_->TraverseDecl(context.getTranslationUnitDecl());
 
-		llvm::outs() << "DEBUG: AST nodes counted: " << mappingVisitor_->codeUnitsCount << ", AST nodes actual: " <<
+		out::Verb() << "DEBUG: AST nodes counted: " << mappingVisitor_->codeUnitsCount << ", AST nodes actual: " <<
 			nodeMapping_->size() << "\n";
 
-		mappingVisitor_->graph.PrintGraphForDebugging();
+		if (Verbose)
+		{
+			mappingVisitor_->graph.PrintGraphForDebugging();
+		}
 
 		if (globalContext_.parsedInput.dumpDot)
 		{
@@ -172,7 +181,7 @@ public:
 		auto bitMask = BitMask(numberOfCodeUnits);
 		auto dependencies = mappingConsumer_.GetDependencyGraph();
 
-		llvm::outs() << "Maximum expected variants: " << pow(2, numberOfCodeUnits) << "\n";
+		out::All() << "Maximum expected variants: " << pow(2, numberOfCodeUnits) << "\n";
 
 		auto variantsCount = 0;
 
@@ -186,10 +195,10 @@ public:
 
 				if (variantsCount % 50 == 0)
 				{
-					llvm::outs() << "Done " << variantsCount << " variants.\n";
+					out::All() << "Done " << variantsCount << " variants.\n";
 				}
 
-				llvm::outs() << "DEBUG: Processing valid bitmask " << Stringify(bitMask) << "\n";
+				out::Verb() << "DEBUG: Processing valid bitmask " << Stringify(bitMask) << "\n";
 
 				// TODO: Change the source file extension based on the programming language.
 				auto fileName = TempFolder + std::to_string(variantsCount) + "_tempFile.c";
@@ -197,7 +206,7 @@ public:
 			}
 		}
 
-		llvm::outs() << "Done " << variantsCount << " variants.\n";
+		out::All() << "Done " << variantsCount << " variants.\n";
 	}
 };
 #endif

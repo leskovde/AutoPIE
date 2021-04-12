@@ -75,6 +75,21 @@ namespace out
 		return logger;
 	}
 
+	inline Logger& operator<< (Logger& logger, const llvm::StringRef stringRef)
+	{
+		if (Verbose)
+		{
+			std::cout << stringRef.str();
+
+			if (LogToFile)
+			{
+				logger.ofs << stringRef.str();
+			}
+		}
+
+		return logger;
+	}
+
 	inline Logger& operator<< (Logger& logger, const Manipulator manipulator)
 	{
 		std::cout << manipulator;
@@ -99,6 +114,21 @@ namespace out
 			}
 		}
 		
+		return logger;
+	}
+
+	inline FilteredLogger& operator<< (FilteredLogger& logger, const llvm::StringRef stringRef)
+	{
+		if (Verbose)
+		{
+			std::cout << stringRef.str();
+
+			if (LogToFile)
+			{
+				logger.logger.ofs << stringRef.str();
+			}
+		}
+
 		return logger;
 	}
 
