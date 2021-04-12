@@ -118,14 +118,14 @@ public:
 	 */
 	void PrintGraphForDebugging() const
 	{
-		llvm::outs() << "--------------- Dependency graph and its code ---------------\n";
+		llvm::outs() << "===------------------- Dependency graph and its code --------------------===\n";
 
 		for (auto it = debugNodeData_.cbegin(); it != debugNodeData_.cend(); ++it)
 		{
 			llvm::outs() << "Node " << it->first << ":\n" << it->second.codeSnippet << "\n";
 		}
 
-		llvm::outs() << "-------------------------------------------------------------\n";
+		llvm::outs() << "===----------------------------------------------------------------------===\n";
 	}
 
 	/**
@@ -141,6 +141,12 @@ public:
 		const auto dotFileName = VisualsFolder + std::string("dotDump_test.dot");
 		auto ofs = std::ofstream(dotFileName);
 
+		if (!ofs)
+		{
+			llvm::errs() << "The GraphViz output file stream could not be opened. Path: " << dotFileName << "\n";
+			return;
+		}
+		
 		ofs << "digraph g {\nforcelabels=true;\nrankdir=TD;\n";
 
 		for (auto it = debugNodeData_.cbegin(); it != debugNodeData_.cend(); ++it)

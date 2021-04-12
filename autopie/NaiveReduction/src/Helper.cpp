@@ -387,15 +387,13 @@ bool CheckLocationValidity(const std::string& filePath, const long lineNumber)
 
 	const auto contextSize = 3;
 	const auto contextStart = lineNumber - contextSize > 0 ? lineNumber - contextSize : 1;
-	const auto contextEnd = static_cast<long>(lineNumber + contextSize) < lines.size() ? 
-		static_cast<long>(lineNumber + contextSize) : lines.size();
+	const auto contextEnd = lineNumber + contextSize < lines.size() ? lineNumber + contextSize : lines.size();
 
-	llvm::outs() << "Context of the error-inducing line:\n";
-	llvm::outs() << "===----------------------------------------------------------------------===\n";
+	llvm::outs() << "===---------------- Context of the error-inducing line ------------------===\n";
 	
 	for (auto i = contextStart; i <= contextEnd; i++)
 	{
-		llvm::outs() << (i != lineNumber ? "    " : "[*] ") << i << ": " << lines[static_cast<long>(i) - 1] << "\n";
+		llvm::outs() << (i != lineNumber ? "    " : "[*] ") << i << ": " << lines[i - 1] << "\n";
 	}
 
 	llvm::outs() << "===----------------------------------------------------------------------===\n";

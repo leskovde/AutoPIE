@@ -14,13 +14,13 @@
  * Path to the temporary directory into which source file variants and executables are generated.\n
  * This path is cleared on each invocation.
  */
-inline const char* TempFolder = "../temp/";
+inline const char* TempFolder = "./temp/";
 
 /**
  * Path to the GraphViz output directory into which `.dot` files are generated.
  * This path is NOT cleared on each invocation.
  */
-inline const char* VisualsFolder = "../visuals/";
+inline const char* VisualsFolder = "./visuals/";
 
 class DependencyGraph;
 
