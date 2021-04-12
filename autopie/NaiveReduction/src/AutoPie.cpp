@@ -19,6 +19,7 @@
 #include "../include/Actions.h"
 #include "../include/Context.h"
 #include "../include/Helper.h"
+#include <optional>
 
 using namespace llvm;
 
@@ -196,7 +197,8 @@ int main(int argc, const char** argv)
 	          });
 
 	LLDBSentry sentry;
-
+	std::optional<std::string> resultFound{};
+	
 	// Attempt to compile each file. If successful, run it in LLDB and validate the error message and location.
 	for (const auto& entry : files)
 	{
@@ -327,15 +329,24 @@ int main(int argc, const char** argv)
 
 								if (symbolContext.IsValid())
 								{
-									outs() << "symbolContext.GetFilename()  = " << symbolContext
-									                                               .GetLineEntry().GetFileSpec().
-									                                               GetFilename() << "\n";
-									outs() << "symbolContext.GetLine()      = " << symbolContext
-									                                               .GetLineEntry().GetLine() << "\n";
+									const auto fileName = symbolContext.GetLineEntry().GetFileSpec().GetFilename();
+									const auto lineNumber = symbolContext.GetLineEntry().GetLine();
+									
+									outs() << "symbolContext.GetFilename()  = " << fileName << "\n";
+									outs() << "symbolContext.GetLine()      = " << lineNumber << "\n";
 									outs() << "symbolContext.GetColumn()    = " << symbolContext
 									                                               .GetLineEntry().GetColumn() << "\n";
 
 									// TODO(Denis): Confirm the location.
+									
+									// TODO: Confirm the message.
+
+									if (lineNumber == 4)
+									{
+										resultFound.emplace(entry.path().string());
+										done = true;
+									}
+									
 									// TODO: The location must be adjusted to the reduction - probably something that should be done inside a visitor.
 								}
 							}
@@ -403,9 +414,22 @@ int main(int argc, const char** argv)
 		process.Kill();
 		debugger.DeleteTarget(target);
 		lldb::SBDebugger::Destroy(debugger);
+
+		if (resultFound.has_value())
+		{
+			break;
+		}
 	}
 
 	// TODO: Conclude the result, print statistics (reduction rate, time consumed, variants created, variants compiled, etc.).
+
+	if (!resultFound.has_value())
+	{
+		outs() << "A smaller program variant could not be found. AutoPie will terminate without a generated result.\n";
+		return EXIT_FAILURE;
+	}
+	
+	outs() << "Found the smallest error-inducing source file: " << resultFound.value() << "\n";
 	
 	return EXIT_SUCCESS;
 }

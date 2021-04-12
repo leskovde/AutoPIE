@@ -359,6 +359,8 @@ int Compile(const std::filesystem::directory_entry& entry, const clang::Language
  */
 bool CheckLocationValidity(const std::string& filePath, const long lineNumber)
 {
+	// TODO: Add unit tests for this function (out of bounds testing, locked file, etc.)
+	
 	std::ifstream ifs(filePath);
 
 	if (!ifs)
