@@ -49,15 +49,10 @@ class VariantPrintingASTVisitor final : public clang::RecursiveASTVisitor<Varian
 	{
 		if (rewriter_)
 		{
-			out::Verb() << "Removing node " << currentNode_ << ":\n" << RangeToString(astContext_, range);
+			out::Verb() << "Removing node " << currentNode_ << ":\n" << RangeToString(astContext_, range) << "\n";
 
-			if (Verbose)
-			{
-				rewriter_->RemoveText(GetPrintableRange(GetPrintableRange(range, astContext_.getSourceManager()),
-			                                        astContext_.getSourceManager()));
-			}
-			
-			out::Verb() << "\n";
+			rewriter_->RemoveText(GetPrintableRange(GetPrintableRange(range, astContext_.getSourceManager()),
+		                                        astContext_.getSourceManager()));
 		}
 		else
 		{

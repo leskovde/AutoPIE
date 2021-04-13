@@ -338,7 +338,7 @@ int Compile(const std::filesystem::directory_entry& entry, const clang::Language
 		result = driver.ExecuteCompilation(*compilation, failingCommands);
 	}
 
-	out::Verb() << "\n";
+	llvm::outs() << "\n";
 
 	if (!std::filesystem::exists(output))
 	{
