@@ -12,11 +12,11 @@ namespace out
 {
 	typedef std::ostream& (*Manipulator) (std::ostream&);
 	
-	static std::_Timeobj<char, const tm*> GetTimestamp()
+	static tm* GetTimestamp()
 	{
 		const auto timeStamp = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 		
-		return std::put_time(std::gmtime(&timeStamp), "%Y-%m-%d %H:%M:%S");
+		return std::gmtime(&timeStamp);
 	}
 	
 	struct Logger
@@ -44,7 +44,7 @@ namespace out
 	{
 		if (LogToFile)
 		{
-			all_.ofs << GetTimestamp() << ":\t";
+			all_.ofs << std::put_time(GetTimestamp(), "%Y-%m-%d %H:%M:%S") << ":\t";
 		}
 
 		return all_;
@@ -56,7 +56,7 @@ namespace out
 		{
 			if (LogToFile)
 			{
-				verb_.logger.ofs << GetTimestamp() << ":\t";
+				verb_.logger.ofs << std::put_time(GetTimestamp(), "%Y-%m-%d %H:%M:%S") << ":\t";
 			}
 		}
 		

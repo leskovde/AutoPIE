@@ -13,7 +13,7 @@ OBJ_PATH = $(BUILD_PATH)/obj
 DOCS_PATH = docs
 
 # Targets.
-TARGET = AutoPie
+TARGET = NaiveReduction
 SOURCES = $(wildcard $(SRC_PATH)/*.cpp)
 OBJECTS = $(SOURCES:%.cpp=$(OBJ_PATH)/%.o)
 DEPENDENCIES = $(OBJECTS:.o=.d)
@@ -59,7 +59,8 @@ release: all
 
 test:
 	@$(BIN_PATH)/$(TARGET) --loc-file="example.cpp" --loc-line=4 \
-		--error-message="segmentation fault" --ratio=0.5 --dump-dot=true example.cpp --
+		--error-message="segmentation fault" --ratio=0.5 --dump-dot=true \
+		--verbose=true example.cpp --
 
 clean:
 	-@rm -rvf $(OBJ_PATH)/*

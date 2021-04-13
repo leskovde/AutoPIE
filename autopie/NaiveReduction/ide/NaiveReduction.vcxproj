@@ -20,7 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\Actions.cpp" />
-    <ClCompile Include="..\src\AutoPie.cpp" />
+    <ClCompile Include="..\src\NaiveReduction.cpp" />
     <ClCompile Include="..\src\Helper.cpp" />
   </ItemGroup>
   <ItemGroup>

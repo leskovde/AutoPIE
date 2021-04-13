@@ -4,7 +4,7 @@
     <ClCompile Include="..\src\Actions.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\AutoPie.cpp">
+    <ClCompile Include="..\src\NaiveReduction.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\src\Helper.cpp">
