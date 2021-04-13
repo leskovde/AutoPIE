@@ -3,11 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30225.117
 MinimumVisualStudioVersion = 10.0.40219.1
-<<<<<<< HEAD:autopie/NaiveReduction.sln
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NaiveReduction", "NaiveReduction\ide\NaiveReduction.vcxproj", "{FA4FEAFE-1896-4126-9190-E7C88997FB2D}"
-=======
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AutoPIE", "SliceExtractor\ide\SliceExtractor.vcxproj", "{64F7008F-7E55-46F8-81D0-BE0003DA0A77}"
->>>>>>> Slicing_Dev:autopie/SliceExtractor.sln
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

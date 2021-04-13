@@ -26,21 +26,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-<<<<<<< HEAD:autopie/NaiveReduction/ide/NaiveReduction.filters
-    <ClInclude Include="Context.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Helper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Visitors.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Consumers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Actions.h">
-=======
     <ClInclude Include="Actions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -54,7 +39,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Visitors.h">
->>>>>>> Slicing_Dev:autopie/SliceExtractor/ide/SliceExtractor.filters
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
