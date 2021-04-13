@@ -4,7 +4,7 @@
 - [x] `--` se do argv uz nepocita! muzu to teda z komentaru a z kodu smazat a upravit argc a argv checky
 - [x] Eventualne migrovat gitlab na github pro release.
 - [ ] Zkusit propojit slicery s mym kodem prvne pres script, pak pres zdrojaky.
-- [ ] Udelat test pipeline - nejlineji az na linux, nejlepe nejak univerzalne pro unix i windows (mozna pomoci CMake)
+- [ ] Udelat test pipeline - nejlineji az na linux, ~~nejlepe nejak univerzalne pro unix i windows (mozna pomoci CMake)~~ (windows je out, LLDB nefunguje spravne)
 - [x] zkusit static slicer vsechna slicing kriteria
 - [x] zkusit prevod z bitcode do source code (zachovani jmen promennych atd.)
 - [x] precist si oba clanky o DG
@@ -19,14 +19,14 @@
 - [x] ~~zjistit, jak udelat pomoci CMake crossplatform cpp projekt~~ (nerelevantni, projekt nebude fungovat na Windows kvuli LLDB)
 - [x] migrovat projekt na linux
 - [ ] napsat shell script na propojeni sliceru s projektem
-- [ ] udelat vizualizaci delta debuggingu, abych se ujistil, ze vse funguje spravne - pro kusy kodu udelat nodes, z nich sestrojit strom a ten pak vykreslit tak, aby slo videt, ktere nodes odstranuji
+- [x] udelat vizualizaci delta debuggingu, abych se ujistil, ze vse funguje spravne - pro kusy kodu udelat nodes, z nich sestrojit strom a ten pak vykreslit tak, aby slo videt, ktere nodes odstranuji
 - [x] ~~zvyraznit chybu v obou slicerech - v example.c neni ve slice promenna k, i presto, ze by tam byt mela~~
-- [ ] zkusit Holy Build Box / migrovat Giri na llvm 11
+- [x] ~~zkusit Holy Build Box / migrovat Giri na llvm 11~~
 - [x] pripravit test suite, osnova k textu (napr. ke kazde sekci mit 5 odrazek, co tam bude)
 - [ ] **zkontrolovat implementaci Delta Debuggingu podle pseudokodu v textu**
 - [x] odebirat krome statementu i decl a expr
 - [ ] pouzit static slicer v naivnim zpusobu pro urychleni
-- [ ] zkusit portnout giri na novejsi LLVM
+- [x] ~~zkusit portnout giri na novejsi LLVM~~
 - [ ] zkusit heuristiku - urcit, zda je vyhodne pouzivat dynamicky slicer podle toho, jak moc se kod branchuje
 - [ ] zkusit formulovat a dokazat vetu "program je konecny prave tehdy, kdyz je kazdy jeho podprogram konecny"
 - [ ] vymyslet, jak minimalizovat cely program a ne jen main
@@ -46,7 +46,8 @@
 - [ ] k introduction dopsat goals
 - [ ] zjistit si neco o C-Reduce a pripadne to i zminit v textu
 - [ ] vytvorit rozumne readme (s logem atd.), pridat ho na hlavni stranku doxygenu (https://stackoverflow.com/questions/9502426/how-to-make-an-introduction-page-with-doxygen)
-- [ ] pridat verbose option pro zapnuti debug vypisu do konzole (nejspis pomoci noveho outstreamu a operatoru `<<`)
-- [ ] pridat log option pro vypisovani do souboru misto do konzole (taky pres `<<` operator)
-- [ ] zkontrolovat, ze soubor a cislo radku dane uzivatelem opravdu existuje - vypsat sousedni radky a zvyraznit ten zadany na vstupu
-- [ ] zjistit, jaky jazyk je na vstupu a podle nej menit nektere prikazy (napr. kompilace)
+- [x] pridat verbose option pro zapnuti debug vypisu do konzole (nejspis pomoci noveho outstreamu a operatoru `<<`)
+- [x] pridat log option pro vypisovani do souboru misto do konzole (taky pres `<<` operator)
+- [x] zkontrolovat, ze soubor a cislo radku dane uzivatelem opravdu existuje - vypsat sousedni radky a zvyraznit ten zadany na vstupu
+- [x] zjistit, jaky jazyk je na vstupu a podle nej menit nektere prikazy (napr. kompilace)
+- [ ] makefile - pridat debug target
