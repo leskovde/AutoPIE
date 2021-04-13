@@ -3,6 +3,7 @@
 #pragma once
 
 #include <clang/Basic/SourceLocation.h>
+#include <clang/Basic/LangStandard.h>
 #include <clang/Lex/Lexer.h>
 #include <lldb/lldb-enumerations.h>
 
@@ -13,13 +14,18 @@
  * Path to the temporary directory into which source file variants and executables are generated.\n
  * This path is cleared on each invocation.
  */
-inline const char* TempFolder = "../temp/";
+inline const char* TempFolder = "./temp/";
 
 /**
  * Path to the GraphViz output directory into which `.dot` files are generated.
  * This path is NOT cleared on each invocation.
  */
-inline const char* VisualsFolder = "../visuals/";
+inline const char* VisualsFolder = "./visuals/";
+
+/**
+ * Path to the logger's output file.
+ */
+inline const char* LogFile = "./autopie.log";
 
 class DependencyGraph;
 
@@ -36,10 +42,10 @@ using BitMask = std::vector<bool>;
  */
 struct Location
 {
-	std::string fileName;
+	std::string filePath;
 	int lineNumber;
 
-	Location(std::string locFile, const int locLine) : fileName(std::move(locFile)), lineNumber(locLine)
+	Location(std::string locFile, const int locLine) : filePath(std::move(locFile)), lineNumber(locLine)
 	{
 	}
 };
@@ -109,10 +115,14 @@ bool IsValid(BitMask& bitMask, DependencyGraph& dependencies);
 //
 //===----------------------------------------------------------------------===//
 
-int Compile(const std::filesystem::directory_entry& entry);
+int Compile(const std::filesystem::directory_entry& entry, clang::Language language);
+
+bool CheckLocationValidity(const std::string& filePath, long lineNumber);
 
 std::string StateToString(lldb::StateType state);
 
 std::string StopReasonToString(lldb::StopReason reason);
+
+std::string LanguageToString(clang::Language lang);
 
 #endif

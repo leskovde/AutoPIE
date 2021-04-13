@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "Helper.h"
+#include "Streams.h"
 
 /**
  * Represents a single code unit.\n
@@ -109,7 +110,7 @@ public:
 
 		if (!success)
 		{
-			llvm::outs() << "DEBUG: Could not add a snippet to the mapping. The snippet:\n" << snippet << "\n";
+			out::Verb() << "DEBUG: Could not add a snippet to the mapping. The snippet:\n" << snippet << "\n";
 		}
 	}
 
@@ -118,14 +119,14 @@ public:
 	 */
 	void PrintGraphForDebugging() const
 	{
-		llvm::outs() << "--------------- Dependency graph and its code ---------------\n";
+		out::Verb() << "===------------------- Dependency graph and its code --------------------===\n";
 
 		for (auto it = debugNodeData_.cbegin(); it != debugNodeData_.cend(); ++it)
 		{
-			llvm::outs() << "Node " << it->first << ":\n" << it->second.codeSnippet << "\n";
+			out::Verb() << "Node " << it->first << ":\n" << it->second.codeSnippet << "\n";
 		}
 
-		llvm::outs() << "-------------------------------------------------------------\n";
+		out::Verb() << "===----------------------------------------------------------------------===\n";
 	}
 
 	/**
@@ -141,6 +142,12 @@ public:
 		const auto dotFileName = VisualsFolder + std::string("dotDump_test.dot");
 		auto ofs = std::ofstream(dotFileName);
 
+		if (!ofs)
+		{
+			llvm::errs() << "The GraphViz output file stream could not be opened. Path: " << dotFileName << "\n";
+			return;
+		}
+		
 		ofs << "digraph g {\nforcelabels=true;\nrankdir=TD;\n";
 
 		for (auto it = debugNodeData_.cbegin(); it != debugNodeData_.cend(); ++it)

@@ -51,3 +51,4 @@
 - [x] zkontrolovat, ze soubor a cislo radku dane uzivatelem opravdu existuje - vypsat sousedni radky a zvyraznit ten zadany na vstupu
 - [x] zjistit, jaky jazyk je na vstupu a podle nej menit nektere prikazy (napr. kompilace)
 - [ ] makefile - pridat debug target
+- [ ] pridat testy specificky pro c++ (zatim mam jen .c files)

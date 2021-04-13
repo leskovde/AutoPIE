@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Helper.h"
+#include "Streams.h"
 
 /**
  * Serves as a container for all publicly available global information.
@@ -12,7 +13,7 @@ class GlobalContext
 {
 	GlobalContext(): parsedInput(InputData("", Location("", 0), 0.0, false))
 	{
-		llvm::errs() << "DEBUG: GlobalContext - New default constructor call.\n";
+		out::Verb() << "DEBUG: GlobalContext - New default constructor call.\n";
 	}
 
 public:
@@ -22,7 +23,7 @@ public:
 
 	GlobalContext(InputData& input, const std::string& /*source*/) : parsedInput(input)
 	{
-		llvm::errs() << "DEBUG: GlobalContext - New non-default constructor call.\n";
+		out::Verb() << "DEBUG: GlobalContext - New non-default constructor call.\n";
 	}
 };
 #endif

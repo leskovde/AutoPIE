@@ -118,9 +118,9 @@ bool ClearTempDirectory(const bool prompt)
 {
 	if (prompt && std::filesystem::exists(TempFolder))
 	{
-		llvm::outs() << "WARNING: The path " << TempFolder << " exists and is about to be cleared! Do you want to proceed? [Y/n] ";
+		out::All() << "WARNING: The path " << TempFolder << " exists and is about to be cleared! Do you want to proceed? [Y/n] ";
 		const auto decision = std::getchar();
-		llvm::outs() << "\n";
+		out::All() << "\n";
 
 		if (decision == 'n' || decision == 'N')
 		{
@@ -128,7 +128,7 @@ bool ClearTempDirectory(const bool prompt)
 		}
 	}
 
-	llvm::outs() << "Clearing the " << TempFolder << " directory...\n";
+	out::All() << "Clearing the " << TempFolder << " directory...\n";
 
 	std::filesystem::remove_all(TempFolder);
 	std::filesystem::create_directory(TempFolder);
@@ -302,10 +302,13 @@ bool IsValid(BitMask& bitMask, DependencyGraph& dependencies)
  * or if the output file was not created.
  *
  * @param entry The file system entry for a source code file.
+ * @param language The programming language in which the source file is written.
  * @return Zero if the code was successfully compiled, the compiler's different exit code otherwise.
  */
-int Compile(const std::filesystem::directory_entry& entry)
+int Compile(const std::filesystem::directory_entry& entry, const clang::Language language)
 {
+	// TODO: Change arguments and clangPath based on the input language.
+	
 	const auto input = entry.path().string();
 	const auto output = TempFolder + entry.path().filename().replace_extension(".exe").string();
 	auto clangPath = llvm::sys::findProgramByName("clang");
@@ -346,6 +349,59 @@ int Compile(const std::filesystem::directory_entry& entry)
 }
 
 /**
+ * Check whether a given location specified by a file and a line number exists.\n
+ * In case it does, the function prints a context containing of a set number of lines
+ * before and after the given location.
+ *
+ * @param filePath The file to be checked.
+ * @param lineNumber The line in the given file to be checked, numbering starts from 1.
+ * @return True if the given file and line combination is accessible, false otherwise.
+ */
+bool CheckLocationValidity(const std::string& filePath, const long lineNumber)
+{
+	// TODO: Add unit tests for this function (out of bounds testing, locked file, etc.)
+	
+	std::ifstream ifs(filePath);
+
+	if (!ifs)
+	{
+		return false;
+	}
+	
+	// Read all content and split it into lines.
+
+	auto ss = std::stringstream(std::string(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>()));
+	auto lines = std::vector<std::string>();
+
+	for (std::string line; std::getline(ss, line);)
+	{
+		lines.emplace_back(line);
+	}
+
+	if (lineNumber > lines.size())
+	{
+		return false;
+	}
+
+	// Print the context of the error-inducing line.
+
+	const auto contextSize = 3;
+	const auto contextStart = lineNumber - contextSize > 0 ? lineNumber - contextSize : 1;
+	const auto contextEnd = lineNumber + contextSize < lines.size() ? lineNumber + contextSize : lines.size();
+
+	out::All() << "===---------------- Context of the error-inducing line ------------------===\n";
+	
+	for (auto i = contextStart; i <= contextEnd; i++)
+	{
+		out::All() << (i != lineNumber ? "    " : "[*] ") << i << ": " << lines[i - 1] << "\n";
+	}
+
+	out::All() << "===----------------------------------------------------------------------===\n";
+
+	return true;
+}
+
+/**
  * Converts the LLDB's StateType enum to a string message.
  *
  * @param state The state to be converted.
@@ -380,7 +436,7 @@ std::string StateToString(const lldb::StateType state)
 	case lldb::eStateSuspended:
 		return "Suspended";
 	default:
-		return "unknown";
+		return "Unknown";
 	}
 }
 
@@ -417,6 +473,36 @@ std::string StopReasonToString(const lldb::StopReason reason)
 	case lldb::eStopReasonInstrumentation:
 		return "Instrumentation";
 	default:
-		return "unknown";
+		return "Unknown";
+	}
+}
+
+std::string LanguageToString(const clang::Language lang)
+{
+	switch (lang)
+	{
+	case clang::Language::Asm:
+		return "Assembly";
+	case clang::Language::C:
+		return "C";
+	case clang::Language::CUDA:
+		return "CUDA";
+	case clang::Language::CXX:
+		return "C++";
+	case clang::Language::HIP:
+		return "HIP";
+	case clang::Language::LLVM_IR:
+		return "LLVM IR";
+	case clang::Language::ObjC:
+		return "Objective-C";
+	case clang::Language::ObjCXX:
+		return "Objective-C++";
+	case clang::Language::OpenCL:
+		return "OpenCL";
+	case clang::Language::RenderScript:
+		return "RenderScript";
+	case clang::Language::Unknown:
+	default:
+		return "Unknown";
 	}
 }

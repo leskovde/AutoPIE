@@ -4,7 +4,7 @@
     <ClCompile Include="..\src\Actions.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\AutoPie.cpp">
+    <ClCompile Include="..\src\NaiveReduction.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\src\Helper.cpp">
@@ -28,6 +28,12 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Helper.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Streams.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Options.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
