@@ -2,6 +2,7 @@
 #include <clang/Rewrite/Core/Rewriter.h>
 #include <stack>
 #include <iostream>
+#include <vector>
 
 class CountVisitorContext
 {

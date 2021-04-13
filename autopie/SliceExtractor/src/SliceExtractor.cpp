@@ -16,8 +16,8 @@
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 
-#include "Context.h"
-#include "Actions.h"
+#include "../include/Context.h"
+#include "../include/Actions.h"
 
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 

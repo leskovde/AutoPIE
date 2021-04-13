@@ -2,7 +2,7 @@
 #include <clang/AST/Stmt.h>
 #include <stdexcept>
 
-#include "Helper.h"
+#include "../include/Helper.h"
 
 clang::SourceRange GetSourceRange(const clang::Stmt& s)
 {

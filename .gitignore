@@ -340,3 +340,5 @@ ASALocalRun/
 healthchecksdb
 /TheToolSolution/ClangDemo/tempFile.cpp
 /TheToolSolution/ClangDemo/temp
+*.aux
+/thesis/source

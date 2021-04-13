@@ -18,6 +18,18 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\Actions.h" />
+    <ClInclude Include="..\include\Consumers.h" />
+    <ClInclude Include="..\include\Context.h" />
+    <ClInclude Include="..\include\Helper.h" />
+    <ClInclude Include="..\include\Visitors.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\Context.cpp" />
+    <ClCompile Include="..\src\Helper.cpp" />
+    <ClCompile Include="..\src\SliceExtractor.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -148,18 +160,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="Context.cpp" />
-    <ClCompile Include="Helper.cpp" />
-    <ClCompile Include="AutoPie.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Actions.h" />
-    <ClInclude Include="Consumers.h" />
-    <ClInclude Include="Context.h" />
-    <ClInclude Include="Helper.h" />
-    <ClInclude Include="Visitors.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
