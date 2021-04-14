@@ -21,7 +21,7 @@ representation of~the~code.
 The representation boiled down to an abstract syntax tree (AST). 
 AST embodies the~syntactic structure of~the~code, regardless of~the~code's language. 
 A vertex of~an AST represents a~construct of~the~code while not being concrete 
-with the~programming language's details. 
+with the~details of the code's programming language. 
 This generality is perfect for C and C++'s chosen domain, 
 as both languages only differ syntax-wise in~minor details.
 
@@ -71,7 +71,7 @@ However, that is hardly a~useful feature in~the context of~this paper.
 Thanks to LLVM \citep{llvm:online}, the~widespread compiler infrastructure,
 the Clang project \citep{clang:online}
 has provided a~compiler front end not only for C and C++ but also 
-for CUDA, OpenCL, and other languages. 
+for CUDA, OpenCL, and other mainstream programming languages. 
 The extend of~Clang as a~compiler front end is so vast that it covers 
 both the~C++ standard and the~unofficial GNU++ dialect.
 
@@ -105,13 +105,14 @@ Additionally, ANTLR can also generate a~tree parser.
 Tree parsers are helpful in~processing ASTs.
 
 The tool is generally used to read data formats, process expressions 
-of various query languages, and even parse programming languages.
+of various query languages, and even parse source code written in complex 
+programming languages.
 It can be used to generate a~syntax tree and walk through it using a~visitor.
 ANTLR is based on the~LL parser, which parses the~input from left to right, 
 performing its leftmost derivation.
 
-To create a~parser or a~syntax tree of~a~programming language, ANTLR requires 
-the complete grammar of~that language.
+To create a~parser or a~syntax tree of~code written in a~programming language, 
+ANTLR requires the complete grammar of~that language.
 Some programming languages, namely C and C++, have an ambiguous syntax that 
 is hard to parse based solely on its grammar.
 Due to ANTLR's high popularity, many grammars have already been written 
@@ -136,7 +137,7 @@ The tool is proprietary software created by Semantic Designs.
 Besides the~mentioned parser generator, it features an entire toolkit for 
 creating custom software analysis.
 This toolkit is used mainly for reliable refactoring, duplicate code 
-detection, and language migration.
+detection, and migration of the source code's programming language.
 
 The parser generator part takes a~grammar and produces a~parser.
 This parser then constructs abstract syntax trees for provided source code.
@@ -146,7 +147,8 @@ The parser saves additional information about provided source files, such as
 comments and formatting.
 It can then recreate the~file accurately.
 
-DMS provides a~grammar for a~large number of~languages, including C and C++.
+DMS provides a~grammar for a~large number of~programming languages, 
+including C and C++.
 The language support, however, is not always up-to-date.
 The newest supported C++ standard is still the~older C++17.
 These complicated grammars' ambiguity is avoided using a~generalized 
@@ -168,9 +170,9 @@ DMS does.
 The chapter highlighted a~spectrum of~tools, ranging from language
 recognizers to compilers.
 
-It would seem that parsing multiple programming languages into an abstract 
-representation requires a~common intermediate language, in~which 
-the representation is stored. 
+It would seem that parsing source code written in multiple programming 
+languages into an abstract representation requires a~common intermediate 
+language, in~which the representation is stored. 
 Having an intermediate language is not always possible for several reasons, 
 including licensing and old architecture. 
 The compiler giant GCC seems to suffer from precisely that.
