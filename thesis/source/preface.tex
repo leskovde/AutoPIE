@@ -1,5 +1,8 @@
-\chapter*{Introduction}
-\addcontentsline{toc}{chapter}{Introduction}
+\chapter{Introduction}
+
+%% By making the introduction an ordered section, it is automatically 
+%% added to the contents.
+%% \addcontentsline{toc}{chapter}{Introduction}
 
 \change[inline]{TODO: Rewrite the~introduction to include goals.}
 
@@ -18,17 +21,17 @@ with arguments $A$.
 Since the~error $E$ is present at runtime and not compile-time,
 it can be assumed that syntax wise the~code is mostly correct.
 Therefore, any syntax-based error can be ruled out.
-This, in turn, leaves us with a~set of~logical errors $\mathcal{E_L}$.
+This, in turn, leaves us with a~set of~semantic errors $\mathcal{E_S}$.
 Those include wrongly indexed arrays and calculations that lead to either
 the incorrect result or an altered control flow of~the program. 
-Let $E \in \mathcal{E_L}$. As the~generality of~errors in $\mathcal{E_L}$
+Let $E \in \mathcal{E_S}$. As the~generality of~errors in $\mathcal{E_S}$
 appears too complicated to be solved for all programming languages at once, 
 it is necessary to break the~problem down for each programming language. 
-This article is concerned with the~logical errors of~C and C++.
-Although C is not a~subset of~C++, the~logical errors made in C can be
+This project is concerned with the~semantic errors of~C and C++.
+Although C is not a~subset of~C++, the~semantic errors made in C can be
 approached similarly to those in C++.
 Both languages share mostly comparable constructs.
-Finding the~cause of~a logical error in a~concrete language requires knowing
+Finding the~cause of~a semantic error in a~concrete language requires knowing
 these constructs, their behavior, and their general handling.
 
 To make finding the~cause of~an error a~systematic approach, one might try removing
@@ -40,10 +43,10 @@ If done carefully and correctly, $\mathcal{P'}$ represents the~smallest
 subset of~$\mathcal{P}$ regarding code
 size, while preserving the~cause of~the error in that subset.
 Upon manual inspection, the~developer is required to make less of~an effort to find
-the cause in $\mathcal{P'}$ as opposed to $\mathcal{P}$.
+the root cause in $\mathcal{P'}$ as opposed to $\mathcal{P}$.
 
 The minimization of~a program can be achieved in numerous ways.
-In further sections, the~article describes and compares three different approaches.
+In further sections, the~project describes and compares three different approaches.
 The first is based on naive statement removal and its consequences during runtime.
 The second removes major chunks of~the code while
 periodically testing the~generated program's correctness.
