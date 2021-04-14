@@ -31,8 +31,8 @@ hard to tell be\-fore\-hand how much time and resources debugging will take.
 
 While most developers see debugging as a~manual chore, there were numerous 
 attempts~at automating at least some parts of~it during the~last few decades. 
-The rise in~popularity of~program analysis resulted in~automated error checks 
-for popular programming languages. 
+The rise in~popularity of~program analysis resulted in the~developement of 
+automated error checkers for popular programming languages. 
 
 SpotBugs\footnote{SpotBugs can be found at 
 \url{https://spotbugs.github.io/index.html}.}, formerly known as FindBugs, 
@@ -41,7 +41,7 @@ suggests, finding bugs.
 It works with the~bytecode of~JDK8 and newer, which indicates that source 
 code is not required.
 SpotBugs uses static analysis to discover bug patterns.
-These patterns are sequences of~code that might contain errors.
+These patterns are sequences of~code that might contain bugs.
 They include misused language features, misused API methods, and changes to 
 source code invariants created during code maintenance.
 Java developers can use SpotBugs's static analysis in~its GUI form or 
@@ -63,8 +63,8 @@ the Clang static analyzer is popular amongst developers working
 with the~C family of~languages.
 
 The functionality of~the~previous tool was extended 
-in CodeChecker\footnote{The latest information concerning CodeChecker
-can be found at \url{https://codechecker.readthedocs.io/en/latest/}.}.
+in CodeChecker\footnote{CodeChecker's information
+page is \url{https://codechecker.readthedocs.io/en/latest/}.}.
 Code\-Check\-er serves as a~wrapper for the~Clang static analyzer and 
 Clang-Tidy.
 Wrapping these two tools into a~more sophisticated application helps 
@@ -86,7 +86,8 @@ While the~tools mentioned above mainly cover only specific cases
 of potential bugs, such as out-of-range array indexing, they 
 have proven themselves valuable for the~developer.
 In the~context of~this work, such checks provide a~helping hand 
-at a~low cost when minimizing a~program.
+when minimizing a~program. Moreover, they do so with state-of-art
+performance.
 The following sub-chapters will talk about the~techniques behind 
 such checks and how they deal with automated debugging.
 
