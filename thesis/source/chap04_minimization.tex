@@ -2,8 +2,8 @@
 
 As described in the first chapter, debugging is a time-consuming task.
 Any amount of help with debugging is always appreciated by developers.
-This paper attempts to help by providing means to minimize the debugged
-program for a given runtime error.
+In this project, we attempt to help by providing means to minimize the 
+debugged program for a given runtime error.
 The minimization's goal is to reduce the amount of source code programmers 
 must go through when debugging, thus speeding up the process.
 The size reduction of the program should be fully automated and reasonably 
@@ -19,15 +19,17 @@ works and its running performance.
 The domain in which the algorithm operates can be described as more minor, 
 simple projects.
 The approach takes into consideration code written in C and C++.
-More complicated concepts such as templates are omitted.
-Additionally, projects with non-deterministic features as such multithreading 
-are also not taken into consideration.
-Instead, the program minimization described in this paper focuses 
+Support for more complicated concepts of those languages, such as templates,
+are omitted.
+Additionally, programs that involve multiple threads and other advanced
+features that might trigger non-deterministic behaviour are also not taken 
+into consideration.\change[]{TODO: Name those features.}
+Instead, the program minimization described in this project focuses 
 on simple single-threaded console applications.
 
 The problem of program minimization while preserving runtime errors can be 
 described as follows.
-A developer has encountered a runtime error in his application.
+Assume that a developer has encountered a runtime error in his application.
 Using logging or debugging tools, he can extract the stack trace at that 
 given point.
 The stack trace provides valuable information the algorithm takes into 
@@ -82,11 +84,13 @@ Using code size reduction, one can look at the reduced program's source
 code to find the error.
 The newly generated program has to fulfill the following invariant.
 
-Invariant: Every program P' created by reducing the original program P 
-based on dynamic information given by P's execution with arguments A 
-must result in the same runtime error E.
-The error's absolute location can differ; it must, however, occur in the 
-same context.
+\begin{invar}[Location alignment]\label{invar04:1}
+  Every program $\mathcal{P'}$ created by reducing the original program 
+  $\mathcal{P}$ based on dynamic information given by the execution of
+  $\mathcal{P}$ with arguments $A$ must result in the same runtime error $E$.
+  The error's absolute location can differ; it must, however, occur in the 
+  same context.
+\end{invar}
 
 The rule specifies that a program must end in the same runtime error 
 as the original program to be considered a correct reduced program.
