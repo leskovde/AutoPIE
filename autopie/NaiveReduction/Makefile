@@ -58,9 +58,11 @@ release: CFLAGS += -O2
 release: all
 
 test:
-	@$(BIN_PATH)/$(TARGET) --loc-file="example.cpp" --loc-line=4 \
-		--error-message="segmentation fault" --ratio=0.5 --dump-dot=true \
-		--verbose=true example.cpp --
+#	@$(BIN_PATH)/$(TARGET) --loc-file="example.cpp" --loc-line=4 \
+#		--error-message="segmentation fault" --ratio=0.5 --dump-dot=true \
+#		--verbose=true example.cpp --
+
+	cd test_suite; python3 ./runtests.py; cd ..
 
 clean:
 	-@rm -rvf $(OBJ_PATH)/*
