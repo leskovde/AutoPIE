@@ -26,9 +26,10 @@ programmers create their tools easily.
 However, not all developers share the~same skill set. 
 Some programmers require complicated additional features, while others 
 prefer an easy-to-use interface. 
-The tooling API has been split into multiple libraries and frameworks. 
+The tooling API has been split into multiple libraries and frameworks,
+including Plugins and LibClang.
 
-For plugin development, a~library intuitively called Plugins is used.
+The~library intuitively called Plugins is used for plugin development.
 The library is linked dynamically, resulting in~relatively small tools.
 Plugins are launched at compilation and offer compilation control as well 
 as access to the~AST.
@@ -375,9 +376,10 @@ although some changes happen internally.
 Those changes include template instantiation.
 
 Traversing the~Clang AST is possible through two different APIs. 
-First, it is possible to invoke an \icode{ASTFrontendAction}, which 
-creates an \icode{ASTConsumer}, who then calls 
-the \icode{ASTRecursiveVisitor}. 
+First, it is possible to invoke an \icode{ASTFrontendAction} instance, 
+which creates and manages an instance of \icode{ASTConsumer}. 
+The latter then constructs the \icode{ASTRecursiveVisitor} object and 
+calls the visitor's methods. 
 The front-end action is invoked upon parsing a~source file. 
 The action can be overridden to create a~consumer and pass any necessary 
 data to it. 
@@ -444,8 +446,8 @@ Visit methods of~the~\icode{ASTRecursiveVisitor} should not be called
 directly. 
 Details concerning the~visitor can be found in~the following section.
 
-In the example shown in~\ref{lst:astconsumer}, the consumer passes variable 
-references to the visitor. 
+In the example shown in listing~\ref{lst:astconsumer}, the consumer passes 
+variable references to the visitor. 
 These references have previously been attained from the frontend action. 
 A reference to the constructed visitor is stored inside the consumer. 
 The visitor is then dispatched in the overridden 
@@ -537,19 +539,19 @@ at \url{https://youtu.be/VqCkCDFLSsc?t=916}. The recording starts at
 the relevant slide.}, 
 one can reach the built-in type of \icode{int * p;} in two ways. 
 The declaration is for a pointer type, which has a \icode{PointerTypeLoc}. 
-On the one hand, it is possible to reach the \icode{BuiltinType} by 
-calling \icode{getPointeeLoc()}. 
-The result is a \icode{BuiltinTypeLoc}, through which a \icode{QualType} 
-can be extracted. 
-The qualifier leads to the desired \icode{BuiltinType}. 
-On the other hand, one can extract a \icode{QualType} from 
-the starting \icode{PointerTypeLoc} and use it to get 
+On the one hand, it is possible to reach the \icode{BuiltinType} node by 
+calling the \icode{getPointeeLoc()} method. 
+The result is a \icode{BuiltinTypeLoc} instance, through which 
+a \icode{QualType} object can be extracted. 
+The qualifier leads to the desired \icode{BuiltinType} instance. 
+On the other hand, one can extract a \icode{QualType} object from 
+the starting \icode{PointerTypeLoc} node and use it to get 
 a \icode{PointerType} instance. 
-By calling \icode{getPointeeType()}, it is possible to get to 
-the \icode{QualType} that leads to the desired built-in type. 
+By calling the \icode{getPointeeType()} method, it is possible to get to 
+the \icode{QualType} node that leads to the desired built-in type. 
 
 Both of these approaches start at the same source location and end 
-with the same built-in type. 
+with the same built-in type object. 
 The steps necessary to traverse this simple pointer type, however, 
 were not trivial.
 
@@ -641,7 +643,8 @@ binaryOperator(hasOperatorName("+"), hasLHS(integerLiteral(equals(0)))).
 \label{lst:matcherexpr}
 \end{figure}
 
-The expression in~\ref{lst:matcherexpr} searches for a~binary operator. 
+The expression in listing~\ref{lst:matcherexpr} searches for a~binary 
+operator. 
 The search is further narrowed to a~plus sign with a~zero left-hand 
 side of~the~operation.
 
@@ -730,8 +733,8 @@ transforming multiple files.
 Each source file creates a~new FrontendAction, and with it, 
 the developer needs a~new instance of~Rewriter.
 
-While LibTooling intends most of~the~issues mentioned earlier, 
-they are not as quickly comprehendible as the~rest of~the~framework. 
+Discovering these obstacles is not as straightforward and intuitive as 
+the rest of the LibTooling framework.
 Templates, the~language feature of~C++, further complicate the~matter. 
 In Clang AST, multiple types derived from a~template might share some nodes. 
 Having multiple parent nodes is also not uncommon for template types. 

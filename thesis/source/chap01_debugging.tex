@@ -207,8 +207,8 @@ without the~definition as well.
 	\end{algorithmic} 
 \end{algorithm}
 
-The simplified algorithm seen in~\ref{alg:dd} splits the~input into $n$ even-sized
-parts and their respective complements. 
+The simplified algorithm seen in figure~\ref{alg:dd} splits the~input into 
+$n$ even-sized parts and their respective complements. 
 Tests are then applied to these snippets, which can result in~three different outcomes. 
 If all tests pass correctly, the~granularity, i.e., $n$, is doubled, and the~input is split
 into more even-sized parts. 
@@ -411,7 +411,7 @@ Let the~criterion be $C = (write(x)_{42}, \{x\})$.
 The value of~$x$ on that line is changed in~the branching 
 part of~the~program, which entirely depends on the~value of~$a$.
 Since $a$ is unknown, no significant code reduction can be made. 
-The static slice with respect to $C$, seen on~\ref{lst:staticslice}, 
+The static slice with respect to $C$, seen in listing~\ref{lst:staticslice}, 
 still contains all of~the~branching statements. 
 Note that the~independent printing loop is gone.
 
@@ -437,7 +437,7 @@ with respect to the~number of~vertices.
 \begin{figure}[ht]\centering
 \includegraphics[scale=0.35]{pdg_sliced}
 \caption{Sliced PDG. The~graph was created from the~source 
-code of~\ref{lst:simpleexample}.
+code shown in listing~\ref{lst:simpleexample}.
 Red edges indicate the~sliced part of~the~program w.r.t.
 $C = (write(x)_{42}, \{x\})$.}
 \label{img:pdg}
@@ -525,7 +525,8 @@ int main(void)
 }  
 \end{lstlisting}
 \caption{Dynamic slice of~the~simple branching program seen
-in~\ref{lst:simpleexample} w.r.t. $C = (write(x)_{42}, \{x\}, \{2\})$.}
+in listing~\ref{lst:simpleexample} w.r.t. 
+$C = (write(x)_{42}, \{x\}, \{2\})$.}
 \label{lst:dynamicslice}
 \end{figure}
 
@@ -554,7 +555,7 @@ The criterion was set to $C = (write(x)_{42}, \{x\}, \{2\})$.
 Since the~dynamic slicer witnessed the~program's execution,
 it could precisely reduce the~code to only those statements
 that were executed. the~result is a~significantly smaller slice
-than in~the case of~\ref{lst:staticslice}.
+than the static slice shown in listing~\ref{lst:staticslice}.
 Note that branching statements are gone.
 
 Since dynamic slicing requires the~user to run the~program, 
