@@ -367,6 +367,9 @@ int main(int argc, const char** argv)
 	}
 	
 	out::All() << "Found the smallest error-inducing source file: " << resultFound.value() << "\n";
+	out::All() << "Renaming the file to 'autoPieOut.c'\n";
+	
+	std::filesystem::rename(resultFound.value(), "autoPieOut.c");
 	
 	return EXIT_SUCCESS;
 }
