@@ -11,6 +11,7 @@ def create_subprocess(command, args):
 
     proc = subprocess.Popen([command] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, _ = proc.communicate()
+    proc.wait()
 
     return proc.returncode, output
 
@@ -43,7 +44,7 @@ class BaseTest(unittest.TestCase):
 
             self.fail('Test failed.')
 
-    def runTool(self, filename, expected_out, args):
+    def runTool(self, filename, reference_file, args):
         """Executes the AutoPIE tool with given arguments. Checks its output and compares it to the reference output."""
 
         #input_path = os.path.join(self.inputs_dir, filename)
@@ -53,10 +54,13 @@ class BaseTest(unittest.TestCase):
         self.assertEqual(return_value, 0)
         self.assertTrue(os.path.isfile('autoPieOut.c'))
 
-        with open('autoPieOut.c', mode='r') as file:
-            actual_output = file.read()
+        with open('autoPieOut.c', mode='r') as actual_file:
+            actual_output = actual_file.read()
 
-        self.evaluate(expected_out, actual_output, command=f'{[self.executable_binary] + args} {filename}')
+        with open(reference_file, mode='r') as ref_file:
+            expected_output = ref_file.read()
+
+        self.evaluate(expected_output, actual_output, command=f'{[self.executable_binary] + args} {filename}')
 
 
 def main():

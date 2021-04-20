@@ -1,27 +1,9 @@
 import unittest
 from run_tests import BaseTest
 
-TestName = 'tests/example1.c'
+TestName = 'tests/example0.c'
 
-Output = '''
-void print(const char* str, int x) 
-{ 
-	x += 3;
-	print(str, x);
-}
-
-int
-main (int argc, char** argv) {
-	int i = 0;
-	
-	
-
-	
-
-	print("Result: %d\n", i);
-}
-'''
-
+Output = 'results/example0_reduced.c'
 
 class Example1(BaseTest):
     def test_execution(self):
