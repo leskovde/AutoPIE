@@ -47,10 +47,15 @@ class BaseTest(unittest.TestCase):
         """Executes the AutoPIE tool with given arguments. Checks its output and compares it to the reference output."""
 
         #input_path = os.path.join(self.inputs_dir, filename)
-        return_value, actual_output = create_subprocess(self.executable_binary, args + [filename] + ['--'])
-        actual_output = actual_output.decode('utf-8')
+        return_value, standard_output = create_subprocess(self.executable_binary, args + [filename] + ['--'])
+        standard_output = standard_output.decode('utf-8')
 
         self.assertEqual(return_value, 0)
+        self.assertTrue(os.path.isfile('autoPieOut.c'))
+
+        with open('autoPieOut.c', mode='r') as file:
+            actual_output = file.read()
+
         self.evaluate(expected_out, actual_output, command=f'{[self.executable_binary] + args} {filename}')
 
 
