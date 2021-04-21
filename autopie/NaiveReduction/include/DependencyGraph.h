@@ -138,6 +138,20 @@ public:
 	 */
 	void DumpDot(const std::string& /*fileName*/) const
 	{
+		if (!std::filesystem::exists(VisualsFolder))
+		{
+			out::Verb() << "Creating the 'visuals' directory.\n";
+			
+			if (std::filesystem::create_directory(VisualsFolder))
+			{
+				out::Verb() << "Directory creation successful.\n";
+			}
+			else
+			{
+				out::Verb() << "Directory creation failed.\n";
+			}
+		}
+		
 		// TODO(Denis): Trim file names (they include full path instead of just the name).
 		const auto dotFileName = VisualsFolder + std::string("dotDump_test.dot");
 		auto ofs = std::ofstream(dotFileName);

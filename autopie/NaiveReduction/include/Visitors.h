@@ -139,6 +139,12 @@ public:
 	 */
 	bool VisitDecl(clang::Decl* decl)
 	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(decl->getBeginLoc()))
+		{
+			return true;
+		}
+		
 		if (llvm::isa<clang::TranslationUnitDecl>(decl) || llvm::isa<clang::VarDecl>(decl))
 		{
 			// Ignore the translation unit decl since it won't be manipulated with.
@@ -164,6 +170,12 @@ public:
 	 */
 	bool VisitCallExpr(clang::CallExpr* expr)
 	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+		{
+			return true;
+		}
+		
 		if (skippedNodes_->find(currentNode_) == skippedNodes_->end() && ShouldBeRemoved())
 		{
 			const auto range = expr->getSourceRange();
@@ -183,6 +195,12 @@ public:
 	 */
 	bool VisitStmt(clang::Stmt* stmt)
 	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(stmt->getBeginLoc()))
+		{
+			return true;
+		}
+		
 		if (llvm::isa<clang::Expr>(stmt))
 		{
 			// Ignore expressions in general since they tend to be too small.
@@ -282,6 +300,12 @@ public:
 	 */
 	bool VisitDecl(clang::Decl* decl)
 	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(decl->getBeginLoc()))
+		{
+			return true;
+		}
+		
 		// TODO(Denis): Decide how to handle Decl subclasses with Stmt counterparts (e.g., VarDecl and DeclStmt) - handle all possible options.
 		if (llvm::isa<clang::TranslationUnitDecl>(decl) || llvm::isa<clang::VarDecl>(decl))
 		{
@@ -331,6 +355,12 @@ public:
 	 */
 	bool VisitCallExpr(clang::CallExpr* expr)
 	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+		{
+			return true;
+		}
+		
 		if (nodeMapping_->find(expr->getID(astContext_)) == nodeMapping_->end())
 		{
 			const auto id = expr->getID(astContext_);
@@ -362,6 +392,12 @@ public:
 	 */
 	bool VisitStmt(clang::Stmt* stmt)
 	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(stmt->getBeginLoc()))
+		{
+			return true;
+		}
+		
 		if (llvm::isa<clang::Expr>(stmt))
 		{
 			// Ignore expressions in general since they tend to be too small.
