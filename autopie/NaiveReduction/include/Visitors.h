@@ -306,6 +306,8 @@ public:
 	 */
 	bool VisitDecl(clang::Decl* decl)
 	{
+		// TODO: Add the main function's declaration to the criterion (so that is doesn't get removed).
+		
 		// Skip included files.
 		if (!astContext_.getSourceManager().isInMainFile(decl->getBeginLoc()))
 		//const auto loc = clang::FullSourceLoc(decl->getBeginLoc(), astContext_.getSourceManager());

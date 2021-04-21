@@ -259,10 +259,14 @@ void Increment(BitMask& bitMask)
  */
 bool IsValid(BitMask& bitMask, DependencyGraph& dependencies)
 {
+	auto characterCount = dependencies.GetTotalCharacterCount();
+	
 	for (size_t i = 0; i < bitMask.size(); i++)
 	{
 		if (!bitMask[i])
 		{
+			characterCount -= dependencies.GetNodeInfo(i).characterCount;
+			
 			if (dependencies.IsInCriterion(i))
 			{
 				// Criterion nodes should be present.
@@ -279,8 +283,14 @@ bool IsValid(BitMask& bitMask, DependencyGraph& dependencies)
 				{
 					return false;
 				}
-			}
+			}		
 		}
+	}
+
+	if (static_cast<double>(characterCount) / dependencies.GetTotalCharacterCount() > ReductionRatio)
+	{
+		// The variant does not fit the desired size ratio.
+		return false;
 	}
 
 	return true;

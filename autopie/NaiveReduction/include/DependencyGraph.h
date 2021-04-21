@@ -17,6 +17,7 @@ struct Node
 {
 	int astId{0};
 	int number{0};
+	int characterCount{0};
 	std::string dumpColor;
 	std::string codeSnippet;
 	std::string nodeTypeName;
@@ -28,8 +29,8 @@ struct Node
 	{
 	}
 	
-	Node(const int astId, const int traversalOrderNumber, std::string color, std::string code,
-	     std::string type) : astId(astId), number(traversalOrderNumber), dumpColor(std::move(color)),
+	Node(const int astId, const int traversalOrderNumber, const int length, std::string color, std::string code,
+	     std::string type) : astId(astId), number(traversalOrderNumber), characterCount(length), dumpColor(std::move(color)),
 	                         codeSnippet(std::move(code)), nodeTypeName(std::move(type))
 	{
 	}
@@ -43,6 +44,7 @@ struct Node
  */
 class DependencyGraph
 {
+	int totalCharacters_{0};
 	std::vector<int> criterion_;
 	std::unordered_map<int, Node> debugNodeData_;
 	std::unordered_map<int, std::vector<int>> edges_;
@@ -105,13 +107,15 @@ public:
 	                                const std::string& type, const std::string& color)
 	{
 		const auto success = debugNodeData_.insert(std::pair<int, Node>(traversalOrderNumber,
-		                                                                Node(astId, traversalOrderNumber, color,
+		                                                                Node(astId, traversalOrderNumber, snippet.size(), color,
 		                                                                     snippet, type))).second;
 
 		if (!success)
 		{
 			out::Verb() << "DEBUG: Could not add a snippet to the mapping. The snippet:\n" << snippet << "\n";
 		}
+
+		totalCharacters_ += snippet.size();
 	}
 
 	/**
@@ -126,6 +130,7 @@ public:
 			out::Verb() << "Node " << it->first << ":\n" << it->second.codeSnippet << "\n";
 		}
 
+		out::Verb() << "Characters total: " << totalCharacters_ << "\n";
 		out::Verb() << "===----------------------------------------------------------------------===\n";
 	}
 
@@ -239,6 +244,27 @@ public:
 	bool IsInCriterion(const int node)
 	{
 		return std::find(criterion_.begin(), criterion_.end(), node) != criterion_.end();
+	}
+
+	/**
+	 * Getter for the n-th node in the debug data container.
+	 *
+	 * @param node The traversal order number of the node.
+	 * @return The `Node` object for the node specified by the given number.
+	 */
+	Node GetNodeInfo(const int node)
+	{
+		return debugNodeData_[node];
+	}
+
+	/**
+	 * Getter for the file's (graph's) total number of characters.
+	 *
+	 * @return The number of characters in all snippets summed.
+	 */
+	int GetTotalCharacterCount() const
+	{
+		return totalCharacters_;
 	}
 };
 #endif

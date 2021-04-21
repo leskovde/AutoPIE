@@ -51,11 +51,11 @@ inline llvm::cl::opt<std::string> ErrorMessage("error-message",
 
 // TODO: Implement reduction ratio to cut the variant search.
 /**
- * Specifies the desired best-possible size of the output. Values are between 0 and 1, with 0 being the unreduced
- * (original) file and 1 being an attempt to fully reduce the source file.\n
+ * Specifies the desired best-possible size of the output. Values are between 0 and 1, with 0 being an empty
+ * file and 1 being all available variants (including the original) of the source file.\n
  * The value is used to stop the variant search upon hitting a certain threshold.\n
- * E.g., 0.75 => the output file will have (in the best scenario) roughly a quarter its size in bytes,
- * with three quarters being removed.
+ * E.g., 0.25 => the output file will have (in the worst scenario and if a valid variant is found) roughly a quarter
+ * its size in bytes, with three quarters being removed.
  */
 inline llvm::cl::opt<double> ReductionRatio("ratio",
                                       llvm::cl::desc("Limits the reduction to a specific ratio between 0 and 1."),
