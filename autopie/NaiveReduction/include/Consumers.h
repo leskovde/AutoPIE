@@ -206,7 +206,7 @@ public:
 			}
 		}
 
-		out::All() << "Done " << variantsCount << " variants.\n";
+		out::All() << "Finished. Done " << variantsCount << " variants.\n";
 	}
 };
 #endif

@@ -367,9 +367,9 @@ int main(int argc, const char** argv)
 	}
 	
 	out::All() << "Found the smallest error-inducing source file: " << resultFound.value() << "\n";
-	out::All() << "Renaming the file to 'autoPieOut.c'\n";
+	out::All() << "Renaming the file to '"<< TempFolder << "autoPieOut.c'\n";
 	
-	std::filesystem::rename(resultFound.value(), "autoPieOut.c");
+	std::filesystem::rename(resultFound.value(), TempFolder + std::string("autoPieOut.c"));
 	
 	return EXIT_SUCCESS;
 }
