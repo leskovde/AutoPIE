@@ -141,6 +141,8 @@ public:
 	{
 		// Skip included files.
 		if (!astContext_.getSourceManager().isInMainFile(decl->getBeginLoc()))
+		//const auto loc = clang::FullSourceLoc(decl->getBeginLoc(), astContext_.getSourceManager());
+		//if (loc.isValid() && loc.isInSystemHeader())
 		{
 			return true;
 		}
@@ -172,6 +174,8 @@ public:
 	{
 		// Skip included files.
 		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+		//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+		//if (loc.isValid() && loc.isInSystemHeader())
 		{
 			return true;
 		}
@@ -197,6 +201,8 @@ public:
 	{
 		// Skip included files.
 		if (!astContext_.getSourceManager().isInMainFile(stmt->getBeginLoc()))
+		//const auto loc = clang::FullSourceLoc(stmt->getBeginLoc(), astContext_.getSourceManager());
+		//if (loc.isValid() && loc.isInSystemHeader())
 		{
 			return true;
 		}
@@ -302,6 +308,8 @@ public:
 	{
 		// Skip included files.
 		if (!astContext_.getSourceManager().isInMainFile(decl->getBeginLoc()))
+		//const auto loc = clang::FullSourceLoc(decl->getBeginLoc(), astContext_.getSourceManager());
+		//if (loc.isValid() && loc.isInSystemHeader())
 		{
 			return true;
 		}
@@ -357,6 +365,8 @@ public:
 	{
 		// Skip included files.
 		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+		//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+		//if (loc.isValid() && loc.isInSystemHeader())
 		{
 			return true;
 		}
@@ -394,6 +404,8 @@ public:
 	{
 		// Skip included files.
 		if (!astContext_.getSourceManager().isInMainFile(stmt->getBeginLoc()))
+		//const auto loc = clang::FullSourceLoc(stmt->getBeginLoc(), astContext_.getSourceManager());
+		//if (loc.isValid() && loc.isInSystemHeader())
 		{
 			return true;
 		}
