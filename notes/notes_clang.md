@@ -141,3 +141,26 @@
   - matcher expressions are created by calling a creator function and building a tree of matchers
   - creating custom matchers can be done by either inheriting an existing Matcher class or by using a matcher creation macro
   - these macros specify the type, the name and the parameters (and their types) of the matcher
+
+------
+
+- only Decl and Stmt nodes are important
+- functions:
+	- FunctionDecl node embodies the entire function
+	- ParamVarDecl is the parameter of the function
+	- CompoundStmt (or other Stmt node) is the body of the function
+- variables:
+	- VarDecl can represent both a local and global variable
+	- VarDecl (and other Decl nodes) can have literals inside (for example initial values)
+- Decls have a name and a type of declaration (name: "main", type: "void (int, char**)"
+- CompoundStmt = code block
+- DeclStmt = Stmt node for local variable declaration, its child is the Decl node and a Literal node
+- useful Expr nodes are the Literal nodes, for example IntegerLiteral
+- Expr nodes have a type and some can also have a value
+- dump() and dumpColor() can be used to print (in text) a subtree of a node
+- the Rewriter can be used to add source code (for example, instrumentation code) by calling InsertTextBefore and InsertTextAfter
+- a Stmt node can be converted to string using ConvertToString() (including its children)
+- getLocStart() includes the first token (or the first child)
+- getLocEnd() does not include the last token = it ends before the last token
+- Lexer - findLocationAfterToken() - takes location and token kind (tok::semi, tok::r_paren, ...) and returns the location after the token
+- it is possible to traverse the AST by calling ParseAST instead of tool.run() (at the cost of losing a frontend action)

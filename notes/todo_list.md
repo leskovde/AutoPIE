@@ -4,7 +4,7 @@
 - [x] `--` se do argv uz nepocita! muzu to teda z komentaru a z kodu smazat a upravit argc a argv checky
 - [x] Eventualne migrovat gitlab na github pro release.
 - [ ] Zkusit propojit slicery s mym kodem prvne pres script, pak pres zdrojaky.
-- [ ] Udelat test pipeline - nejlineji az na linux, ~~nejlepe nejak univerzalne pro unix i windows (mozna pomoci CMake)~~ (windows je out, LLDB nefunguje spravne)
+- [x] Udelat test pipeline - nejlineji az na linux, ~~nejlepe nejak univerzalne pro unix i windows (mozna pomoci CMake)~~ (windows je out, LLDB nefunguje spravne)
 - [x] zkusit static slicer vsechna slicing kriteria
 - [x] zkusit prevod z bitcode do source code (zachovani jmen promennych atd.)
 - [x] precist si oba clanky o DG
@@ -28,7 +28,7 @@
 - [ ] pouzit static slicer v naivnim zpusobu pro urychleni
 - [x] ~~zkusit portnout giri na novejsi LLVM~~
 - [ ] zkusit heuristiku - urcit, zda je vyhodne pouzivat dynamicky slicer podle toho, jak moc se kod branchuje
-- [ ] zkusit formulovat a dokazat vetu "program je konecny prave tehdy, kdyz je kazdy jeho podprogram konecny"
+- [ ] ~~zkusit formulovat a dokazat vetu "program je konecny prave tehdy, kdyz je kazdy jeho podprogram konecny"~~ (neresitelne, Rice theorem)
 - [ ] vymyslet, jak minimalizovat cely program a ne jen main
 - [ ] udelat experimenty na soutezi SV-COMP
 - [ ] nechavat v redukovanem kodu relevantni konstanty (QoL, protoze slicing konstanty ignoruje)
