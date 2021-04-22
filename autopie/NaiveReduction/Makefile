@@ -59,7 +59,7 @@ release: all
 
 test:
 	@$(BIN_PATH)/$(TARGET) --loc-file="example.cpp" --loc-line=4 \
-		--error-message="segmentation fault" --ratio=0.9 --dump-dot=true \
+		--error-message="segmentation fault" --ratio=0.75 --dump-dot=true \
 		--verbose=true example.cpp --
 
 #	cd test_suite; python3 ./runtests.py; cd ..

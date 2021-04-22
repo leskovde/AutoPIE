@@ -238,6 +238,7 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 	int errorLine_;
 	NodeMappingRef nodeMapping_;
 	clang::ASTContext& astContext_;
+	NodeMappingRef declNodeMapping_;
 	std::unordered_map<std::string, bool> snippetSet_;
 	SkippedMapRef skippedNodes_ = std::make_shared<std::unordered_map<int, bool>>();
 
@@ -277,6 +278,7 @@ public:
 	                                                                                              nodeMapping_(std::move(mapping)),
 	                                                                                              astContext_(ci->getASTContext())
 	{
+		declNodeMapping_ = std::make_shared<NodeMapping>();
 	}
 
 	/**
@@ -338,6 +340,11 @@ public:
 				snippetSet_[codeSnippet] = true;
 				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, "crimson");
 
+				if (llvm::cast<clang::FunctionDecl>(decl)->isMain())
+				{
+					graph.AddCriterionNode(codeUnitsCount);
+				}
+				
 				// Turns out declarations also have children.
 				// TODO(Denis): Handle structs, enums, etc. by getting DeclContext and using specific methods.
 				// http://clang-developers.42468.n3.nabble.com/How-to-traverse-all-children-FieldDecl-from-parent-CXXRecordDecl-td4045698.html
@@ -410,6 +417,36 @@ public:
 		//if (loc.isValid() && loc.isInSystemHeader())
 		{
 			return true;
+		}
+		
+		// Handle variable declarations.
+		if (llvm::isa<clang::DeclStmt>(stmt))
+		{
+			const auto declStmt = llvm::cast<clang::DeclStmt>(stmt);
+			
+			for (auto decl : declStmt->decls())
+			{
+				if (decl != nullptr)
+				{
+					const auto id = decl->getID();
+
+					if (declNodeMapping_->find(id) == declNodeMapping_->end())
+					{
+						(*declNodeMapping_)[id] = codeUnitsCount;
+					}
+				}
+			}
+		}
+		
+		// Handle variables.
+		if (llvm::isa<clang::DeclRefExpr>(stmt))
+		{
+			const auto parentID = llvm::cast<clang::DeclRefExpr>(stmt)->getFoundDecl()->getID();
+
+			if (declNodeMapping_->find(parentID) != declNodeMapping_->end())
+			{
+				graph.InsertDependency((*declNodeMapping_)[parentID], codeUnitsCount);
+			}
 		}
 		
 		if (llvm::isa<clang::Expr>(stmt))
