@@ -114,14 +114,12 @@ public:
 		{
 			out::Verb() << "DEBUG: Could not add a snippet to the mapping. The snippet:\n" << snippet << "\n";
 		}
-
-		totalCharacters_ += snippet.size();
 	}
 
 	/**
 	 * Prints the dependency graph node by node into the console.
 	 */
-	void PrintGraphForDebugging() const
+	void PrintGraphForDebugging()
 	{
 		out::Verb() << "===------------------- Dependency graph and its code --------------------===\n";
 
@@ -130,7 +128,7 @@ public:
 			out::Verb() << "Node " << it->first << ":\n" << it->second.codeSnippet << "\n";
 		}
 
-		out::Verb() << "Characters total: " << totalCharacters_ << "\n";
+		out::Verb() << "Characters total: " << GetTotalCharacterCount() << "\n";
 		out::Verb() << "===----------------------------------------------------------------------===\n";
 	}
 
@@ -259,11 +257,40 @@ public:
 
 	/**
 	 * Getter for the file's (graph's) total number of characters.
+	 * During the method's first call, the total character count is calculated
+	 * and the count of each node is corrected.
 	 *
 	 * @return The number of characters in all snippets summed.
 	 */
-	int GetTotalCharacterCount() const
+	int GetTotalCharacterCount()
 	{
+		if (totalCharacters_ == 0)
+		{
+			std::unordered_map<int, int> correctedCounts;
+			
+			for (auto it = edges_.begin(); it != edges_.end(); ++it)
+			{
+				auto currentCount = GetNodeInfo(it->first).characterCount;
+								
+				for (auto dependency : it->second)
+				{
+					currentCount -= GetNodeInfo(dependency).characterCount;
+				}
+
+				correctedCounts[it->first] = currentCount;
+			}
+
+			for (auto it = correctedCounts.begin(); it != correctedCounts.end(); ++it)
+			{
+				debugNodeData_[it->first].characterCount = it->second;
+			}
+
+			for (auto it = debugNodeData_.begin(); it != debugNodeData_.end(); ++it)
+			{
+				totalCharacters_ += it->second.characterCount;
+			}
+		}
+
 		return totalCharacters_;
 	}
 };
