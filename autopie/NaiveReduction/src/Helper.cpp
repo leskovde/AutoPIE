@@ -257,7 +257,7 @@ void Increment(BitMask& bitMask)
  * @return True if the bitmask results in a valid source file variant in terms of code unit
  * relationships.
  */
-bool IsValid(BitMask& bitMask, DependencyGraph& dependencies, const double lowerRatio, const double upperRatio)
+std::pair<bool, double> IsValid(BitMask& bitMask, DependencyGraph& dependencies)
 {
 	auto characterCount = dependencies.GetTotalCharacterCount();
 	
@@ -271,7 +271,7 @@ bool IsValid(BitMask& bitMask, DependencyGraph& dependencies, const double lower
 			if (dependencies.IsInCriterion(i))
 			{
 				// Criterion nodes should be present.
-				return false;
+				return std::pair<bool, double>(false, 0);
 			}
 
 			auto children = dependencies.GetDependentNodes(i);
@@ -282,21 +282,13 @@ bool IsValid(BitMask& bitMask, DependencyGraph& dependencies, const double lower
 				// children as well.
 				if (bitMask[child])
 				{
-					return false;
+					return  std::pair<bool, double>(false, 0);
 				}
 			}		
 		}
 	}
 
-	const auto currentRatio = static_cast<double>(characterCount) / dependencies.GetTotalCharacterCount();
-	
-	if (lowerRatio > currentRatio || currentRatio > upperRatio)
-	{
-		// The variant does not fit the desired size ratio.
-		return false;
-	}
-
-	return true;
+	return  std::pair<bool, double>(true, static_cast<double>(characterCount) / dependencies.GetTotalCharacterCount());
 }
 
 //===----------------------------------------------------------------------===//

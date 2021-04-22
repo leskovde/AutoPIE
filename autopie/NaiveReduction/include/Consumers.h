@@ -180,19 +180,46 @@ public:
 
 		printingConsumer_.SetData(mappingConsumer_.GetSkippedNodes(), mappingConsumer_.GetDependencyGraph());
 
-		auto bitMask = BitMask(numberOfCodeUnits);
 		auto dependencies = mappingConsumer_.GetDependencyGraph();
 
-		out::All() << "Maximum expected variants: " << pow(2, numberOfCodeUnits) << "\n";
+		//out::All() << "Maximum expected variants: " << pow(2, numberOfCodeUnits) << "\n";
 
-		auto variantsCount = 0;
-
-		while (!IsFull(bitMask))
+		if (globalContext_.currentEpoch == 0)
 		{
-			Increment(bitMask);
-
-			if (IsValid(bitMask, dependencies, globalContext_.currentRatioLowerBound, globalContext_.currentRationUpperBound))
+			// Create ranges for each epoch.
+			for (auto i = 0; i < globalContext_.deepeningContext.epochCount; i++)
 			{
+				globalContext_.deepeningContext.bitMasks.insert(
+					std::pair<double, std::vector<BitMask>>((i + 1) * globalContext_.deepeningContext.epochStep, 
+						std::vector<BitMask>()));
+			}
+
+			// Add the last range (of invalid bit masks).
+			globalContext_.deepeningContext.bitMasks.insert(std::pair<double, std::vector<BitMask>>(1.0, std::vector<BitMask>()));
+			globalContext_.deepeningContext.bitMasks.insert(std::pair<double, std::vector<BitMask>>(INFINITY, std::vector<BitMask>()));
+
+			auto bitMask = BitMask(numberOfCodeUnits);
+			
+			// Distribute bit masks into ranges.
+			while (!IsFull(bitMask))
+			{
+				Increment(bitMask);
+
+				const auto validation = IsValid(bitMask, dependencies);
+				
+				if (validation.first)
+				{
+					auto it = globalContext_.deepeningContext.bitMasks.upper_bound(validation.second);
+					it->second.push_back(bitMask);
+				}
+			}
+		}
+		
+		auto variantsCount = 0;
+		auto& bitMasks = globalContext_.deepeningContext.bitMasks[(globalContext_.currentEpoch + 1) * globalContext_.deepeningContext.epochStep];
+
+		for (auto& bitMask : bitMasks)
+		{
 				variantsCount++;
 
 				if (variantsCount % 50 == 0)
@@ -205,7 +232,6 @@ public:
 				// TODO: Change the source file extension based on the programming language.
 				auto fileName = TempFolder + std::to_string(variantsCount) + "_tempFile.c";
 				printingConsumer_.HandleTranslationUnit(context, fileName, bitMask);
-			}
 		}
 
 		out::All() << "Finished. Done " << variantsCount << " variants.\n";

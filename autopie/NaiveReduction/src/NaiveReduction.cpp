@@ -340,7 +340,9 @@ int main(int argc, const char** argv)
 		return EXIT_FAILURE;
 	}
 
-	auto context = GlobalContext(parsedInput, *op.getSourcePathList().begin());
+	const auto epochCount = 5;
+	
+	auto context = GlobalContext(parsedInput, *op.getSourcePathList().begin(), epochCount);
 	clang::tooling::ClangTool tool(op.getCompilations(), context.parsedInput.errorLocation.filePath);
 
 	auto inputLanguage = clang::Language::Unknown;
@@ -368,13 +370,9 @@ int main(int argc, const char** argv)
 			<< ", line: " << parsedInput.errorLocation.lineNumber << " could not be found.\n";
 	}
 
-	const auto epochCount = 5;
-	const auto epochStep = static_cast<double>(ReductionRatio) / epochCount;
-
-	for (auto i = 0; i < epochCount; i++)
+	for (auto i = 0; i < context.deepeningContext.epochCount; i++)
 	{
-		context.currentRatioLowerBound = i * epochStep;
-		context.currentRationUpperBound = (i + 1) * epochStep;
+		context.currentEpoch = i;
 		
 		// Run all Clang AST related actions.
 		auto result = tool.run(CustomFrontendActionFactory(context).get());
