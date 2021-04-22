@@ -52,72 +52,8 @@ struct LLDBSentry
 	LLDBSentry& operator=(const LLDBSentry& other) = delete;
 };
 
-/**
- * Generates a minimal program variant by naively removing statements.
- * 
- * Call:\n
- * > NaiveReduction.exe [file with error] [line with error] [error description message] [reduction ratio] <source path 0> [... <source path N>] --
- * e.g. NaiveReduction.exe --loc-file="example.cpp" --loc-line=17 --error-message="segmentation fault" --ratio=0.5 example.cpp --
- */
-int main(int argc, const char** argv)
+bool ValidateResults(const clang::Language inputLanguage)
 {
-	// Parse the command-line args passed to the tool.
-	clang::tooling::CommonOptionsParser op(argc, argv, Args);
-
-	// TODO(Denis): Create multi-file support.
-	if (op.getSourcePathList().size() > 1)
-	{
-		errs() << "Only a single source file is supported.\n";
-		return EXIT_FAILURE;
-	}
-	
-	auto parsedInput = InputData(static_cast<std::basic_string<char>>(ErrorMessage),
-	                             Location(static_cast<std::basic_string<char>>(SourceFile), LineNumber), ReductionRatio,
-	                             DumpDot);
-
-	// Prompt the user to clear the temp directory.
-	if (!ClearTempDirectory(false))
-	{
-		errs() << "Terminating...\n";
-		return EXIT_FAILURE;
-	}
-
-	auto context = GlobalContext(parsedInput, *op.getSourcePathList().begin());
-	clang::tooling::ClangTool tool(op.getCompilations(), context.parsedInput.errorLocation.filePath);
-
-	auto inputLanguage = clang::Language::Unknown;
-	// Run a language check inside a separate scope so that all built ASTs get freed at the end.
-	{
-		std::vector<std::unique_ptr<clang::ASTUnit>> trees;
-		tool.buildASTs(trees);
-
-		if (trees.size() != 1)
-		{
-			errs() << "Although only one AST was expected, " << trees.size() << " ASTs have been built.\n";
-			return EXIT_FAILURE;
-		}
-		
-		inputLanguage = (*trees.begin())->getInputKind().getLanguage();
-		
-		out::Verb() << "File: " << (*trees.begin())->getOriginalSourceFileName() << ", language: " << LanguageToString(inputLanguage) << "\n";
-	}
-
-	assert(inputLanguage != clang::Language::Unknown);
-
-	if (!CheckLocationValidity(parsedInput.errorLocation.filePath, parsedInput.errorLocation.lineNumber))
-	{
-		errs() << "The specified error location is invalid!\nSource path: " << parsedInput.errorLocation.filePath
-			<< ", line: " << parsedInput.errorLocation.lineNumber << " could not be found.\n";
-	}
-	
-	// Run all Clang AST related actions.
-	auto result = tool.run(CustomFrontendActionFactory(context).get());
-	
-	if (result)
-	{
-		errs() << "The tool returned a non-standard value: " << result << "\n";
-	}
-	
 	// Collect the results.
 	std::vector<std::filesystem::directory_entry> files;
 	for (const auto& entry : std::filesystem::directory_iterator(TempFolder))
@@ -132,13 +68,14 @@ int main(int argc, const char** argv)
 		          return a.file_size() < b.file_size();
 	          });
 
+	// TODO: Multiple sentry creations result in an error.
 	LLDBSentry sentry;
 	std::optional<std::string> resultFound{};
 	
 	// Attempt to compile each file. If successful, run it in LLDB and validate the error message and location.
 	for (const auto& entry : files)
 	{
-		auto compilationExitCode = Compile(entry, inputLanguage);
+		const auto compilationExitCode = Compile(entry, inputLanguage);
 
 		if (compilationExitCode != 0)
 		{
@@ -155,7 +92,7 @@ int main(int argc, const char** argv)
 		if (!debugger.IsValid())
 		{
 			errs() << "Debugger could not be created.\n";
-			return EXIT_FAILURE;
+			exit(EXIT_FAILURE);
 		}
 
 		const char* arguments[] = {nullptr};
@@ -203,7 +140,7 @@ int main(int argc, const char** argv)
 			{
 				if (lldb::SBProcess::EventIsProcessEvent(event))
 				{
-					auto state = lldb::SBProcess::GetStateFromEvent(event);
+					const auto state = lldb::SBProcess::GetStateFromEvent(event);
 
 					if (state == lldb::eStateInvalid)
 					{
@@ -225,8 +162,8 @@ int main(int argc, const char** argv)
 							out::Verb() << "thread.IsValid()             = " << static_cast<int>(thread.IsValid()) << "\n";
 							out::Verb() << "thread.GetThreadID()         = " << thread.GetThreadID() << "\n";
 							out::Verb() << "thread.GetName()             = " << (thread.GetName() != nullptr
-								                                                ? thread.GetName()
-								                                                : "(null)") << "\n";
+								                                                     ? thread.GetName()
+								                                                     : "(null)") << "\n";
 							out::Verb() << "thread.GetStopReason()       = " << StopReasonToString(thread.GetStopReason()) <<
 								"\n";
 							out::Verb() << "thread.IsSuspended()         = " << static_cast<int>(thread.IsSuspended()) <<
@@ -248,8 +185,8 @@ int main(int argc, const char** argv)
 							if (function.IsValid())
 							{
 								out::Verb() << "function.GetDisplayName()   = " << (function.GetDisplayName() != nullptr
-									                                               ? function.GetDisplayName()
-									                                               : "(null)") << "\n";
+									                                                    ? function.GetDisplayName()
+									                                                    : "(null)") << "\n";
 							}
 
 							auto symbol = frame.GetSymbol();
@@ -272,7 +209,7 @@ int main(int argc, const char** argv)
 									out::Verb() << "symbolContext.GetFilename()  = " << fileName << "\n";
 									out::Verb() << "symbolContext.GetLine()      = " << lineNumber << "\n";
 									out::Verb() << "symbolContext.GetColumn()    = " << symbolContext
-									                                               .GetLineEntry().GetColumn() << "\n";
+									                                                    .GetLineEntry().GetColumn() << "\n";
 
 									// TODO(Denis): Confirm the location.
 									
@@ -362,8 +299,7 @@ int main(int argc, const char** argv)
 
 	if (!resultFound.has_value())
 	{
-		out::All() << "A smaller program variant could not be found. AutoPie will terminate without a generated result.\n";
-		return EXIT_FAILURE;
+		return false;
 	}
 	
 	out::All() << "Found the smallest error-inducing source file: " << resultFound.value() << "\n";
@@ -371,5 +307,91 @@ int main(int argc, const char** argv)
 	
 	std::filesystem::rename(resultFound.value(), TempFolder + std::string("autoPieOut.c"));
 	
-	return EXIT_SUCCESS;
+	return true;
+}
+
+/**
+ * Generates a minimal program variant by naively removing statements.
+ * 
+ * Call:\n
+ * > NaiveReduction.exe [file with error] [line with error] [error description message] [reduction ratio] <source path 0> [... <source path N>] --
+ * e.g. NaiveReduction.exe --loc-file="example.cpp" --loc-line=17 --error-message="segmentation fault" --ratio=0.5 example.cpp --
+ */
+int main(int argc, const char** argv)
+{
+	// Parse the command-line args passed to the tool.
+	clang::tooling::CommonOptionsParser op(argc, argv, Args);
+
+	// TODO(Denis): Create multi-file support.
+	if (op.getSourcePathList().size() > 1)
+	{
+		errs() << "Only a single source file is supported.\n";
+		return EXIT_FAILURE;
+	}
+	
+	auto parsedInput = InputData(static_cast<std::basic_string<char>>(ErrorMessage),
+	                             Location(static_cast<std::basic_string<char>>(SourceFile), LineNumber), ReductionRatio,
+	                             DumpDot);
+
+	// Prompt the user to clear the temp directory.
+	if (!ClearTempDirectory(false))
+	{
+		errs() << "Terminating...\n";
+		return EXIT_FAILURE;
+	}
+
+	auto context = GlobalContext(parsedInput, *op.getSourcePathList().begin());
+	clang::tooling::ClangTool tool(op.getCompilations(), context.parsedInput.errorLocation.filePath);
+
+	auto inputLanguage = clang::Language::Unknown;
+	// Run a language check inside a separate scope so that all built ASTs get freed at the end.
+	{
+		std::vector<std::unique_ptr<clang::ASTUnit>> trees;
+		tool.buildASTs(trees);
+
+		if (trees.size() != 1)
+		{
+			errs() << "Although only one AST was expected, " << trees.size() << " ASTs have been built.\n";
+			return EXIT_FAILURE;
+		}
+		
+		inputLanguage = (*trees.begin())->getInputKind().getLanguage();
+		
+		out::Verb() << "File: " << (*trees.begin())->getOriginalSourceFileName() << ", language: " << LanguageToString(inputLanguage) << "\n";
+	}
+
+	assert(inputLanguage != clang::Language::Unknown);
+
+	if (!CheckLocationValidity(parsedInput.errorLocation.filePath, parsedInput.errorLocation.lineNumber))
+	{
+		errs() << "The specified error location is invalid!\nSource path: " << parsedInput.errorLocation.filePath
+			<< ", line: " << parsedInput.errorLocation.lineNumber << " could not be found.\n";
+	}
+
+	const auto epochCount = 5;
+	const auto epochStep = static_cast<double>(ReductionRatio) / epochCount;
+
+	for (auto i = 0; i < epochCount; i++)
+	{
+		context.currentRatioLowerBound = i * epochStep;
+		context.currentRationUpperBound = (i + 1) * epochStep;
+		
+		// Run all Clang AST related actions.
+		auto result = tool.run(CustomFrontendActionFactory(context).get());
+
+		if (result)
+		{
+			errs() << "The tool returned a non-standard value: " << result << "\n";
+		}
+		
+		if (ValidateResults(inputLanguage))
+		{
+			return EXIT_SUCCESS;
+		}
+		
+		out::All() << "Epoch " << i + 1 << " out of " << epochCount << ": A smaller program variant could not be found.\n";
+		ClearTempDirectory(false);
+	}
+
+	return EXIT_FAILURE;
 }

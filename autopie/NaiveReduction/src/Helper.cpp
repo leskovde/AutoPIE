@@ -257,7 +257,7 @@ void Increment(BitMask& bitMask)
  * @return True if the bitmask results in a valid source file variant in terms of code unit
  * relationships.
  */
-bool IsValid(BitMask& bitMask, DependencyGraph& dependencies)
+bool IsValid(BitMask& bitMask, DependencyGraph& dependencies, const double lowerRatio, const double upperRatio)
 {
 	auto characterCount = dependencies.GetTotalCharacterCount();
 	
@@ -288,7 +288,9 @@ bool IsValid(BitMask& bitMask, DependencyGraph& dependencies)
 		}
 	}
 
-	if (static_cast<double>(characterCount) / dependencies.GetTotalCharacterCount() > ReductionRatio)
+	const auto currentRatio = static_cast<double>(characterCount) / dependencies.GetTotalCharacterCount();
+	
+	if (lowerRatio > currentRatio || currentRatio > upperRatio)
 	{
 		// The variant does not fit the desired size ratio.
 		return false;

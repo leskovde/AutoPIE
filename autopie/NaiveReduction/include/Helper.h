@@ -107,7 +107,7 @@ bool IsFull(BitMask& bitMask);
 
 void Increment(BitMask& bitMask);
 
-bool IsValid(BitMask& bitMask, DependencyGraph& dependencies);
+bool IsValid(BitMask& bitMask, DependencyGraph& dependencies, double lowerRatio, double upperRatio);
 
 //===----------------------------------------------------------------------===//
 //

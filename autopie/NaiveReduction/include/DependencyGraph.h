@@ -49,6 +49,7 @@ class DependencyGraph
 	std::unordered_map<int, Node> debugNodeData_;
 	std::unordered_map<int, std::vector<int>> edges_;
 	std::unordered_map<int, std::vector<int>> inverseEdges_;
+	std::unordered_map<int, std::vector<int>> dependentNodesCache_;
 
 public:
 
@@ -193,7 +194,12 @@ public:
 	 * the given node.
 	 */
 	std::vector<int> GetDependentNodes(const int startingNode)
-	{
+	{		
+		if (dependentNodesCache_.find(startingNode) != dependentNodesCache_.end())
+		{
+			return dependentNodesCache_.find(startingNode)->second;
+		}
+		
 		auto nodeQ = std::queue<int>();
 		auto allDependencies = std::vector<int>();
 
@@ -215,6 +221,8 @@ public:
 				}
 			}
 		}
+
+		dependentNodesCache_.insert(std::pair<int, std::vector<int>>(startingNode, allDependencies));
 
 		return allDependencies;
 	}

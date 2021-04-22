@@ -152,10 +152,12 @@ class VariantGenerationConsumer final : public clang::ASTConsumer
 {
 	DependencyMappingASTConsumer mappingConsumer_;
 	VariantPrintingASTConsumer printingConsumer_;
+	GlobalContext& globalContext_;
 
 public:
 	VariantGenerationConsumer(clang::CompilerInstance* ci, GlobalContext& context) : mappingConsumer_(ci, context),
-	                                                                                 printingConsumer_(ci)
+	                                                                                 printingConsumer_(ci),
+																					 globalContext_(context)
 	{
 	}
 
@@ -189,7 +191,7 @@ public:
 		{
 			Increment(bitMask);
 
-			if (IsValid(bitMask, dependencies))
+			if (IsValid(bitMask, dependencies, globalContext_.currentRatioLowerBound, globalContext_.currentRationUpperBound))
 			{
 				variantsCount++;
 

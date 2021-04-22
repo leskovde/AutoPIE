@@ -20,7 +20,9 @@ public:
 
 	// Variant generation properties.
 	InputData parsedInput;
-
+	double currentRatioLowerBound{0};
+	double currentRationUpperBound{0};
+	
 	GlobalContext(InputData& input, const std::string& /*source*/) : parsedInput(input)
 	{
 		out::Verb() << "DEBUG: GlobalContext - New non-default constructor call.\n";
