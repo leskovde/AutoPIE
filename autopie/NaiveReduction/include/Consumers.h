@@ -216,7 +216,7 @@ public:
 		}
 		
 		auto variantsCount = 0;
-		auto& bitMasks = globalContext_.deepeningContext.bitMasks[(globalContext_.currentEpoch + 1) * globalContext_.deepeningContext.epochStep];
+		auto& bitMasks = globalContext_.deepeningContext.bitMasks.lower_bound((globalContext_.currentEpoch + 1) * globalContext_.deepeningContext.epochStep - globalContext_.deepeningContext.epochStep / 2)->second;
 
 		for (auto& bitMask : bitMasks)
 		{

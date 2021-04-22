@@ -68,8 +68,6 @@ bool ValidateResults(const clang::Language inputLanguage)
 		          return a.file_size() < b.file_size();
 	          });
 
-	// TODO: Multiple sentry creations result in an error.
-	LLDBSentry sentry;
 	std::optional<std::string> resultFound{};
 	
 	// Attempt to compile each file. If successful, run it in LLDB and validate the error message and location.
@@ -215,7 +213,7 @@ bool ValidateResults(const clang::Language inputLanguage)
 									
 									// TODO: Confirm the message.
 
-									if (lineNumber == 4)
+									if (lineNumber == 4 || lineNumber == 2)
 									{
 										resultFound.emplace(entry.path().string());
 										done = true;
@@ -370,6 +368,8 @@ int main(int argc, const char** argv)
 			<< ", line: " << parsedInput.errorLocation.lineNumber << " could not be found.\n";
 	}
 
+	LLDBSentry sentry;
+	
 	for (auto i = 0; i < context.deepeningContext.epochCount; i++)
 	{
 		context.currentEpoch = i;
