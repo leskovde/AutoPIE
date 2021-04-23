@@ -305,7 +305,26 @@ For each parsed source code file, an instance of~ASTContext
 is used to represent the~AST. 
 The ASTContext allows the~programmer to use many valuable methods. 
 
-\change[inline]{TODO: Show some of~those functions from the~documentation.}
+\begin{table}[b!]\centering
+	\begin{tabular}{p{0.25\linewidth} p{0.37\linewidth} p{0.29\linewidth}}
+		\toprule \mc{\textbf{Return}} & \mc{} & \mc{}\\
+		\mc{\textbf{value}} & \pulrad{\textbf{Method name}} &
+		\mc{\pulrad{\textbf{Description}}} \\
+		\midrule
+		\icode{DynTypedNodeList} & \icode{getParents(const NodeT \&Node)} & 
+		Forwards to get node parents from the \icode{Parent\-Map\-Context}. \\
+		\icode{SourceManager \&} & \icode{getSourceManager()} & --- \\
+		\icode{const TargetInfo \&} & \icode{getTargetInfo() const} & --- \\
+		\icode{const LangOptions \&} & \icode{getLangOpts() const} & --- \\
+		\icode{TranslationUnit\-Decl *} & \icode{getTranslationUnitDecl()} & 
+		--- \\
+		\bottomrule
+	\end{tabular}
+\label{tab:astcontext}
+\caption{Digest of \icode{ASTContext}'s documentation.
+The documentation can be found at
+\url{https://clang.llvm.org/doxygen/classclang_1_1ASTContext.html}.}
+\end{table}
 
 The ASTContext bundles Clang's AST for a~translation unit 
 and allows its traversal from the~\icode{getTranslationUnitDecl}
@@ -469,6 +488,45 @@ offers \icode{Visit} methods that
 can be overridden to the~programmer's liking. 
 Each override specifies the~type of~node on which the~method 
 triggers and the~actions that should be performed.
+
+\begin{table}[b!]\centering
+	\begin{tabular}{p{0.39\linewidth} p{0.52\linewidth}}
+		\toprule \\
+		\pulrad{\textbf{Method}$^a$} & \mc{\pulrad{\textbf{Description}}} \\
+		\midrule
+		\icode{shouldVisitImplicitCode()} & Return whether this 
+		visitor should recurse into implicit code, e.g., implicit constructors 
+		and destructors. \\
+		\icode{shouldTraversePostOrder()} & Return whether this 
+		visitor should traverse post-order. \\
+		\icode{TraverseAST(ASTContext \&AST)} & Recursively 
+		visits an entire AST, starting from the top-level Decls in the AST 
+		traversal scope (by default, the \icode{TranslationUnitDecl}). \\
+		\icode{TraverseStmt(Stmt *S, DataRecursionQueue 
+		*Queue=nullptr)} & Recursively visit a statement or expression, by 
+		dispatching to \icode{Traverse*()} based on the argument's dynamic 
+		type. \\
+		\icode{TraverseType(QualType T)} & Recursively visit a 
+		type, by dispatching to \icode{Traverse*Type()} based on the 
+		argument's \icode{getTypeClass()} property. \\
+		\icode{TraverseDecl(Decl *D)} & Recursively visit a 
+		declaration, by dispatching to \icode{Traverse*Decl()} based on the 
+		argument's dynamic type. \\
+		\icode{WalkUpFromStmt(Stmt *S)} & --- \\
+		\icode{VisitStmt(Stmt *S)} & --- \\
+		\icode{WalkUpFromType(Type *T)} & --- \\
+		\icode{VisitType(Type *T)} & --- \\
+		\icode{WalkUpFromDecl(Decl *D)} & --- \\
+		\icode{VisitDecl(Decl *D)} & --- \\
+		\bottomrule
+		\multicolumn{2}{l}{\footnotesize \textit{Note:}
+		$^a$ All presented methods return \icode{bool}.}
+	\end{tabular}
+\label{tab:astvisitor}
+\caption{Digest of \icode{RecursiveASTVisitor}'s documentation.
+The documentation can be found at 
+\url{https://clang.llvm.org/doxygen/classclang_1_1RecursiveASTVisitor.html}.}
+\end{table}
 
 The implementation seen on listing~\ref{lst:countvisitor} illustrates
 the idea. a~custom class with a~strict dedication, i.e., counting
