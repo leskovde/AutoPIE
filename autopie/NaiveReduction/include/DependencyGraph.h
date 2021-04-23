@@ -47,10 +47,39 @@ class DependencyGraph
 	int totalCharacters_{0};
 	std::vector<int> criterion_;
 	std::unordered_map<int, Node> debugNodeData_;
-	std::unordered_map<int, std::vector<int>> edges_;
-	std::unordered_map<int, std::vector<int>> inverseEdges_;
+	std::unordered_map<int, std::vector<int>> statementEdges_;
+	std::unordered_map<int, std::vector<int>> statementInverseEdges_;
+	std::unordered_map<int, std::vector<int>> variableEdges_;
+	std::unordered_map<int, std::vector<int>> variableInverseEdges_;
 	std::unordered_map<int, std::vector<int>> dependentNodesCache_;
 
+	static std::vector<int> GetDependentNodesFromContainer(const int startingNode, const std::unordered_map<int, std::vector<int>>& container)
+	{
+		auto nodeQ = std::queue<int>();
+		auto allDependencies = std::vector<int>();
+
+		nodeQ.push(startingNode);
+
+		while (!nodeQ.empty())
+		{
+			auto currentNode = nodeQ.front();
+			nodeQ.pop();
+
+			auto it = container.find(currentNode);
+
+			if (it != container.end())
+			{
+				for (auto dependency : it->second)
+				{
+					nodeQ.push(dependency);
+					allDependencies.push_back(dependency);
+				}
+			}
+		}
+
+		return allDependencies;
+	}
+	
 public:
 
 	/**
@@ -69,27 +98,53 @@ public:
 	 * @param parent The traversal order number of the parent.
 	 * @param child The traversal order number of the child.
 	 */
-	void InsertDependency(const int parent, const int child)
+	void InsertStatementDependency(const int parent, const int child)
 	{
 		if (parent == child)
 		{
 			return;
 		}
 
-		auto it = edges_.find(parent);
+		auto it = statementEdges_.find(parent);
 
-		if (it == edges_.end())
+		if (it == statementEdges_.end())
 		{
-			it = edges_.insert(std::pair<int, std::vector<int>>(parent, std::vector<int>())).first;
+			it = statementEdges_.insert(std::pair<int, std::vector<int>>(parent, std::vector<int>())).first;
 		}
 
 		it->second.push_back(child);
 
-		it = inverseEdges_.find(child);
+		it = statementInverseEdges_.find(child);
 
-		if (it == inverseEdges_.end())
+		if (it == statementInverseEdges_.end())
 		{
-			it = inverseEdges_.insert(std::pair<int, std::vector<int>>(child, std::vector<int>())).first;
+			it = statementInverseEdges_.insert(std::pair<int, std::vector<int>>(child, std::vector<int>())).first;
+		}
+
+		it->second.push_back(parent);
+	}
+
+	void InsertVariableDependency(const int parent, const int child)
+	{
+		if (parent == child)
+		{
+			return;
+		}
+
+		auto it = variableEdges_.find(parent);
+
+		if (it == variableEdges_.end())
+		{
+			it = variableEdges_.insert(std::pair<int, std::vector<int>>(parent, std::vector<int>())).first;
+		}
+
+		it->second.push_back(child);
+
+		it = variableInverseEdges_.find(child);
+
+		if (it == variableInverseEdges_.end())
+		{
+			it = variableInverseEdges_.insert(std::pair<int, std::vector<int>>(child, std::vector<int>())).first;
 		}
 
 		it->second.push_back(parent);
@@ -175,7 +230,7 @@ public:
 				<< "), " << it->second.nodeTypeName << "\", color=\"" << it->second.dumpColor << "\"];\n";
 		}
 
-		for (auto it = edges_.cbegin(); it != edges_.cend(); ++it)
+		for (auto it = statementEdges_.cbegin(); it != statementEdges_.cend(); ++it)
 		{
 			for (auto child : it->second)
 			{
@@ -183,9 +238,27 @@ public:
 			}
 		}
 
+		for (auto it = variableEdges_.cbegin(); it != variableEdges_.cend(); ++it)
+		{
+			for (auto child : it->second)
+			{
+				ofs << it->first << " -> " << child << " [color=maroon];\n";
+			}
+		}
+
 		ofs << "}\n";
 	}
 
+	[[nodiscard]] std::vector<int> GetStatementDependentNodes(const int startingNode) const
+	{
+		return GetDependentNodesFromContainer(startingNode, statementEdges_);
+	}
+
+	[[nodiscard]] std::vector<int> GetVariableDependentNodes(const int startingNode) const
+	{
+		return GetDependentNodesFromContainer(startingNode, variableEdges_);
+	}
+	
 	/**
 	 * Searches in a BFS manner for all descendants of a given node.
 	 *
@@ -194,34 +267,16 @@ public:
 	 * the given node.
 	 */
 	std::vector<int> GetDependentNodes(const int startingNode)
-	{		
+	{
 		if (dependentNodesCache_.find(startingNode) != dependentNodesCache_.end())
 		{
 			return dependentNodesCache_.find(startingNode)->second;
 		}
+
+		auto allDependencies = GetStatementDependentNodes(startingNode);
+		auto varDependencies = GetVariableDependentNodes(startingNode);
+		allDependencies.insert(allDependencies.end(), std::make_move_iterator(varDependencies.begin()), std::make_move_iterator(varDependencies.end()));
 		
-		auto nodeQ = std::queue<int>();
-		auto allDependencies = std::vector<int>();
-
-		nodeQ.push(startingNode);
-
-		while (!nodeQ.empty())
-		{
-			auto currentNode = nodeQ.front();
-			nodeQ.pop();
-
-			auto it = edges_.find(currentNode);
-
-			if (it != edges_.end())
-			{
-				for (auto dependency : it->second)
-				{
-					nodeQ.push(dependency);
-					allDependencies.push_back(dependency);
-				}
-			}
-		}
-
 		dependentNodesCache_.insert(std::pair<int, std::vector<int>>(startingNode, allDependencies));
 
 		return allDependencies;
@@ -236,9 +291,9 @@ public:
 	 */
 	std::vector<int> GetParentNodes(const int startingNode)
 	{
-		const auto it = inverseEdges_.find(startingNode);
+		const auto it = statementInverseEdges_.find(startingNode);
 
-		return it != inverseEdges_.end() ? it->second : std::vector<int>();
+		return it != statementInverseEdges_.end() ? it->second : std::vector<int>();
 	}
 
 	/**
@@ -276,7 +331,7 @@ public:
 		{
 			std::unordered_map<int, int> correctedCounts;
 			
-			for (auto it = edges_.begin(); it != edges_.end(); ++it)
+			for (auto it = statementEdges_.begin(); it != statementEdges_.end(); ++it)
 			{
 				auto currentCount = GetNodeInfo(it->first).characterCount;
 								

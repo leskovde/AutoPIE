@@ -291,6 +291,8 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 		}
 	}
 
+	// TODO: Remove bidirectional dependencies and dependency duplicates.
+	
 	void HandleVariableInstancesInStatements(clang::Stmt* stmt)
 	{
 		if (stmt != nullptr && llvm::isa<clang::Expr>(stmt))
@@ -314,7 +316,7 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 
 					if (declNodeMapping_->find(parentID) != declNodeMapping_->end())
 					{
-						graph.InsertDependency((*declNodeMapping_)[parentID], codeUnitsCount);
+						graph.InsertVariableDependency((*declNodeMapping_)[parentID], codeUnitsCount);
 					}
 				}
 				// Sometimes the variable is hidden beneath an implicit cast.
@@ -360,7 +362,7 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 
 				if (child != nullptr && nodeMapping_->find(child->getID(astContext_)) != nodeMapping_->end())
 				{
-					graph.InsertDependency(codeUnitsCount, nodeMapping_->at(child->getID(astContext_)));
+					graph.InsertStatementDependency(codeUnitsCount, nodeMapping_->at(child->getID(astContext_)));
 				}
 			}
 
@@ -429,7 +431,7 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 
 					if (*it != nullptr && nodeMapping_->find(it->getID(astContext_)) != nodeMapping_->end())
 					{
-						graph.InsertDependency(codeUnitsCount, nodeMapping_->at(it->getID(astContext_)));
+						graph.InsertStatementDependency(codeUnitsCount, nodeMapping_->at(it->getID(astContext_)));
 					}
 				}
 			}
@@ -529,6 +531,7 @@ public:
 	bool VisitStmt(clang::Stmt* stmt)
 	{
 		// TODO: Handle assignment expressions as nodes.
+		// TODO: Make sure the processing flow in this method and in ProcessStatement is correct.
 		
 		// Skip included files.
 		if (!astContext_.getSourceManager().isInMainFile(stmt->getBeginLoc()))
