@@ -270,6 +270,12 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 		return nodeMapping_->insert(std::pair<int, int>(astId, codeUnitsCount)).second;
 	}
 
+	/**
+	 * Checks whether the given statement represents a declaration.\n
+	 * If it does, the node ID is mapped to the current traversal number in a separate declaration mapping.
+	 *
+	 * @param stmt The statement to be checked and mapped.
+	 */
 	void HandleDeclarationsInStatements(clang::Stmt* stmt) const
 	{
 		if (stmt != nullptr && llvm::isa<clang::DeclStmt>(stmt))
@@ -292,7 +298,14 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 	}
 
 	// TODO: Remove bidirectional dependencies and dependency duplicates.
-	
+
+	/**
+	 * Checks whether a statement contains a declaration reference, i.e., a variable usage.\n
+	 * If it does and the variable's declaration has been mapped, a dependency is created.\n
+	 * The dependency states that the current node is dependent on the declaring node.
+	 *
+	 * @param stmt The statement to be checked for variable usages.
+	 */
 	void HandleVariableInstancesInStatements(clang::Stmt* stmt)
 	{
 		if (stmt != nullptr && llvm::isa<clang::Expr>(stmt))
@@ -333,7 +346,13 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 			}
 		}
 	}
-	
+
+	/**
+	 * The body of VisitDecl after all invalid Decl types have been ruled out.\n
+	 * Namely handles functions and maps their bodies to their declarations as a dependency.
+	 *
+	 * @param decl The current processed declaration.
+	 */
 	void ProcessDeclaration(clang::Decl* decl)
 	{
 		if (nodeMapping_->find(decl->getID()) == nodeMapping_->end())
@@ -373,7 +392,13 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 			out::Verb() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
 		}
 	}
-	
+
+	/**
+	 * The body of VisitCallExpr after all invalid Expr types have been ruled out.\n
+	 * Checks call's variable dependencies and maps the node as valid.
+	 *
+	 * @param expr The current processed declaration.
+	 */
 	void ProcessCallExpression(clang::CallExpr* expr)
 	{
 		if (nodeMapping_->find(expr->getID(astContext_)) == nodeMapping_->end())
@@ -402,6 +427,12 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 		}
 	}
 
+	/**
+	 * The body of VisitStmt after all invalid Stmt types have been ruled out.\n
+	 * Checks both statement and variable dependencies, variable declarations, and maps the node as valid.
+	 *
+	 * @param stmt The current processed declaration.
+	 */
 	void ProcessStatement(clang::Stmt* stmt)
 	{
 		if (nodeMapping_->find(stmt->getID(astContext_)) == nodeMapping_->end())

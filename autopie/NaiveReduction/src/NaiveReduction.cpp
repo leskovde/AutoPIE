@@ -52,6 +52,17 @@ struct LLDBSentry
 	LLDBSentry& operator=(const LLDBSentry& other) = delete;
 };
 
+/**
+ * Attempts to validate results of the last epoch.\n
+ * Searches the temporary directory for any files, sorts them by smallest and then validates them.\n
+ * The validation consists of compilation and a debugging session. Whenever the compilation succeeds,
+ * the program is run using LLDB to determine whether it produces the desired runtime error.\n
+ * If a valid variant is found, it is stored as `autoPieOut.<extensions based on language>` in the
+ * temporary directory.
+ *
+ * @param inputLanguage The programming language in which the source code is written.
+ * @return True if the epoch produced a valid result, false otherwise.
+ */
 bool ValidateResults(const clang::Language inputLanguage)
 {
 	// Collect the results.
@@ -301,6 +312,8 @@ bool ValidateResults(const clang::Language inputLanguage)
 	}
 	
 	out::All() << "Found the smallest error-inducing source file: " << resultFound.value() << "\n";
+
+	// TODO: Change the .c extension based on the programming language (in all instances, not just this one).
 	out::All() << "Renaming the file to '"<< TempFolder << "autoPieOut.c'\n";
 	
 	std::filesystem::rename(resultFound.value(), TempFolder + std::string("autoPieOut.c"));

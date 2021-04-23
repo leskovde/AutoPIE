@@ -53,6 +53,12 @@ class DependencyGraph
 	std::unordered_map<int, std::vector<int>> variableInverseEdges_;
 	std::unordered_map<int, std::vector<int>> dependentNodesCache_;
 
+	/**
+	 * Recursively searches for all children of a given node in a given unordered map.
+	 *
+	 * @param startingNode The node whose children should be searched.
+	 * @param container The unordered map in which the search should be conducted.
+	 */
 	static std::vector<int> GetDependentNodesFromContainer(const int startingNode, const std::unordered_map<int, std::vector<int>>& container)
 	{
 		auto nodeQ = std::queue<int>();
@@ -93,7 +99,7 @@ public:
 	}
 
 	/**
-	 * Adds an edge between two nodes. The edge is bidirectional.
+	 * Adds a statement dependency edge between two nodes. The edge is bidirectional.
 	 *
 	 * @param parent The traversal order number of the parent.
 	 * @param child The traversal order number of the child.
@@ -124,6 +130,12 @@ public:
 		it->second.push_back(parent);
 	}
 
+	/**
+	 * Adds a variable dependency edge between two nodes. The edge is bidirectional.
+	 *
+	 * @param parent The traversal order number of the parent.
+	 * @param child The traversal order number of the child.
+	 */
 	void InsertVariableDependency(const int parent, const int child)
 	{
 		if (parent == child)
@@ -249,18 +261,32 @@ public:
 		ofs << "}\n";
 	}
 
+	/**
+	 * Searches in a BFS manner for all statement dependent descendants of a given node.
+	 *
+	 * @param startingNode The node whose descendants are considered.
+	 * @return A container of nodes (specified by their traversal order number) that are dependent on
+	 * the given node.
+	 */
 	[[nodiscard]] std::vector<int> GetStatementDependentNodes(const int startingNode) const
 	{
 		return GetDependentNodesFromContainer(startingNode, statementEdges_);
 	}
 
+	/**
+	 * Searches in a BFS manner for all variable dependent descendants of a given node.
+	 *
+	 * @param startingNode The node whose descendants are considered.
+	 * @return A container of nodes (specified by their traversal order number) that are dependent on
+	 * the given node.
+	 */
 	[[nodiscard]] std::vector<int> GetVariableDependentNodes(const int startingNode) const
 	{
 		return GetDependentNodesFromContainer(startingNode, variableEdges_);
 	}
 	
 	/**
-	 * Searches in a BFS manner for all descendants of a given node.
+	 * Searches in a BFS manner for all descendants of a given node. This includes both statement and variable dependencies.
 	 *
 	 * @param startingNode The node whose descendants are considered.
 	 * @return A container of nodes (specified by their traversal order number) that are dependent on

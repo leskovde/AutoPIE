@@ -254,8 +254,8 @@ void Increment(BitMask& bitMask)
  *
  * @param bitMask The variant represent by a bitmask.
  * @param dependencies The code unit relationship graph.
- * @return True if the bitmask results in a valid source file variant in terms of code unit
- * relationships.
+ * @return A pair of values. True if the bitmask results in a valid source file variant in terms of code unit
+ * relationships. If valid, the second value is set to the variant's size ratio when compared to the original size.
  */
 std::pair<bool, double> IsValid(BitMask& bitMask, DependencyGraph& dependencies)
 {

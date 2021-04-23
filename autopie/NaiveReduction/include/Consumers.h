@@ -184,6 +184,9 @@ public:
 
 		//out::All() << "Maximum expected variants: " << pow(2, numberOfCodeUnits) << "\n";
 
+		// The first epoch requires special handling.
+		// All valid bitmask variants should be iterated and separated into bins based on their size.
+		// The bins are then iterated in their respective epochs.
 		if (globalContext_.currentEpoch == 0)
 		{
 			// Create ranges for each epoch.
