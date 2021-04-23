@@ -270,6 +270,156 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 		return nodeMapping_->insert(std::pair<int, int>(astId, codeUnitsCount)).second;
 	}
 
+	void HandleDeclarationsInStatements(clang::Stmt* stmt) const
+	{
+		if (stmt != nullptr && llvm::isa<clang::DeclStmt>(stmt))
+		{
+			const auto declStmt = llvm::cast<clang::DeclStmt>(stmt);
+
+			for (auto decl : declStmt->decls())
+			{
+				if (decl != nullptr)
+				{
+					const auto id = decl->getID();
+
+					if (declNodeMapping_->find(id) == declNodeMapping_->end())
+					{
+						(*declNodeMapping_)[id] = codeUnitsCount;
+					}
+				}
+			}
+		}
+	}
+
+	void HandleVariableInstancesInStatements(clang::Stmt* stmt)
+	{
+		if (stmt != nullptr && llvm::isa<clang::Expr>(stmt))
+		{
+			for (auto it = stmt->child_begin(); it != stmt->child_end(); ++it)
+			{
+				if (*it != nullptr && llvm::isa<clang::DeclRefExpr>(*it))
+				{
+					const auto parentID = llvm::cast<clang::DeclRefExpr>(*it)->getFoundDecl()->getID();
+
+					if (declNodeMapping_->find(parentID) != declNodeMapping_->end())
+					{
+						graph.InsertDependency((*declNodeMapping_)[parentID], codeUnitsCount);
+					}
+				}
+			}
+		}
+	}
+	
+	void ProcessDeclaration(clang::Decl* decl)
+	{
+		if (nodeMapping_->find(decl->getID()) == nodeMapping_->end())
+		{
+			const auto id = decl->getID();
+			const auto typeName = decl->getDeclKindName();
+			const auto codeSnippet = RangeToString(astContext_, decl->getSourceRange());
+			const auto line = astContext_.getSourceManager().getSpellingLineNumber(decl->getBeginLoc());
+
+			out::Verb() << "Node " << codeUnitsCount << ": Type " << typeName << "\n";
+
+			if (InsertMapping(id, codeSnippet, line))
+			{
+				snippetSet_[codeSnippet] = true;
+				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, "crimson");
+
+				if (llvm::cast<clang::FunctionDecl>(decl)->isMain())
+				{
+					graph.AddCriterionNode(codeUnitsCount);
+				}
+
+				// Turns out declarations also have children.
+				// TODO(Denis): Handle structs, enums, etc. by getting DeclContext and using specific methods.
+				// http://clang-developers.42468.n3.nabble.com/How-to-traverse-all-children-FieldDecl-from-parent-CXXRecordDecl-td4045698.html
+				const auto child = decl->getBody();
+
+				if (child != nullptr && nodeMapping_->find(child->getID(astContext_)) != nodeMapping_->end())
+				{
+					graph.InsertDependency(codeUnitsCount, nodeMapping_->at(child->getID(astContext_)));
+				}
+			}
+
+			codeUnitsCount++;
+		}
+		else
+		{
+			out::Verb() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
+		}
+	}
+	
+	void ProcessCallExpression(clang::CallExpr* expr)
+	{
+		if (nodeMapping_->find(expr->getID(astContext_)) == nodeMapping_->end())
+		{
+			const auto id = expr->getID(astContext_);
+			const auto typeName = expr->getStmtClassName();
+			const auto codeSnippet = RangeToString(astContext_, expr->getSourceRange());
+			const auto line = astContext_.getSourceManager().getSpellingLineNumber(expr->getBeginLoc());
+
+			// Look for variable usages inside the current statement.
+			// If the statement uses a previously declared variable, it should be dependent on that declaration.
+			// e.g. `if (x < 2) { ... } `should depend on `int x = 0;`
+			HandleVariableInstancesInStatements(expr);
+
+			if (InsertMapping(id, codeSnippet, line))
+			{
+				snippetSet_[codeSnippet] = true;
+				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, "goldenrod");
+			}
+
+			codeUnitsCount++;
+		}
+		else
+		{
+			out::Verb() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
+		}
+	}
+
+	void ProcessStatement(clang::Stmt* stmt)
+	{
+		if (nodeMapping_->find(stmt->getID(astContext_)) == nodeMapping_->end())
+		{
+			const auto id = stmt->getID(astContext_);
+			const auto typeName = stmt->getStmtClassName();
+			const auto codeSnippet = RangeToString(astContext_, stmt->getSourceRange());
+			const auto line = astContext_.getSourceManager().getSpellingLineNumber(stmt->getBeginLoc());
+
+			out::Verb() << "Node " << codeUnitsCount << ": Type " << typeName << "\n";
+
+			if (InsertMapping(id, codeSnippet, line))
+			{
+				snippetSet_[codeSnippet] = true;
+				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, "darkorchid");
+
+				HandleDeclarationsInStatements(stmt);
+				//HandleVariableInstancesInStatements(stmt);
+
+				// Apparently only statements have children.
+				for (auto it = stmt->child_begin(); it != stmt->child_end(); ++it)
+				{
+					// Look for variable usages inside the current statement.
+					// If the statement uses a previously declared variable, it should be dependent on that declaration.
+					// e.g. `if (x < 2) { ... } `should depend on `int x = 0;`
+					HandleVariableInstancesInStatements(*it);
+
+					if (*it != nullptr && nodeMapping_->find(it->getID(astContext_)) != nodeMapping_->end())
+					{
+						graph.InsertDependency(codeUnitsCount, nodeMapping_->at(it->getID(astContext_)));
+					}
+				}
+			}
+
+			codeUnitsCount++;
+		}
+		else
+		{
+			out::Verb() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
+		}
+	}
+
 public:
 	int codeUnitsCount = 0; ///< The traversal order number.
 	DependencyGraph graph = DependencyGraph();
@@ -307,9 +457,7 @@ public:
 	 * Creates dependencies between the node and its children.
 	 */
 	bool VisitDecl(clang::Decl* decl)
-	{
-		// TODO: Add the main function's declaration to the criterion (so that is doesn't get removed).
-		
+	{		
 		// Skip included files.
 		if (!astContext_.getSourceManager().isInMainFile(decl->getBeginLoc()))
 		//const auto loc = clang::FullSourceLoc(decl->getBeginLoc(), astContext_.getSourceManager());
@@ -326,42 +474,7 @@ public:
 			return true;
 		}
 
-		if (nodeMapping_->find(decl->getID()) == nodeMapping_->end())
-		{
-			const auto id = decl->getID();
-			const auto typeName = decl->getDeclKindName();
-			const auto codeSnippet = RangeToString(astContext_, decl->getSourceRange());
-			const auto line = astContext_.getSourceManager().getSpellingLineNumber(decl->getBeginLoc());
-
-			out::Verb() << "Node " << codeUnitsCount << ": Type " << typeName << "\n";
-
-			if (InsertMapping(id, codeSnippet, line))
-			{
-				snippetSet_[codeSnippet] = true;
-				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, "crimson");
-
-				if (llvm::cast<clang::FunctionDecl>(decl)->isMain())
-				{
-					graph.AddCriterionNode(codeUnitsCount);
-				}
-				
-				// Turns out declarations also have children.
-				// TODO(Denis): Handle structs, enums, etc. by getting DeclContext and using specific methods.
-				// http://clang-developers.42468.n3.nabble.com/How-to-traverse-all-children-FieldDecl-from-parent-CXXRecordDecl-td4045698.html
-				const auto child = decl->getBody();
-
-				if (child != nullptr && nodeMapping_->find(child->getID(astContext_)) != nodeMapping_->end())
-				{
-					graph.InsertDependency(codeUnitsCount, nodeMapping_->at(child->getID(astContext_)));
-				}
-			}
-
-			codeUnitsCount++;
-		}
-		else
-		{
-			out::Verb() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
-		}
+		ProcessDeclaration(decl);
 
 		return true;
 	}
@@ -380,25 +493,7 @@ public:
 			return true;
 		}
 		
-		if (nodeMapping_->find(expr->getID(astContext_)) == nodeMapping_->end())
-		{
-			const auto id = expr->getID(astContext_);
-			const auto typeName = expr->getStmtClassName();
-			const auto codeSnippet = RangeToString(astContext_, expr->getSourceRange());
-			const auto line = astContext_.getSourceManager().getSpellingLineNumber(expr->getBeginLoc());
-
-			if (InsertMapping(id, codeSnippet, line))
-			{
-				snippetSet_[codeSnippet] = true;
-				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, "goldenrod");
-			}
-
-			codeUnitsCount++;
-		}
-		else
-		{
-			out::Verb() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
-		}
+		ProcessCallExpression(expr);
 
 		return true;
 	}
@@ -411,6 +506,8 @@ public:
 	 */
 	bool VisitStmt(clang::Stmt* stmt)
 	{
+		// TODO: Handle assignment expressions as nodes.
+		
 		// Skip included files.
 		if (!astContext_.getSourceManager().isInMainFile(stmt->getBeginLoc()))
 		//const auto loc = clang::FullSourceLoc(stmt->getBeginLoc(), astContext_.getSourceManager());
@@ -419,72 +516,13 @@ public:
 			return true;
 		}
 		
-		// Handle variable declarations.
-		if (llvm::isa<clang::DeclStmt>(stmt))
-		{
-			const auto declStmt = llvm::cast<clang::DeclStmt>(stmt);
-			
-			for (auto decl : declStmt->decls())
-			{
-				if (decl != nullptr)
-				{
-					const auto id = decl->getID();
-
-					if (declNodeMapping_->find(id) == declNodeMapping_->end())
-					{
-						(*declNodeMapping_)[id] = codeUnitsCount;
-					}
-				}
-			}
-		}
-		
-		// Handle variables.
-		if (llvm::isa<clang::DeclRefExpr>(stmt))
-		{
-			const auto parentID = llvm::cast<clang::DeclRefExpr>(stmt)->getFoundDecl()->getID();
-
-			if (declNodeMapping_->find(parentID) != declNodeMapping_->end())
-			{
-				graph.InsertDependency((*declNodeMapping_)[parentID], codeUnitsCount);
-			}
-		}
-		
 		if (llvm::isa<clang::Expr>(stmt))
 		{
 			// Ignore expressions in general since they tend to be too small.
 			return true;
 		}
 
-		if (nodeMapping_->find(stmt->getID(astContext_)) == nodeMapping_->end())
-		{
-			const auto id = stmt->getID(astContext_);
-			const auto typeName = stmt->getStmtClassName();
-			const auto codeSnippet = RangeToString(astContext_, stmt->getSourceRange());
-			const auto line = astContext_.getSourceManager().getSpellingLineNumber(stmt->getBeginLoc());
-
-			out::Verb() << "Node " << codeUnitsCount << ": Type " << typeName << "\n";
-
-			if (InsertMapping(id, codeSnippet, line))
-			{
-				snippetSet_[codeSnippet] = true;
-				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, "darkorchid");
-
-				// Apparently only statements have children.
-				for (auto it = stmt->child_begin(); it != stmt->child_end(); ++it)
-				{
-					if (*it != nullptr && nodeMapping_->find(it->getID(astContext_)) != nodeMapping_->end())
-					{
-						graph.InsertDependency(codeUnitsCount, nodeMapping_->at(it->getID(astContext_)));
-					}
-				}
-			}
-
-			codeUnitsCount++;
-		}
-		else
-		{
-			out::Verb() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
-		}
+		ProcessStatement(stmt);
 
 		return true;
 	}
