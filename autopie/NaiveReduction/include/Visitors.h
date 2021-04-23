@@ -295,8 +295,19 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 	{
 		if (stmt != nullptr && llvm::isa<clang::Expr>(stmt))
 		{
+			const auto id = stmt->getID(astContext_);
+			const auto typeName = stmt->getStmtClassName();
+			const auto codeSnippet = RangeToString(astContext_, stmt->getSourceRange());
+			const auto line = astContext_.getSourceManager().getSpellingLineNumber(stmt->getBeginLoc());
+			
 			for (auto it = stmt->child_begin(); it != stmt->child_end(); ++it)
 			{
+				const auto it_id = it->getID(astContext_);
+				const auto it_typeName = it->getStmtClassName();
+				const auto it_codeSnippet = RangeToString(astContext_, it->getSourceRange());
+				const auto it_line = astContext_.getSourceManager().getSpellingLineNumber(it->getBeginLoc());
+				
+				// The statement / expression might contain a direct variable usage, e.g. `x = 5;`
 				if (*it != nullptr && llvm::isa<clang::DeclRefExpr>(*it))
 				{
 					const auto parentID = llvm::cast<clang::DeclRefExpr>(*it)->getFoundDecl()->getID();
@@ -305,6 +316,17 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 					{
 						graph.InsertDependency((*declNodeMapping_)[parentID], codeUnitsCount);
 					}
+				}
+				// Sometimes the variable is hidden beneath an implicit cast.
+				else if (*it != nullptr && llvm::isa<clang::ImplicitCastExpr>(*it))
+				{
+					HandleVariableInstancesInStatements(*it);
+				}
+				// Other times, the statement or expression might be using a variable inside an binary operator expression.
+				// e.g. `assert(x == 5);`
+				else if (*it != nullptr && llvm::isa<clang::BinaryOperator>(*it))
+				{
+					HandleVariableInstancesInStatements(*it);
 				}
 			}
 		}
