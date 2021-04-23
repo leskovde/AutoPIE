@@ -139,7 +139,7 @@ declarations, and expressions and removing one code unit at a time.
   correct.
 \end{defn}
 
-Algorithm~\ref{alg:naive} describes the naive process. 
+Algorithm in figure~\ref{alg:naive} describes the naive process. 
 Once the input source code is provided, it is split into $n$ of these 
 code units.
 Every unit is then taken into consideration, removing it and keeping every 
@@ -149,14 +149,14 @@ respective code unit.
 These outputs are then fed back as input code and processed the same way 
 one by one.
 
-\begin{algorithm}
-	\label{alg:naive}
-	\caption{Naive Statement Removal.} 
-	\hspace*{\algorithmicindent} \textbf{Input:} \\
-	\hspace*{\algorithmicindent}\hspace*{\algorithmicindent} $L \ldots$ location of the error. \\
-	\hspace*{\algorithmicindent}\hspace*{\algorithmicindent} $P \ldots$ the input source code. \\
-	\hspace*{\algorithmicindent}\hspace*{\algorithmicindent} $A \ldots$ the input program's arguments. \\
-	\hspace*{\algorithmicindent} \textbf{Output:} The reduced source code. 
+\begin{figure}[h]
+	\hrule height.8pt depth0pt \kern2pt
+	\textbf{Input:} \\
+	\hspace*{\algorithmicindent} $L \ldots$ location of the error. \\
+	\hspace*{\algorithmicindent} $P \ldots$ the input source code. \\
+	\hspace*{\algorithmicindent} $A \ldots$ the input program's arguments. \\
+	\textbf{Output:} The reduced source code. 
+	\hrule height.8pt depth0pt \kern2pt
 	\begin{algorithmic}[1]
 		\State $allVariants \leftarrow \{\}$
 		\State $variantQueue \leftarrow \{\}$
@@ -178,7 +178,10 @@ one by one.
 		\EndFor
 		\State \Return none.
 	\end{algorithmic} 
-\end{algorithm}
+	\hrule height.8pt depth0pt \kern2pt
+	\label{alg:naive}
+	\caption{Naive Statement Removal.} 
+\end{figure}
 
 Each iteration with the input size of $n$ code units results in $n$ new 
 variants, those contribute to $n * (n - 1) $ new results.
@@ -407,14 +410,14 @@ during static slicing.
 Nonetheless, slicing statically before doing so dynamically has been 
 a rule of thumb for this project.
 
-\begin{algorithm}
-	\label{alg:slicing}
-	\caption{Minimization Based on Slicing.} 
-	\hspace*{\algorithmicindent} \textbf{Input:} \\
-	\hspace*{\algorithmicindent}\hspace*{\algorithmicindent} $L \ldots$ location of the error. \\
-	\hspace*{\algorithmicindent}\hspace*{\algorithmicindent} $P \ldots$ the input source code. \\
-	\hspace*{\algorithmicindent}\hspace*{\algorithmicindent} $A \ldots$ the input program's arguments. \\
-	\hspace*{\algorithmicindent} \textbf{Output:} The reduced source code. 
+\begin{figure}[h]
+	\hrule height.8pt depth0pt \kern2pt
+	\textbf{Input:} \\
+	\hspace*{\algorithmicindent} $L \ldots$ location of the error. \\
+	\hspace*{\algorithmicindent} $P \ldots$ the input source code. \\
+	\hspace*{\algorithmicindent} $A \ldots$ the input program's arguments. \\
+	\textbf{Output:} The reduced source code. 
+	\hrule height.8pt depth0pt \kern2pt
 	\begin{algorithmic}[1]
 		\State $S \leftarrow$ GetStatementAtLocation($L$)
 		\State $variableList \leftarrow \{\}$
@@ -440,7 +443,10 @@ a rule of thumb for this project.
 		\State $P' \leftarrow$ PreciseReduction($P'$, $L'$, $A$)
 		\State \Return $P'$.
 	\end{algorithmic} 
-\end{algorithm}
+	\hrule height.8pt depth0pt \kern2pt
+	\label{alg:slicing}
+	\caption{Minimization Based on Slicing.} 
+\end{figure}
 
 The proposed systematical solution is described in algorithm~\ref{alg:slicing}.
 The input program is sliced statically w.r.t.

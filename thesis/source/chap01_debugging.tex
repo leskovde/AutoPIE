@@ -173,11 +173,11 @@ without the~definition as well.
 
 \change[inline]{TODO: Move comments more towards the~center.}
 
-\begin{algorithm}
-	\label{alg:dd}
-	\caption{Minimizing Delta Debugging Algorithm.} 
-	\hspace*{\algorithmicindent} \textbf{Input:} $\sigma \ldots$ the test's input string. \\
-	\hspace*{\algorithmicindent} \textbf{Output:} The reduced failure-causing substring. 
+\begin{figure}[h]
+	\hrule height.8pt depth0pt \kern2pt
+	\textbf{Input:} $\sigma \ldots$ the test's input string. \\
+	\textbf{Output:} The reduced failure-causing substring. 
+	\hrule height.8pt depth0pt \kern2pt
 	\begin{algorithmic}[1]
 		\State $n \leftarrow 2$
 		\State Split the~string $\sigma$ into $\alpha_1,\dots,\alpha_n$ of~equal size.
@@ -205,7 +205,10 @@ without the~definition as well.
 			\State goto (2).
 		\EndIf
 	\end{algorithmic} 
-\end{algorithm}
+	\hrule height.8pt depth0pt \kern2pt
+	\label{alg:dd}
+	\caption{Minimizing Delta Debugging Algorithm.} 
+\end{figure}
 
 The simplified algorithm seen in figure~\ref{alg:dd} splits the~input into 
 $n$ even-sized parts and their respective complements. 
