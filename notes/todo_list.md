@@ -28,11 +28,11 @@
 - [ ] pouzit static slicer v naivnim zpusobu pro urychleni
 - [x] ~~zkusit portnout giri na novejsi LLVM~~
 - [ ] zkusit heuristiku - urcit, zda je vyhodne pouzivat dynamicky slicer podle toho, jak moc se kod branchuje
-- [ ] ~~zkusit formulovat a dokazat vetu "program je konecny prave tehdy, kdyz je kazdy jeho podprogram konecny"~~ (neresitelne, Rice theorem)
+- [x] ~~zkusit formulovat a dokazat vetu "program je konecny prave tehdy, kdyz je kazdy jeho podprogram konecny"~~ (neresitelne, Rice theorem)
 - [ ] vymyslet, jak minimalizovat cely program a ne jen main
 - [ ] udelat experimenty na soutezi SV-COMP
 - [ ] nechavat v redukovanem kodu relevantni konstanty (QoL, protoze slicing konstanty ignoruje)
-- [ ] opravit komentare a argumenty (usage a to, kde prijde argument `--`) ve vsech branches
+- [x] opravit komentare a argumenty (usage a to, kde prijde argument `--`) ve vsech branches
 - [x] vytvorit strukturu projektu tak, aby slo branche mergovat do sebe
 - [ ] udelat setup script / nejaky jednoduchy installer pro cely tool (prerekvizity, build vsech binarek mych projektu)
 - [ ] update manualu v master / Naive_Dev
@@ -52,3 +52,7 @@
 - [x] zjistit, jaky jazyk je na vstupu a podle nej menit nektere prikazy (napr. kompilace)
 - [ ] makefile - pridat debug target
 - [ ] pridat testy specificky pro c++ (zatim mam jen .c files)
+- [x] pridat dependence mezi deklaracemi promennych a jejich pouzitim
+- [x] naivni reseni provest zpusobem iterativniho prohlubovani
+- [x] zprovoznit reduction ratio
+- [x] zaridit, aby se main neodebral pri redukci
