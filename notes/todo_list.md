@@ -41,7 +41,7 @@
 - [x] odstranit klicovat slova `new` z listingu! nahradit je za reference nebo unique pointery
 - [x] zmenit popis visitoru - visit funkce se volaji opacne, nez to mam v textu
 - [ ] do pseudokodu napsat podminku, ze se nesmi odebrat radka v kodu, ktera zpusobuje error
-- [ ] popsat, proc je v moji domene determinismus - spusteni typickeho programu nekolikrat probehne pokazde jinym zpusobem (co se tyce naplanovani instrukci atd.), ale dojde se ke stejnemu vysledku... chci minimalizovat nedeterminismus
+- [x] ~~popsat, proc je v moji domene determinismus - spusteni typickeho programu nekolikrat probehne pokazde jinym zpusobem (co se tyce naplanovani instrukci atd.), ale dojde se ke stejnemu vysledku... chci minimalizovat nedeterminismus~~ paragraf jsem vypustil, neni potreba vysvetlovat
 - [ ] premyslet o zpusobu prevedeni na bytecode (to uz umim pres ` Compile()`) a ten pak prohnat pres pattern recognition
 - [ ] k introduction dopsat goals
 - [ ] zjistit si neco o C-Reduce a pripadne to i zminit v textu
