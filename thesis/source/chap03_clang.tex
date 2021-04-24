@@ -28,6 +28,11 @@ Some programmers require complicated additional features, while others
 prefer an easy-to-use interface. 
 The tooling API has been split into multiple libraries and frameworks,
 including Plugins and LibClang.
+Explaining the two mentioned libraries is necessary. 
+It is essential to show their capabilities before introducing LibTooling. 
+LibTooling is the tooling library ultimately chosen for this project.
+
+\paragraph{Plugins.}
 
 The~library intuitively called Plugins is used for plugin development.
 The library is linked dynamically, resulting in~relatively small tools.
@@ -54,6 +59,8 @@ command or \icode{-fplugin} on the~command line when running clang.
 The plugin takes those arguments from the~command line that are prefixed 
 by \icode{-Xclang}.
 
+\paragraph{LibClang.}
+
 Another framework, LibClang, offers a~simple C and Python API for quick 
 tool writing. 
 Unlike Plugins and LibTooling, which will be mentioned later, the~code 
@@ -62,6 +69,8 @@ This stability implies that tools written using LibClang do not require
 upkeep with every new LLVM/Clang release. 
 Overall, the~framework and tools written using it are high-level and 
 are easily readable.
+
+\paragraph{LibTooling.}
 
 The most feature woven set of~libraries is LibTooling. 
 Unlike Plugins, LibTooling \citep{libtooling:online} 
@@ -138,13 +147,16 @@ is different from the~typical AST.
 It saves and carries more data, namely context.  
 For example, it contains additional information to map source 
 code to nodes and capture semantics. 
+This chapter describes the Clang node type hierarchy, the tree's 
+representation in memory, and different ways of traversing an AST.
+\subsection{Node types}
 
-Its nodes belong to a~vast class hierarchy. 
+Clang AST's nodes belong to a~vast class hierarchy. 
 This hierarchy contains classes that represent every supported 
 source code construct.
 Nodes are of~four different types: statements (\icode{Stmt}), 
-declarations (\icode{Decl}), declaration context (\icode{DeclContext}),
-and types (\icode{Type}). 
+declarations (\icode{Decl}), specific declaration context 
+(\icode{DeclContext}), and types (\icode{Type}). 
 However, in~the APIs mentioned above, the~nodes do not share
 a common ancestor.
 
@@ -291,6 +303,8 @@ to a Clang tool.}
 \label{lst:astdump}
 \end{figure}
 
+\subsection{Representation}
+
 The Clang AST attempts to represent the~source code as faithfully 
 as possible. 
 It can be said that Clang's AST is closer to C, C++, 
@@ -396,6 +410,8 @@ its structure.
 Generally, changes to the~Clang AST are strongly discouraged, 
 although some changes happen internally. 
 Those changes include template instantiation.
+
+\subsection{Traversal}
 
 Traversing the~Clang AST is possible through two different APIs. 
 First, it is possible to invoke an \icode{ASTFrontendAction} instance, 
