@@ -113,14 +113,24 @@ Similarly, it has not been determined how to recognize programs that can
 run indefinitely.
 
 Minimization of programs requires two steps—first, the removal of chunks 
-of the given source code.
+of the given source code. 
+The following sections describe several techniques of chunk removal. 
+The naive approach is explained briefly. 
+Possible improvements to this approach are then described to improve its 
+runtime. 
+Subsequent approaches employ techniques discussed in 
+chapter~\ref{chap:automated}. 
+The method based on Delta debugging offers a modified version of 
+the debugging algorithm. 
+Another approach combines different types of slices to achieve the best 
+results.
+
 Second, performing a validation to determine whether the result meets 
-the required criteria, i.e., minimality and correctness.
-Following approaches for both steps have been considered.
+the required criteria, i.e., minimality and correctness. 
+Descriptions of naive and systematic validations are explained in the 
+sections below.
 
-\section{Naive reduction}
-
-\subsection{Description}
+\section{Naive reduction}\label{chap:naive}
 
 The simplest approach examined in this project is the naive removal of each 
 source code statement.
@@ -197,11 +207,6 @@ and verify them from the smallest to the largest.
 Depending on the input program's execution time, the verification might take 
 more time than the variant generation step.
 
-\subsection{Takeaways} \label{sec:takeaways}
-
-\change{TODO: Draw parallels to the traveling salesman problem and reduce 
-the complexity to exponential.}
-
 The algorithm can be sped up by using the following techniques.
 The input's size can be significantly reduced by performing static 
 slicing of the input program as the first step.
@@ -209,13 +214,13 @@ Compared to the naive approach, static slicing is a significantly less
 expensive operation.
 Furthermore, it does not require the program to run.
 With two main issues concerning the current discussed approach - the size 
-of the input and its execution time - static slicing manages to ignore 
+of the input and its execution time - static slicing helps to eliminate 
 one of these factors.
 Both the input size and subsequent execution time could both be brought 
 down by using dynamic slicing.
 
-The usage of dynamic slices, as opposed to static, has its potential pros.
-On the other hand, it has definitive cons.
+The usage of dynamic slices, as opposed to static, has its potential benefits.
+On the other hand, it has definitive limitations.
 One such con is the requirement to run the said program.
 This point will be discussed in more detail later; however, let us consider 
 static slicing for this approach to minimize the number of program executions.
@@ -258,11 +263,10 @@ the algorithms' quicker running time.
 The running time will especially be left unchanged in programs that do not 
 employ structured or object-oriented programming.
 
-
 \section{Delta debugging}
 
-Zeller's Delta debugging \cite{Zeller99, Zeller01, Zeller02} has been 
-described in detail in section 1.1.
+Zeller's Delta debugging \cite{Zeller99, Zeller02, Zeller01} has been 
+described in detail in section~\ref{chap:delta}.
 Although it serves primarily to find failure-inducing parts of inputs when 
 run on test cases, it can tremendously help with program minimization.
 For a given input, Delta debugging attempts to find and isolate its 
@@ -360,7 +364,7 @@ at runtime.
 Static slicing does not suffer from the mentioned issue.
 It is inexpensive in terms of execution time regardless of the purpose 
 of the sliced program.
-With the arguments trick mentioned in section~\ref{sec:takeaways}, 
+With the arguments trick mentioned in chapter~\ref{chap:naive}, 
 static slices can be as small as dynamic ones.
 Minimality of the slice is, however, not guaranteed.
 
@@ -448,7 +452,7 @@ a rule of thumb for this project.
 	\label{alg:slicing}
 \end{figure}
 
-The proposed systematical solution is described in algorithm~\ref{alg:slicing}.
+The proposed systematical solution is described in figure~\ref{alg:slicing}.
 The input program is sliced statically w.r.t.
 every variable available at the failure-inducing line.
 The slices are then unified and given as the input to a dynamic slicer.
