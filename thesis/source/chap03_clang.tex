@@ -377,7 +377,7 @@ The same can be said for programs that contain compile-time errors.
  */
 class CountAction final : public ASTFrontendAction
 {
-	CounterObject statementCount;
+	int statementCount_;
 	
 public:
 
@@ -385,7 +385,7 @@ public:
 	void EndSourceFileAction() override
 	{
 		outs() << "Statement count: " 
-			<< statementCount.Value << "\n";
+			<< statementCount_ << "\n";
 	}
 
 	std::unique_ptr<ASTConsumer> CreateASTConsumer(
@@ -394,7 +394,7 @@ public:
 		// Pass any data to the consumer.
 		return std::unique_ptr<ASTConsumer>(
 			std::make_unique<CountASTConsumer>(
-				&ci, &statementCount));
+				&ci, statementCount_));
 	}
 };
 \end{lstlisting}
@@ -442,18 +442,18 @@ displayed.
  */
 class CountASTConsumer final : public ASTConsumer
 {
-	CountASTVisitor* visitor;
+	std::unique_ptr<CountASTVisitor> visitor_;
 
 public:
 	// Pass any desired data to the visitor.
-	CountASTConsumer(CompilerInstance* ci, CounterObject* counter)
-		: visitor(new CountASTVisitor(ci, counter)) { }
+	CountASTConsumer(CompilerInstance* ci, int& counter)
+		: visitor_(std::make_unique<CountASTVisitor>(ci, counter)) { }
 
 	void HandleTranslationUnit(ASTContext& context) override
 	{
 		// Use the ASTContext to reference 
 		// the translation unit decl.
-		visitor->TraverseDecl(
+		visitor_->TraverseDecl(
 			context.getTranslationUnitDecl());
 	}
 };
@@ -572,20 +572,20 @@ way of~differentiating node types is casting them dynamically.
  */
 class CountASTVisitor : public clang::RecursiveASTVisitor<CountASTVisitor>
 {
-        clang::ASTContext* astContext;
-        CounterObject* statementCount;
+        clang::ASTContext& astContext_;
+        int& statementCount_;
 
 public:
-        CountASTVisitor(clang::CompilerInstance* ci, CounterObject* counter)
-                : astContext(&ci->getASTContext()), 
-					statementCount(counter) { }
+        CountASTVisitor(clang::CompilerInstance* ci, int& counter)
+                : astContext_(&ci->getASTContext()), 
+					statementCount_(counter) { }
 
 		// Perform a body of actions upon 
 		// encountering a statement.
         virtual bool VisitStmt(clang::Stmt* st)
         {
                 outs() << "Found a statement.\n";
-				(*statementCount)++;
+				statementCount_++;
 				
                 return true;
         }
