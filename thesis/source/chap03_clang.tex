@@ -301,9 +301,12 @@ This supplementary data makes information that would be lost
 otherwise, such as compile-time constants, available 
 in the~unreduced form. 
 
-For each parsed source code file, an instance of~ASTContext 
+For each parsed source code file, an instance of~\icode{ASTContext} 
 is used to represent the~AST. 
-The ASTContext allows the~programmer to use many valuable methods. 
+The \icode{ASTContext} allows the~programmer to use many valuable methods. 
+Table~\ref{tab:astcontext} contains a part of \icode{ASTContext}'s Doxygen 
+documentation. 
+It mainly presents methods that were used in this project.
 
 \begin{table}[b!]\centering
 	\begin{tabular}{p{0.25\linewidth} p{0.37\linewidth} p{0.29\linewidth}}
@@ -313,17 +316,17 @@ The ASTContext allows the~programmer to use many valuable methods.
 		\midrule
 		\icode{DynTypedNodeList} & \icode{getParents(const NodeT \&Node)} & 
 		Forwards to get node parents from the \icode{Parent\-Map\-Context}. \\
-		\icode{SourceManager \&} & \icode{getSourceManager()} & --- \\
-		\icode{const TargetInfo \&} & \icode{getTargetInfo() const} & --- \\
-		\icode{const LangOptions \&} & \icode{getLangOpts() const} & --- \\
-		\icode{TranslationUnit\-Decl *} & \icode{getTranslationUnitDecl()} & 
+		\icode{SourceManager\&} & \icode{getSourceManager()} & --- \\
+		\icode{const TargetInfo\&} & \icode{getTargetInfo() const} & --- \\
+		\icode{const LangOptions\&} & \icode{getLangOpts() const} & --- \\
+		\icode{TranslationUnit\-Decl*} & \icode{getTranslationUnitDecl()} & 
 		--- \\
 		\bottomrule
 	\end{tabular}
-\label{tab:astcontext}
 \caption{Digest of \icode{ASTContext}'s documentation.
 The documentation can be found at
 \url{https://clang.llvm.org/doxygen/classclang_1_1ASTContext.html}.}
+\label{tab:astcontext}
 \end{table}
 
 The ASTContext bundles Clang's AST for a~translation unit 
@@ -488,6 +491,8 @@ offers \icode{Visit} methods that
 can be overridden to the~programmer's liking. 
 Each override specifies the~type of~node on which the~method 
 triggers and the~actions that should be performed.
+A portion of these methods is presented in table~\ref{tab:astvisitor}. 
+The table's contents are based on the Doxygen documentation.
 
 \begin{table}[b!]\centering
 	\begin{tabular}{p{0.39\linewidth} p{0.52\linewidth}}
@@ -522,10 +527,10 @@ triggers and the~actions that should be performed.
 		\multicolumn{2}{l}{\footnotesize \textit{Note:}
 		$^a$ All presented methods return \icode{bool}.}
 	\end{tabular}
-\label{tab:astvisitor}
 \caption{Digest of \icode{RecursiveASTVisitor}'s documentation.
 The documentation can be found at 
 \url{https://clang.llvm.org/doxygen/classclang_1_1RecursiveASTVisitor.html}.}
+\label{tab:astvisitor}
 \end{table}
 
 The implementation seen on listing~\ref{lst:countvisitor} illustrates
