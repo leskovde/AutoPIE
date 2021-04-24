@@ -641,9 +641,8 @@ For each node, the~visitor searches the~class hierarchy from
 the node's dynamic type up. 
 Once the~type is determined, the~visitor calls the~appropriate 
 overridden \icode{Visit} method. 
-Traversing the~class hierarchy from the~bottom up 
-translates to calling specific visit functions for specific types 
-rather than visit functions of~their abstract types.
+Traversing the class hierarchy this way translates to calling the methods 
+for abstract types first, followed by more specific visit functions.
 
 The tree traversal can be done in~a preorder or postorder fashion. 
 Preorder traversal is the~default. the~developer can also stop

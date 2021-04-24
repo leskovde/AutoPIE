@@ -39,7 +39,7 @@
 - [ ] pridat do manualu info o setupu
 - [x] udelat do makefilu target pro doxygen
 - [x] odstranit klicovat slova `new` z listingu! nahradit je za reference nebo unique pointery
-- [ ] zmenit popis visitoru - visit funkce se volaji opacne, nez to mam v textu
+- [x] zmenit popis visitoru - visit funkce se volaji opacne, nez to mam v textu
 - [ ] do pseudokodu napsat podminku, ze se nesmi odebrat radka v kodu, ktera zpusobuje error
 - [ ] popsat, proc je v moji domene determinismus - spusteni typickeho programu nekolikrat probehne pokazde jinym zpusobem (co se tyce naplanovani instrukci atd.), ale dojde se ke stejnemu vysledku... chci minimalizovat nedeterminismus
 - [ ] premyslet o zpusobu prevedeni na bytecode (to uz umim pres ` Compile()`) a ten pak prohnat pres pattern recognition
