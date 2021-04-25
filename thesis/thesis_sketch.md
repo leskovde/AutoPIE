@@ -68,10 +68,15 @@ Contains the most up-to-date outline and a summary of what's being worked on.
 6. Implementation
 
    - TBD: The text depends on how the programming part goes, mention all the obstacles and challenges, mention the requirements (HW and SW, e.g. Docker), mention used work (DG, giri) and how it was used in this project
+   - explain the common parts of the project (argument parsing, code unit splitting, compilation, verification)
+   - for each project, document the coding part
+   - for each approach, describe the workflow (what projects are used in which order, what is their output, etc.)
+   - explain the limitations of the implementation (poor delta implementation, missing handlers for certain language constructs, etc.)
 
 7. Experiments
 
    - run the project on tailored tests (i.e. programs from the target domain that are expected to "work well" with the minimization) and plot some results (reduction rate, speed, compare different approaches and highlight their strengths)
+   - compare a total of 8 approaches: naive, naive with static slicing, naive with static slicing and argument assignment, delta, delta with static slicing, delta with static slicing and argument assignment, systematic, systematic with argument assignment
    - run the project on the SV-COMP competition benchmark and show the results
 
 8. Conclusion
