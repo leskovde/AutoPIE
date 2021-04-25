@@ -149,14 +149,10 @@ declarations, and expressions and removing one code unit at a time.
 \end{defn}
 
 Algorithm in figure~\ref{alg:naive} describes the naive process. 
-Once the input source code is provided, it is split into $n$ of these 
-code units.
-Every unit is then taken into consideration, removing it and keeping every 
-other unit in the code.
-This process results in $n$ new variants, each complementing their 
-respective code unit.
-These outputs are then fed back as input code and processed the same way 
-one by one.
+Once the input source code is provided, it is split into $n$ code units.
+Every unit has two possible states: it is either kept or removed.
+Analogically to generating every subset of a set of elements, this
+variant generating algoritm results in $2^n$ possible variants.
 
 \begin{figure}[h]
 	\hrule height.8pt depth0pt \kern2pt
@@ -168,14 +164,15 @@ one by one.
 	\hrule height.8pt depth0pt \kern2pt
 	\begin{algorithmic}[1]
 		\State $allVariants \leftarrow \{\}$
-		\State $variantQueue \leftarrow \{\}$
-		\State $variantQueue.Push(P)$
-		\While{$variantQueue.Count > 0$}
-			\State $currentVariant \leftarrow variantQueue.Pop()$
-			\State $(C_1, C_2, \ldots, C_n) \leftarrow$ SplitIntoCodeUnits($currentVariant$)
-			\ForAll{$C_i \in (C_1, C_2, \ldots, C_n)$}
-				\State ${C'}_i \leftarrow$ Complement($C_i$)
-				\State $variantQueue.Push({C'}_i)$
+		\State $(C_1, C_2, \ldots, C_n) \leftarrow$ SplitIntoCodeUnits($currentVariant$)
+		\State $bitField \leftarrow [{bit}_{n-1}, {bit}_{n-2}, \ldots, {bit}_0]$,  
+			$\forall i \in 0 \ldots n-1 : bit_i = 0$
+		\While{$\exists i \in 0 \ldots n-1 : bit_i = 0$}
+			\State $currentVariant \leftarrow (C_1, C_2, \ldots, C_n)$
+			\For{$i \in 0 \ldots n-1$}
+				\If{bitField[i] = 0}
+					\State $currentVariant \leftarrow currentVariant \setminus \{C_{i+1}\}$
+				\EndIf
 			\EndFor
 			\State $allVariants.Add(currentVariant)$
 		\EndWhile
@@ -192,10 +189,8 @@ one by one.
 	\label{alg:naive}
 \end{figure}
 
-Each iteration with the input size of $n$ code units results in $n$ new 
-variants, those contribute to $n * (n - 1) $ new results.
-The naive time complexity is, therefore, the abysmal $O(n!)$.
-Moreover, the $n!$ variants require some verification and classification 
+The naive time complexity is, therefore, the abysmal $O(2^n)$.
+Moreover, the $2^n$ variants require some verification and classification 
 to determine whether they are minimal or not.
 The correctness of many of the invalid variants can be ruled out at 
 compile-time.
