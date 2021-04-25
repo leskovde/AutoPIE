@@ -102,6 +102,113 @@ Stress is placed on the location's context in which the error arises.
 As long as locations in $\mathcal{P'}$ are adjusted based on those in 
 $\mathcal{P}$, the location of the error does not matter.
 
+Figure~\ref{lst:reductionexample} contains an example of $\mathcal{P}$ and its 
+minimal variant $\mathcal{P'}$. 
+All statements that do not directly contribute to the specified 
+runtime error are removed.
+A non-minimal variant might contain additional non-impactful lines, 
+such as line 32.
+
+\begin{figure}[p]
+\begin{minipage}{0.46\textwidth}
+\begin{lstlisting}[basicstyle=\small, caption=Program $\mathcal{P}$.,
+  language=C++, label={lst:reductionoriginal}]
+#include <stdio.h>
+#include <stdlib.h>
+
+long get_factorial(int n)
+{
+	// Missing the stopping 
+	// constraint 
+	// => segmentation fault.
+	return (n * 
+		get_factorial(n - 1));
+}
+
+int main()
+{
+	const int n = 20;
+	long loop_result = 1;
+	
+	for (int i = 1; i <= n; 
+		i++)
+	{
+		loop_result *= i;
+	}
+	
+	long recursive_result = 
+		get_factorial(n);
+	
+	if (loop_result != 
+		recursive_result)
+	{
+		printf("%ld, %ld\n", 
+			loop_result, 
+			recursive_result);
+			
+		return (1);
+	}
+	
+	printf("Success.\n");
+	
+	return (0);
+}
+\end{lstlisting}
+\end{minipage}
+\hfill
+\begin{minipage}{.45\textwidth}
+\begin{lstlisting}[basicstyle=\small, caption=Minimal va\-riant $\mathcal{P'}$., 
+  language=C++, numbers=right,
+  label={lst:reductionminimal}]
+#include <stdio.h>
+#include <stdlib.h>
+
+long get_factorial(int n)
+{
+	// Missing the stopping 
+	// constraint 
+	// => segmentation fault.
+	return (n * 
+		get_factorial(n - 1));
+}
+
+int main()
+{
+	const int n = 20;
+	
+	
+	
+	
+	
+	
+	
+	
+	long recursive_result = 
+		get_factorial(n);
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+}
+\end{lstlisting}
+\end{minipage}
+\caption{A program resulting in a segmentation fault error and its 
+minimal erroneous variant. 
+The variant is stripped off all statements unnecessary for the error 
+to occur. }
+\label{lst:reductionexample}
+\end{figure}
+
 \change[inline]{TODO: Come up with an actual way to make sure a program 
 is minimal.}
 \change[inline]{TODO: Come up with an approximation to guess whether
