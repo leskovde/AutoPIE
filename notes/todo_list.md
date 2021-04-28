@@ -56,3 +56,6 @@
 - [x] naivni reseni provest zpusobem iterativniho prohlubovani
 - [x] zprovoznit reduction ratio
 - [x] zaridit, aby se main neodebral pri redukci
+- [ ] zkontrolovat Delta debugging podle https://www.cs.utah.edu/~regehr/papers/pldi12-preprint.pdf a updatenout obe sekce (chapter 1.1 a 4.2) (neni potreba delat nejaky chytry delta debugging, staci hlavne neco funkcniho)
+- [ ] pripsat neco o CReduce pomoci https://www.cs.utah.edu/~regehr/papers/pldi12-preprint.pdf
+- [ ] **! napsat, ze moje domena je closed => programy za behu neberou zaden externi vstup**

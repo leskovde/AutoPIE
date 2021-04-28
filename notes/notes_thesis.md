@@ -163,3 +163,43 @@
   - control flow and data flow analysis and graph generation - talked about earlier
   - points-to analysis - talked about earlier
   - supports many languages including C and C++ (ending with c++17)
+  
+  ------
+  
+  - the result of delta is a concat of unremovable strings
+  - delta produces bad results - might depend on undefined behaviour, too large
+  - effective program reduction requires more than straightforward delta debugging
+  - Bugpoint tool - reduces input on LLVM IR level
+  - some reducers stop at a local minimum, which is still large
+  - line based delta debugging might be easy to implement, but its output is large
+  - when given only the initial failing test case, the only way to find the minimum variant is by using exhaustive search
+  - suffers from the same issue - exponentially many variants, no way of predicting whether an error will be present in the result
+  - it is possible to use a SAT solver for semantic verification
+  - heuristics - starting with the initial input and transforming it while testing it => test case REDUCTION, not MINIMIZATION
+  - dd - minimizes the difference between a failure-inducing test case and a given template
+  - ddmin - the template is empty => ddmin minimizes the size
+  - ddmin - greedy search, can skip optimal solution by accident by being stuck on a local minimum
+  - hierarchical delta debugging - better results and execution time that ddmin, uses AST
+  - Berkley delta - line based ddmin - a utility called topformflat transforms the input so that all nesting below a certain depth is on one line
+  - precise reduction requires steps such as removal of arguments from functions and their calling sites
+  - generalized delta: a combination of search algorithm, transformation operator, validity-checking function and, a fitness function (with respect to what should the reduction be done)
+  - ! getting rid of undefined behaviour - check for warnings in the compiler's output !
+  - ! getting rid of more undefined behaviour - run Clang static analyzer (or other analyzers such as Infer) and terminate when warnings / errors are produced !
+  	- not all problematic behaviour can be discovered by these two approaches !
+  - problematic behaviours:
+  	- use before initialization
+  	- pointer and array errors
+  	- integer overflow and shift past bandwidth
+  	- struct and union errors
+  	- mismatches between printf's arguments and format string
+  - validation - must be done using semantic analyzers, not static analyzers
+  - creduce's handling of reduction / validation suggests they are tailored towards a specific language... the goal of autopie is to run on both C and C++
+  - instrumentation is useful for AST-based reduction - think about how it can be used in autopie
+  - function inlining has great effect on reduction
+  - generally, their reduction implementations are much larger than mine
+  - examples of useful transformations:
+  	 - removing bodies of compound statements, changing integer constants to 0 or 1
+  	- removing just the parentheses or curly braces and leaving their bodies in the code, replacing ternary operators with the code from one of their branches
+  	- removing chunks of code, starting from the size of the input file and halving down to one line - similar to Berkley delta
+  	- running a formating tool to fix indentations, etc. - done inside the loop, not as a pre/postprocessing step
+
