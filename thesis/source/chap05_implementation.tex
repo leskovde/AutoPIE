@@ -1,198 +1,283 @@
 \chapter{Implementation}
 
-In order to compare results, the different approaches described in chapter 4 need their concrete implementations
-There are reliable implementations of some mentioned techniques, such as Delta debugging (TODO: link DD implementations)
-However, only some of these implementations were used
-Most notably, the static and dynamic slicers are reused from other works
+In order to compare results, the different approaches described in 
+chapter~\ref{chap:minimization} need their concrete implementations.
+There are reliable implementations of some mentioned techniques, such as 
+Delta debugging.\change[]{TODO: link DD implementations.}
+However, only some of these implementations were used.
+Most notably, the static and dynamic slicers are reused from other works.
 The majority of the project was built using LibTooling and LLDB API.
-The following sections describe the process of this project's development
-Used technologies and implementations are discussed first
-The rest is a description of the development of different approaches and their components.
+The following sections describe the process of this project's development.
+Used technologies and implementations are discussed first.
+The rest is a description of the development of different approaches and 
+their components.
 
-\section{Technologies} 
+\section{Technologies}
 
-This project requires an effective way of recognizing and removing a language construct of C or C++ source code
-In previous chapters, it has been concluded that an AST would be a good candidate for representing source code
-In particular, the Clang AST offers the ability to remove source code mapped to nodes in the AST
-By deleting either single nodes or entire subtrees, we can carefully reduce a program's source code.
-All AST-oriented operations and transformations are available in the LibTooling library
+This project requires an effective way of recognizing and removing a language 
+construct of C or C++ source code.
+In previous chapters, it has been concluded that an AST would be a good 
+candidate for representing source code.
+In particular, the Clang AST offers the ability to remove source code mapped 
+to nodes in the AST.
+By deleting either single nodes or entire subtrees, we can carefully reduce 
+a program's source code.
+All AST-oriented operations and transformations are available in 
+the LibTooling library.
 LibTooling can be built from the LLVM repository together with Clang.
-The required versions of Clang (11.0.0) and LibTooling are built from LLVM version 11.0.0
-Building LLVM from source is a time-consuming process that does not always end in the desired result
-The user must specify all required projects in advance using CMake's options
-LLVM and its projects are then built using a different build tool such as ninja or make
-Even though the building process can run multiple jobs at once, it can still take up to several hours, consuming a significant amount of the system's memory
-The debug build utilizes tens of gigabytes of disk space
+The required versions of Clang (11.0.0) and LibTooling are built from LLVM 
+version 11.0.0.
+Building LLVM from source is a time-consuming process that does not always 
+end in the desired result.
+The user must specify all required projects in advance using CMake's options.
+LLVM and its projects are then built using a different build tool such as 
+ninja or make.
+Even though the building process can run multiple jobs at once, it can still 
+take up to several hours, consuming a significant amount of the system's 
+memory.
+The debug build utilizes tens of gigabytes of disk space.
 Thankfully, debugging symbols are not required for this project.
-Clang is not the only LLVM project required as a prerequisite
- The user also needs to build LLDB with its scripting bridge API
-This can be achieved by adding LLDB to the LLVM project list when invoking CMake
-The Python API and its C++ scripting bridge can also be included by specifying a few other arguments.
-By default, LLVM builds for all available platforms, including ARM and PowerPC
-However, only a single platform is required/supported for this project
+Clang is not the only LLVM project required as a prerequisite.
+ The user also needs to build LLDB with its scripting bridge API.
+This can be achieved by adding LLDB to the LLVM project list when invoking 
+CMake.
+The Python API and its C++ scripting bridge can also be included by 
+specifying a few other arguments.
+By default, LLVM builds for all available platforms, including ARM and 
+PowerPC.
+However, only a single platform is required/supported for this project.
 The target platform with which LLVM should be built is x86 64 bits.
-LibTooling is changing with every release
-Projects dependent on an older version of LibTooling might not work with a newer one
-Moreover, older releases of LLVM cannot always be built on new platforms
-From experience, the issue might arise when an old LLVM version attempts to link new system headers and libraries
-An easy and reliable way of preserving older LibTooling environments is by storing them in a Docker container
-Docker is another dependency of this project
-It is required to run slicing implementations as well as support the entire minimization process on Windows.
+LibTooling is changing with every release.
+Projects dependent on an older version of LibTooling might not work with 
+a newer one.
+Moreover, older releases of LLVM cannot always be built on new platforms.
+From experience, the issue might arise when an old LLVM version attempts 
+to link new system headers and libraries.
+An easy and reliable way of preserving older LibTooling environments is by 
+storing them in a Docker container.
+Docker is another dependency of this project.
+It is required to run slicing implementations as well as support the entire 
+minimization process on Windows.
 
-\section{External code]
+\section{External code}
 
 The code cannot be added to the project due to compatibility reasons.
-Giri (TODO)
-DG (TODO)
+Giri\change[]{TODO: Read the notes and the overview, summarize the contents.}
+DG\change[]{TODO: Read the notes and the overview, summarize the contents.}
 
 \section{Shared components}
 
-This project compares several reduction techniques
-Each of these techniques is represented by its project or its script
-Some projects work with code that is shared with other projects
-This section will discuss the parts of this work that were reused across multiple techniques
-Thus, these parts serve as a joint base for these techniques
-The following paragraphs explain the code behind validation and AST transformations.
+This project compares several reduction techniques.
+Each of these techniques is represented by its project or its script.
+Some projects work with code that is shared with other projects.
+This section will discuss the parts of this work that were reused across 
+multiple techniques.
+Thus, these parts serve as a joint base for these techniques.
+The following paragraphs explain the code behind validation and AST 
+transformations.
 
-Generating variants is done by altering the AST or its underlying code
-Sections 3.2 and 3.4 talk about the AST and how it can be traversed and modified
-First, a frontend action is created, which then constructs a Consumer instance
+Generating variants is done by altering the AST or its underlying code.
+Sections 3.2 and 3.4 talk about the AST and how it can be traversed and 
+modified.
+First, a frontend action is created, which then constructs a \icode{Consumer} 
+instance.
 The consumer can dispatch specific visitors and perform various operations.
 
-\paragraph{Actions} Each derivation of ASTFrontendAction can have its own preprocessing and postprocessing steps
-Other than performing an action before and after a file is handled, it also creates a specific visitor
-The **Actions.h** and **Actions.cpp** files show concrete derivations of ASTFrontendActions
-Moreover, some of the derivations use their custom factories
-By default, any ASTFrontendAction can be created by calling the FrontendActionFactory::create() method
-However, this function cannot provide any arguments for concrete ASTFrontendAction implementations
-A workaround can be seen in the **Actions.cpp** file, which contains a custom factory
-The factory takes the necessary parameters and passes them to a Consumer instance in its **create()** method.
+\paragraph{Actions.} Each derivation of \icode{ASTFrontendAction} can have 
+its own preprocessing and postprocessing steps.
+Other than performing an action before and after a file is handled, it also 
+creates a specific visitor.
+The \icode{Actions.h} and \icode{Actions.cpp} files show concrete derivations 
+of \icode{ASTFrontendAction}.
+Moreover, some of the derivations use their custom factories.
+By default, any \icode{ASTFrontendAction} can be created by calling 
+the \icode{FrontendActionFactory::create()} method.
+However, this function cannot provide any arguments for concrete 
+\icode{ASTFrontendAction} implementations.
+A workaround can be seen in the \icode{Actions.cpp} file, which contains 
+a custom factory.
+The factory takes the necessary parameters and passes them to 
+a \icode{Consumer} instance in its \icode{create()} method.
 
-\paragraph{Consumers} High-level actions have been coded into **Consumer** implementations
-Current **Consumer** classes serve specific purposes
-For example, the **VariantGenerationConsumer** (TODO: Change to VariantGeneratingConsumer) does not invoke any visitor instances
-Instead, it keeps two different **Consumer** objects
-The pair of consumers has its required input and output
-The **VariantGenerationConsumer** unifies the interface between the two consumers and allows them to communicate
-Thus, these concrete **Consumer** classes also serve as a middleman for data transfers between visitors and the caller
-An example of a consumer action would be generating every possible program variant
-The **Consumer** contains the generating loop
-It then dispatches a visitor inside the loop
-The visitor might return results, which the consumer stores and uses for future operations
-An example of data transfer might be specifying how a variant should look
-This might be done by passing an object to the visitor
-The visitor could then return a string representing that variant to the consumer.
+\paragraph{Consumers.} High-level actions have been coded into 
+\icode{Consumer} implementations.
+Current \icode{Consumer} classes serve specific purposes.
+For example, the \icode{VariantGenerationConsumer} \change[]{TODO: Change to VariantGeneratingConsumer} 
+does not invoke any visitor instances.
+Instead, it keeps two different \icode{Consumer} objects.
+The pair of consumers has its required input and output.
+The \icode{VariantGenerationConsumer} unifies the interface between the two 
+consumers and allows them to communicate.
+Thus, these concrete \icode{Consumer} classes also serve as a middleman for 
+data transfers between visitors and the caller.
+An example of a consumer action would be generating every possible program 
+variant.
+The \icode{Consumer} contains the generating loop.
+It then dispatches a visitor inside the loop.
+The visitor might return results, which the consumer stores and uses for 
+future operations.
+An example of data transfer might be specifying how a variant should look.
+This might be done by passing an object to the visitor.
+The visitor could then return a string representing that variant to 
+the consumer.
 
-\paragraph{Visitors} In this project, visitors perform relatively short actions
-They might collect information during their traversal lifetime and return that information once the AST has been traversed
-They might perform more complicated **Rewriter** actions based on the current node type
-An example of an essential visitor for this project is the **MappingASTVisitor**
-The purpose of this class is to split the code into units
+\paragraph{Visitors.} In this project, visitors perform relatively short 
+actions.
+They might collect information during their traversal lifetime and return 
+that information once the AST has been traversed.
+They might perform more complicated \icode{Rewriter} actions based on the 
+current node type.
+An example of an essential visitor for this project is 
+the \icode{MappingASTVisitor}.
+The purpose of this class is to split the code into units.
 Furthermore, it also specifies the dependencies between these units.
 
-Testing results on whether they are valid variants requires a standard interface, too
-Section 4.4 describes the steps in the process of validation
-The implementation contains three parts that are used in most approaches presented by this project
+Testing results on whether they are valid variants requires a standard 
+interface, too.
+Section~\ref{chap:verification} describes the steps in the process 
+of validation.
+The implementation contains three parts that are used in most approaches 
+presented by this project.
 Below is the description of compilation, analysis, and execution.
 
-\paragraph{Compilation} By calling the **Compile** function in **Helper.cpp**, one can invoke the Clang compiler driver
-The compiler has two goals
-Firstly, it filters out non-compilable and thus invalid variants
-Secondly, it prepares compilable variants for the execution stage
-The compilation can be invoked with a wide range of arguments
-In this case, it is provided with the **-g** and **-O0** options
-The former generates debug symbols for the executable, while the latter ensures reliable debugging by eliminating any compiler optimizations
-Compilation's output is printed to the standard output, and its exit status determines the function's return value
-If the compiler terminates with a valid exit code but does not create the binary, the function returns as if the compilation failed
-The binary is stored to a specified path, which by default is the same file path as the input source file
-The file extension is substituted with **.exe**.
+\paragraph{Compilation.} By calling the \icode{Compile} function in 
+\icode{Helper.cpp}, one can invoke the Clang compiler driver.
+The compiler has two goals.
+Firstly, it filters out non-compilable and thus invalid variants.
+Secondly, it prepares compilable variants for the execution stage.
+The compilation can be invoked with a wide range of arguments.
+In this case, it is provided with the \icode{-g} and \icode{-O0} options.
+The former generates debug symbols for the executable, while the latter 
+ensures reliable debugging by eliminating any compiler optimizations.
+Compilation's output is printed to the standard output, and its exit status 
+determines the function's return value.
+If the compiler terminates with a valid exit code but does not create 
+the binary, the function returns as if the compilation failed.
+The binary is stored to a specified path, which by default is the same file 
+path as the input source file.
+The file extension is substituted with \icode{'.exe'}.
 
-\paragraph{Static analysis} (TODO: Research and implement calls to the Clang static analyzer.)
+\paragraph{Static analysis.}
+\change[inline]{TODO: Research and implement calls to the Clang static analyzer.}
 
-\paragraph{Execution} Compiled binaries need to be validated at runtime
-This way, we check whether the program results in the desired runtime error
-Programs are executed in the LLDB environment
-LLDB provides Python API, which allows invoking more or less all of the debugger's commands
-The API is also available from C++ using a scripting bridge
-SWIG processes function calls made from C++
-They then produce bindings to the Python API
-Thanks to the scripting bridge, every validation step is written in C++
-The **ValidateResults** function creates a debugging environment for every executable
-The programs are then run in separate processes
-During the execution, events are broadcasted from the forked processes
-The stack trace is investigated whenever the program broadcasts a stopped state, indicating a thrown exception
-If the symbol's location on top of the stack trace is the same as the one of the desired error, the program is tagged as valid
+\paragraph{Execution.} Compiled binaries need to be validated at runtime.
+This way, we check whether the program results in the desired runtime error.
+Programs are executed in the LLDB environment.
+LLDB provides Python API, which allows invoking more or less all of 
+the debugger's commands.
+The API is also available from C++ using a scripting bridge.
+SWIG processes function calls made from C++.
+They then produce bindings to the Python API.
+Thanks to the scripting bridge, every validation step is written in C++.
+The \icode{ValidateResults} function creates a debugging environment for every 
+executable.
+The programs are then run in separate processes.
+During the execution, events are broadcasted from the forked processes.
+The stack trace is investigated whenever the program broadcasts a stopped 
+state, indicating a thrown exception.
+If the symbol's location on top of the stack trace is the same as the one of 
+the desired error, the program is tagged as valid.
 Otherwise, the execution continues.
-
 
 \section{Naive reduction}
 
-The naive algorithm was described in section 4.1
-Unlike greedy algorithms, the naive approach can guarantee minimality
-As such, much time went into improving the implementation
-The approach works by deploying a **DependencyMappingConsumer**, whose's primary job is to split the AST into code units
-The mentioned consumer dispatches a visitor that creates the traversal order
-The visitor considers declarations and statements
-It determines whether these nodes should be visited by the other visitors and maps their dependencies
-In short, one node is dependent on another if it is in the other node's subtree
-Another rule for node dependencies states that usages of variables depend on their declarations
-Function definitions and calls follow a similar rule
-Once the **MappingASTVisitor** has traversed the AST, the **DependencyMappingConsumer** collects its output, and the variant generating function is initialized
-Before any actual variants are created, the algorithm first separates all valid variants into bins of different sizes—the binning works as follows
-The **DependencyMappingConsumer** has determined **n**: the number of code units in the file.
-Moreover, it has set the order in which nodes are traversed
-We can create a bitfield of size **n**, where the **i-th** bit represents the **i-th** node in the traversal order
-If the bit is set to **true**, the node will be preserved
-Otherwise, it will be removed from the variant
-This gives us **2^n** bitfield variants, the same number required for all program variants
-With the bitfield representation, we could use bitwise operations to move between different variants
-The only operation necessary for generating all variants is the increment function
-While cycling through all possible bitfield configurations, we check that each obeys the dependency rules
-Valid bitfields also carry the source code size of the program variant they represent
-Variants are assigned into categories based on their represented size
-The idea is to search iteratively, generate minor source code variants, and validate them first before moving on to the remaining possible variants
-The number of bins represents the granularity with which the deepening search is conducted
+The naive algorithm was described in section~ref{chap:naive}.
+Unlike greedy algorithms, the naive approach can guarantee minimality.
+As such, much time went into improving the implementation.
+The approach works by deploying a \icode{DependencyMappingConsumer}, whose 
+primary job is to split the AST into code units.
+The mentioned consumer dispatches a visitor that creates the traversal order.
+The visitor considers declarations and statements.
+It determines whether these nodes should be visited by the other visitors and 
+maps their dependencies.
+In short, one node is dependent on another if it is in the other node's 
+subtree.
+Another rule for node dependencies states that usages of variables depend on 
+their declarations.
+Function definitions and calls follow a similar rule.
+Once the \icode{MappingASTVisitor} has traversed the AST, 
+the \icode{DependencyMappingConsumer} collects its output, and the variant 
+generating function is initialized.
+Before any actual variants are created, the algorithm first separates all 
+valid variants into bins of different sizes—the binning works as follows.
+The \icode{DependencyMappingConsumer} has determined $n$: the number of code 
+units in the file.
+Moreover, it has set the order in which nodes are traversed.
+We can create a bitfield of size $n$, where the $i^{th}$ bit represents 
+the $i^{th}$ node in the traversal order.
+If the bit is set to \icode{true}, the node will be preserved.
+Otherwise, it will be removed from the variant.
+This gives us $2^n$ bitfield variants, the same number required for all 
+program variants.
+With the bitfield representation, we could use bitwise operations to move 
+between different variants.
+The only operation necessary for generating all variants is the increment 
+function.
+While cycling through all possible bitfield configurations, we check that 
+each obeys the dependency rules.
+Valid bitfields also carry the source code size of the program variant they 
+represent.
+Variants are assigned into categories based on their represented size.
+The idea is to search iteratively, generate minor source code variants, and 
+validate them first before moving on to the remaining possible variants.
+The number of bins represents the granularity with which the deepening 
+search is conducted.
 It makes sense to set the granularity high for more extensive programs.
-After the binning process is complete, the variant generating loop is launched
-The loop considers all bitfields in a given bin
-In each iteration, the bitfield is passed to a **VariantPrintingASTVisitor**
-The visitor traverses the AST in the order given by the **MappingASTVisitor**
-The nodes represented by the bitfield are either kept or removed based on the value of each bit
-It should be stated that the nodes are not removed
-Instead, it is the underlying source code that is being deleted using a **Rewriter** operation
-The removal also follows an explicit rule
-Nodes are removed only if their parents will not be removed
-This rule eliminates the chance of removing an underlying code snippet twice
-Each **VariantPrintingASTVisitor** handles a single variant
-After all variants from the given bit are processed, all results are tested for validation
-In case a valid result is found, the search ends
-Otherwise, the search continues with the bin representing the following smallest variant sizes.
-
+After the binning process is complete, the variant generating loop is 
+launched.
+The loop considers all bitfields in a given bin.
+In each iteration, the bitfield is passed to 
+a \icode{VariantPrintingASTVisitor}.
+The visitor traverses the AST in the order given by 
+the \icode{MappingASTVisitor}.
+The nodes represented by the bitfield are either kept or removed based on 
+the value of each bit.
+It should be stated that the nodes are not removed.
+Instead, it is the underlying source code that is being deleted using 
+a \icode{Rewriter} operation.
+The removal also follows an explicit rule.
+Nodes are removed only if their parents will not be removed.
+This rule eliminates the chance of removing an underlying code snippet twice.
+Each \icode{VariantPrintingASTVisitor} handles a single variant.
+After all variants from the given bit are processed, all results are tested 
+for validation.
+In case a valid result is found, the search ends.
+Otherwise, the search continues with the bin representing the following 
+smallest variant sizes.
 
 \section{Delta debugging}
 
-
-
 \section{Systematic approach}
 
-(TODO: Might require to mention the component that unifies slices or extracts all variables from a line.)
-The systematic approach comprises multiple steps
-The motivation behind these steps and an overview of the algorithm can be found in section 4.3
-This approach uses external code that cannot be trivially added to the project
-Therefore, it is launched and operated differently
-The base is a Python script that invokes all necessary components
-The script uses Docker API to launch a DG container
-It also maps input and output directories to that container in order to send and retrieve data
-The container's launch command invokes the slicer to process the given input and store it in the given output directory
-Giri is launched analogically
-Both slicers return a list of lines that represent the slices
-This output needs to be processed further
-The script invokes the **SliceExtractor** program
-The program transforms a source file into the desired slice based on the given list of lines
-It does so based on ASTMatchers, removing the complement of the given list of lines by using **Rewriter** operations
-Once the **SliceExtractor** produces the desired source file, the file is considered the respective slicer's output
-This way, each step of the algorithm results in a valid source file
-After passing through the two slicers, the intermediate result is further reduced using the naive approach
-The Python script executes the naive algorithm, which then produces the desired results
-Another approach can also substitute the ultimate step
-One can easily swap between the naive reduction and Delta debugging by simply changing the path to the executable in the Python script.
+\change[inline]{TODO: Might require mentioning the component that unifies slices or extracts all variables from a line.}
+
+The systematic approach comprises multiple steps.
+The motivation behind these steps and an overview of the algorithm can be 
+found in section~\ref{chap:systematic}.
+This approach uses external code that cannot be trivially added to 
+the project.
+Therefore, it is launched and operated differently.
+The base is a Python script that invokes all necessary components.
+The script uses Docker API to launch a DG container.
+It also maps input and output directories to that container in order to send 
+and retrieve data.
+The container's launch command invokes the slicer to process the given input 
+and store it in the given output directory.
+Giri is launched analogically.
+Both slicers return a list of lines that represent the slices.
+This output needs to be processed further.
+The script invokes the **SliceExtractor** program.
+The program transforms a source file into the desired slice based on 
+the given list of lines.
+It does so based on ASTMatchers, removing the complement of the given list 
+of lines by using \icode{Rewriter} operations.
+Once the \icode{SliceExtractor} produces the desired source file, the file 
+is considered the respective slicer's output.
+This way, each step of the algorithm results in a valid source file.
+After passing through the two slicers, the intermediate result is further 
+reduced using the naive approach.
+The Python script executes the naive algorithm, which then produces the 
+desired results.
+Another approach can also substitute the ultimate step.
+One can easily swap between the naive reduction and Delta debugging by 
+simply changing the path to the executable in the Python script.
