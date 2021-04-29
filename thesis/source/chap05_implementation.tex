@@ -110,7 +110,7 @@ a \icode{Consumer} instance in its \icode{create()} method.
 \paragraph{Consumers.} High-level actions have been coded into 
 \icode{Consumer} implementations.
 Current \icode{Consumer} classes serve specific purposes.
-For example, the \icode{Variant\-Generation\-Consumer} \change[]{TODO: Change to VariantGeneratingConsumer} 
+For example, the \icode{Vari\-ant\-Generation\-Consumer} \change[]{TODO: Change to VariantGeneratingConsumer} 
 does not invoke any visitor instances.
 Instead, it keeps two different \icode{Consumer} objects.
 The pair of consumers has its required input and output.
@@ -206,12 +206,12 @@ their declarations.
 Function definitions and calls follow a similar rule.
 
 Once the \icode{MappingASTVisitor} has traversed the AST, 
-the \icode{DependencyMappingConsumer} collects its output, and the variant 
-generating function is initialized.
+the \icode{Dependency\-Map\-ping\-Consumer} collects its output, and the 
+variant generating function is initialized.
 Before any actual variants are created, the algorithm first separates all 
 valid variants into bins of different sizes—the binning works as follows.
-The \icode{DependencyMappingConsumer} has determined $n$: the number of code 
-units in the file.
+The \icode{Dependency\-Mapping\-Consumer} has determined $n$: the number of 
+code units in the file.
 Moreover, it has set the order in which nodes are traversed.
 
 We can create a bitfield of size $n$, where the $i^{th}$ bit represents 
