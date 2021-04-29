@@ -7,6 +7,7 @@ Delta debugging.\change[]{TODO: link DD implementations.}
 However, only some of these implementations were used.
 Most notably, the static and dynamic slicers are reused from other works.
 The majority of the project was built using LibTooling and LLDB API.
+
 The following sections describe the process of this project's development.
 Used technologies and implementations are discussed first.
 The rest is a description of the development of different approaches and 
@@ -24,6 +25,7 @@ By deleting either single nodes or entire subtrees, we can carefully reduce
 a program's source code.
 All AST-oriented operations and transformations are available in 
 the LibTooling library.
+
 LibTooling can be built from the LLVM repository together with Clang.
 The required versions of Clang (11.0.0) and LibTooling are built from LLVM 
 version 11.0.0.
@@ -37,8 +39,9 @@ take up to several hours, consuming a significant amount of the system's
 memory.
 The debug build utilizes tens of gigabytes of disk space.
 Thankfully, debugging symbols are not required for this project.
+
 Clang is not the only LLVM project required as a prerequisite.
- The user also needs to build LLDB with its scripting bridge API.
+The user also needs to build LLDB with its scripting bridge API.
 This can be achieved by adding LLDB to the LLVM project list when invoking 
 CMake.
 The Python API and its C++ scripting bridge can also be included by 
@@ -47,6 +50,7 @@ By default, LLVM builds for all available platforms, including ARM and
 PowerPC.
 However, only a single platform is required/supported for this project.
 The target platform with which LLVM should be built is x86 64 bits.
+
 LibTooling is changing with every release.
 Projects dependent on an older version of LibTooling might not work with 
 a newer one.
@@ -55,15 +59,19 @@ From experience, the issue might arise when an old LLVM version attempts
 to link new system headers and libraries.
 An easy and reliable way of preserving older LibTooling environments is by 
 storing them in a Docker container.
+
 Docker is another dependency of this project.
 It is required to run slicing implementations as well as support the entire 
 minimization process on Windows.
 
 \section{External code}
 
-The code cannot be added to the project due to compatibility reasons.
-Giri\change[]{TODO: Read the notes and the overview, summarize the contents.}
-DG\change[]{TODO: Read the notes and the overview, summarize the contents.}
+Some of the external code cannot be added to the C++ project due to 
+compatibility reasons.
+
+Giri\change[]{TODO: Read the notes and the over\-view, summarize the contents.}
+
+DG\change[]{TODO: Read the notes and the over\-view, summarize the contents.}
 
 \section{Shared components}
 
@@ -73,12 +81,12 @@ Some projects work with code that is shared with other projects.
 This section will discuss the parts of this work that were reused across 
 multiple techniques.
 Thus, these parts serve as a joint base for these techniques.
+
 The following paragraphs explain the code behind validation and AST 
 transformations.
-
 Generating variants is done by altering the AST or its underlying code.
-Sections 3.2 and 3.4 talk about the AST and how it can be traversed and 
-modified.
+Sections~\ref{chap:ast} and~\ref{chap:sts} talk about the AST and how it can 
+be traversed and modified.
 First, a frontend action is created, which then constructs a \icode{Consumer} 
 instance.
 The consumer can dispatch specific visitors and perform various operations.
@@ -102,11 +110,11 @@ a \icode{Consumer} instance in its \icode{create()} method.
 \paragraph{Consumers.} High-level actions have been coded into 
 \icode{Consumer} implementations.
 Current \icode{Consumer} classes serve specific purposes.
-For example, the \icode{VariantGenerationConsumer} \change[]{TODO: Change to VariantGeneratingConsumer} 
+For example, the \icode{Variant\-Generation\-Consumer} \change[]{TODO: Change to VariantGeneratingConsumer} 
 does not invoke any visitor instances.
 Instead, it keeps two different \icode{Consumer} objects.
 The pair of consumers has its required input and output.
-The \icode{VariantGenerationConsumer} unifies the interface between the two 
+The \icode{Variant\-Generation\-Consumer} unifies the interface between the two 
 consumers and allows them to communicate.
 Thus, these concrete \icode{Consumer} classes also serve as a middleman for 
 data transfers between visitors and the caller.
@@ -125,7 +133,7 @@ the consumer.
 actions.
 They might collect information during their traversal lifetime and return 
 that information once the AST has been traversed.
-They might perform more complicated \icode{Rewriter} actions based on the 
+They might perform more complicated \icode{Rewri\-ter} actions based on the 
 current node type.
 An example of an essential visitor for this project is 
 the \icode{MappingASTVisitor}.
@@ -184,6 +192,7 @@ Otherwise, the execution continues.
 The naive algorithm was described in section~ref{chap:naive}.
 Unlike greedy algorithms, the naive approach can guarantee minimality.
 As such, much time went into improving the implementation.
+
 The approach works by deploying a \icode{DependencyMappingConsumer}, whose 
 primary job is to split the AST into code units.
 The mentioned consumer dispatches a visitor that creates the traversal order.
@@ -195,6 +204,7 @@ subtree.
 Another rule for node dependencies states that usages of variables depend on 
 their declarations.
 Function definitions and calls follow a similar rule.
+
 Once the \icode{MappingASTVisitor} has traversed the AST, 
 the \icode{DependencyMappingConsumer} collects its output, and the variant 
 generating function is initialized.
@@ -203,6 +213,7 @@ valid variants into bins of different sizes—the binning works as follows.
 The \icode{DependencyMappingConsumer} has determined $n$: the number of code 
 units in the file.
 Moreover, it has set the order in which nodes are traversed.
+
 We can create a bitfield of size $n$, where the $i^{th}$ bit represents 
 the $i^{th}$ node in the traversal order.
 If the bit is set to \icode{true}, the node will be preserved.
@@ -218,6 +229,7 @@ each obeys the dependency rules.
 Valid bitfields also carry the source code size of the program variant they 
 represent.
 Variants are assigned into categories based on their represented size.
+
 The idea is to search iteratively, generate minor source code variants, and 
 validate them first before moving on to the remaining possible variants.
 The number of bins represents the granularity with which the deepening 
@@ -225,6 +237,7 @@ search is conducted.
 It makes sense to set the granularity high for more extensive programs.
 After the binning process is complete, the variant generating loop is 
 launched.
+
 The loop considers all bitfields in a given bin.
 In each iteration, the bitfield is passed to 
 a \icode{VariantPrintingASTVisitor}.
@@ -239,6 +252,7 @@ The removal also follows an explicit rule.
 Nodes are removed only if their parents will not be removed.
 This rule eliminates the chance of removing an underlying code snippet twice.
 Each \icode{VariantPrintingASTVisitor} handles a single variant.
+
 After all variants from the given bit are processed, all results are tested 
 for validation.
 In case a valid result is found, the search ends.
@@ -254,6 +268,7 @@ smallest variant sizes.
 The systematic approach comprises multiple steps.
 The motivation behind these steps and an overview of the algorithm can be 
 found in section~\ref{chap:systematic}.
+
 This approach uses external code that cannot be trivially added to 
 the project.
 Therefore, it is launched and operated differently.
@@ -264,9 +279,10 @@ and retrieve data.
 The container's launch command invokes the slicer to process the given input 
 and store it in the given output directory.
 Giri is launched analogically.
+
 Both slicers return a list of lines that represent the slices.
 This output needs to be processed further.
-The script invokes the **SliceExtractor** program.
+The script invokes the \icode{SliceExtractor} program.
 The program transforms a source file into the desired slice based on 
 the given list of lines.
 It does so based on ASTMatchers, removing the complement of the given list 
@@ -274,6 +290,7 @@ of lines by using \icode{Rewriter} operations.
 Once the \icode{SliceExtractor} produces the desired source file, the file 
 is considered the respective slicer's output.
 This way, each step of the algorithm results in a valid source file.
+
 After passing through the two slicers, the intermediate result is further 
 reduced using the naive approach.
 The Python script executes the naive algorithm, which then produces the 

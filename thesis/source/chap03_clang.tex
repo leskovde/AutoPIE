@@ -140,7 +140,7 @@ the tool's arguments from the~project's compilation arguments.
 One can interpret the~arguments following \icode{-{}-} as a~temporary
 compilation database.
 
-\section{Clang AST}
+\section{Clang AST}\label{chap:ast}
 
 The abstract syntax tree used in~the Clang front-end \citep{ast:online}
 is different from the~typical AST. 
@@ -748,7 +748,7 @@ The traversal mode can, however, be changed to ignore implicit nodes.
 One such traversal mode is \icode{IgnoreUnlessSpelledInSource}, 
 which conveniently only looks at nodes represented by the~source code. 
 
-\section{Source-to-source transformation}
+\section{Source-to-source transformation}\label{chap:sts}
 
 To transform source code based on its AST, the~programmer must extract 
 the AST from the~code, alter the~AST, and then translate it back to valid 
