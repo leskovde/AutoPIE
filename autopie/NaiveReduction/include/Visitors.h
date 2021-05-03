@@ -45,14 +45,24 @@ class VariantPrintingASTVisitor final : public clang::RecursiveASTVisitor<Varian
 	 *
 	 * @param range The source range to be removed.
 	 */
-	void RemoveFromSource(const clang::SourceRange range) const
+	void RemoveFromSource(const clang::SourceRange range)
 	{
 		if (rewriter_)
 		{
 			out::Verb() << "Removing node " << currentNode_ << ":\n" << RangeToString(astContext_, range) << "\n";
 
-			rewriter_->RemoveText(GetPrintableRange(GetPrintableRange(range, astContext_.getSourceManager()),
-		                                        astContext_.getSourceManager()));
+			const auto printableRange = GetPrintableRange(GetPrintableRange(range, astContext_.getSourceManager()),
+				astContext_.getSourceManager());
+
+			const auto begin = astContext_.getSourceManager().getPresumedLineNumber(printableRange.getBegin());
+			const auto end = astContext_.getSourceManager().getPresumedLineNumber(printableRange.getEnd());
+
+			if (begin < AdjustedErrorLine)
+			{
+				AdjustedErrorLine -= AdjustedErrorLine < end ? end - begin + 1 : AdjustedErrorLine - begin + 1;
+			}
+			
+			rewriter_->RemoveText(printableRange);
 		}
 		else
 		{
@@ -93,7 +103,9 @@ class VariantPrintingASTVisitor final : public clang::RecursiveASTVisitor<Varian
 	}
 
 public:
-	explicit VariantPrintingASTVisitor(clang::CompilerInstance* ci) : astContext_(ci->getASTContext())
+	int AdjustedErrorLine;
+	
+	explicit VariantPrintingASTVisitor(clang::CompilerInstance* ci, const int errorLine) : astContext_(ci->getASTContext()), AdjustedErrorLine(errorLine)
 	{
 	}
 

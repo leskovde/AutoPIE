@@ -67,6 +67,16 @@ public:
 	{
 		visitor_->SetData(std::move(skippedNodes), graph);
 	}
+
+	/**
+	 * After the visitor's traversal is complete, the error-inducing line number is updated.
+	 *
+	 * @return The new presumed line on which the error should be thrown.
+	 */
+	int GetAdjustedErrorLine() const
+	{
+		return visitor_->AdjustedErrorLine;
+	}
 };
 
 /**
@@ -178,6 +188,7 @@ public:
 		mappingConsumer_.HandleTranslationUnit(context);
 		const auto numberOfCodeUnits = mappingConsumer_.GetCodeUnitsCount();
 
+		globalContext_.variantAdjustedErrorLocation.clear();
 		printingConsumer_.SetData(mappingConsumer_.GetSkippedNodes(), mappingConsumer_.GetDependencyGraph());
 
 		auto dependencies = mappingConsumer_.GetDependencyGraph();
@@ -223,18 +234,20 @@ public:
 
 		for (auto& bitMask : bitMasks)
 		{
-				variantsCount++;
+			variantsCount++;
 
-				if (variantsCount % 50 == 0)
-				{
-					out::All() << "Done " << variantsCount << " variants.\n";
-				}
+			if (variantsCount % 50 == 0)
+			{
+				out::All() << "Done " << variantsCount << " variants.\n";
+			}
 
-				out::Verb() << "DEBUG: Processing valid bitmask " << Stringify(bitMask) << "\n";
+			out::Verb() << "DEBUG: Processing valid bitmask " << Stringify(bitMask) << "\n";
 
-				// TODO: Change the source file extension based on the programming language.
-				auto fileName = TempFolder + std::to_string(variantsCount) + "_tempFile.c";
-				printingConsumer_.HandleTranslationUnit(context, fileName, bitMask);
+			// TODO: Change the source file extension based on the programming language.
+			auto fileName = TempFolder + std::to_string(variantsCount) + "_tempFile.c";
+			printingConsumer_.HandleTranslationUnit(context, fileName, bitMask);
+
+			globalContext_.variantAdjustedErrorLocation[variantsCount] = printingConsumer_.GetAdjustedErrorLine();
 		}
 
 		out::All() << "Finished. Done " << variantsCount << " variants.\n";

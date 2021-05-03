@@ -37,6 +37,7 @@ public:
 	int currentEpoch{0};
 	InputData parsedInput;
 	IterativeDeepeningContext deepeningContext;
+	std::unordered_map<int, int> variantAdjustedErrorLocation;
 	
 	GlobalContext(InputData& input, const std::string& /*source*/, const int epochs) : parsedInput(input), deepeningContext(epochs)
 	{
