@@ -20,7 +20,7 @@ class VariantPrintingASTConsumer final : public clang::ASTConsumer
 	VariantPrintingASTVisitorRef visitor_;
 
 public:
-	explicit VariantPrintingASTConsumer(clang::CompilerInstance* ci) : visitor_(std::make_unique<VariantPrintingASTVisitor>(ci))
+	explicit VariantPrintingASTConsumer(clang::CompilerInstance* ci, int errorLine) : visitor_(std::make_unique<VariantPrintingASTVisitor>(ci, errorLine))
 	{
 	}
 
@@ -166,7 +166,7 @@ class VariantGenerationConsumer final : public clang::ASTConsumer
 
 public:
 	VariantGenerationConsumer(clang::CompilerInstance* ci, GlobalContext& context) : mappingConsumer_(ci, context),
-	                                                                                 printingConsumer_(ci),
+	                                                                                 printingConsumer_(ci, context.parsedInput.errorLocation.lineNumber),
 																					 globalContext_(context)
 	{
 	}

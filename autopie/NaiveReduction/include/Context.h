@@ -15,7 +15,7 @@ struct IterativeDeepeningContext
 	std::map<double, std::vector<BitMask>> bitMasks;
 
 	explicit IterativeDeepeningContext(const int epochs) : epochCount(epochs),
-	epochStep(static_cast<double>(ReductionRatio) / epochCount)
+	                                                       epochStep(static_cast<double>(ReductionRatio) / epochCount)
 	{
 	}
 };
@@ -26,7 +26,7 @@ struct IterativeDeepeningContext
  */
 class GlobalContext
 {
-	GlobalContext(): parsedInput(InputData("", Location("", 0), 0.0, false)), deepeningContext(1)
+	GlobalContext(): parsedInput(InputData("", Location("", 0), 0.0, false)), deepeningContext (1)
 	{
 		out::Verb() << "DEBUG: GlobalContext - New default constructor call.\n";
 	}
@@ -37,9 +37,11 @@ public:
 	int currentEpoch{0};
 	InputData parsedInput;
 	IterativeDeepeningContext deepeningContext;
+	clang::Language language{clang::Language::Unknown};
 	std::unordered_map<int, int> variantAdjustedErrorLocation;
-	
-	GlobalContext(InputData& input, const std::string& /*source*/, const int epochs) : parsedInput(input), deepeningContext(epochs)
+
+	GlobalContext(InputData& input, const std::string& /*source*/, const int epochs) : parsedInput(input),
+	                                                                                   deepeningContext(epochs)
 	{
 		out::Verb() << "DEBUG: GlobalContext - New non-default constructor call.\n";
 	}

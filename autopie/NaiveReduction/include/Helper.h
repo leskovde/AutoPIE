@@ -5,7 +5,10 @@
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Basic/LangStandard.h>
 #include <clang/Lex/Lexer.h>
+
 #include <lldb/lldb-enumerations.h>
+#include <lldb/API/SBDebugger.h>
+#include <lldb/API/SBEvent.h>
 
 #include <filesystem>
 #include <utility>
@@ -27,9 +30,43 @@ inline const char* VisualsFolder = "./visuals/";
  */
 inline const char* LogFile = "./autopie.log";
 
+class GlobalContext;
 class DependencyGraph;
 
 using BitMask = std::vector<bool>;
+
+//===----------------------------------------------------------------------===//
+//
+/// LLDB lock.
+//
+//===----------------------------------------------------------------------===//
+
+/**
+ * Guards the LLDB module, destroying it upon exiting the scope.
+ */
+struct LLDBSentry
+{
+	/**
+	 * Initializes the LLDB debugger.
+	 */
+	LLDBSentry()
+	{
+		lldb::SBDebugger::Initialize();
+	}
+
+	/**
+	 * Destroys the LLDB debugger.
+	 */
+	~LLDBSentry()
+	{
+		lldb::SBDebugger::Terminate();
+	}
+
+	// Rule of three.
+
+	LLDBSentry(const LLDBSentry& other) = delete;
+	LLDBSentry& operator=(const LLDBSentry& other) = delete;
+};
 
 //===----------------------------------------------------------------------===//
 //
@@ -116,6 +153,8 @@ std::pair<bool, double> IsValid(BitMask& bitMask, DependencyGraph& dependencies)
 //===----------------------------------------------------------------------===//
 
 int Compile(const std::filesystem::directory_entry& entry, clang::Language language);
+
+bool ValidateResults(GlobalContext& context);
 
 bool CheckLocationValidity(const std::string& filePath, long lineNumber);
 

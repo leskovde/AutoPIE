@@ -14,6 +14,12 @@
 #include <clang/Driver/Driver.h>
 #include <clang/Frontend/TextDiagnosticPrinter.h>
 
+#include <lldb/API/SBListener.h>
+#include <lldb/API/SBProcess.h>
+#include <lldb/API/SBTarget.h>
+#include <lldb/API/SBError.h>
+#include <lldb/API/SBThread.h>
+
 #include <llvm/ADT/SmallVector.h>
 #include <llvm/Object/MachO.h>
 #include <llvm/Support/Host.h>
@@ -21,7 +27,9 @@
 #include <llvm/Support/VirtualFileSystem.h>
 
 #include <filesystem>
+#include <optional>
 
+#include "../include/Context.h"
 #include "../include/DependencyGraph.h"
 #include "../include/Helper.h"
 
@@ -401,6 +409,280 @@ bool CheckLocationValidity(const std::string& filePath, const long lineNumber)
 	}
 
 	out::All() << "===----------------------------------------------------------------------===\n";
+
+	return true;
+}
+
+/**
+ * Attempts to validate results of the last epoch.\n
+ * Searches the temporary directory for any files, sorts them by smallest and then validates them.\n
+ * The validation consists of compilation and a debugging session. Whenever the compilation succeeds,
+ * the program is run using LLDB to determine whether it produces the desired runtime error.\n
+ * If a valid variant is found, it is stored as `autoPieOut.<extensions based on language>` in the
+ * temporary directory.
+ *
+ * @param globalContext The global context of the tool required for language options and line number adjustments.
+ * @return True if the epoch produced a valid result, false otherwise.
+ */
+bool ValidateResults(GlobalContext& globalContext)
+{
+	// Collect the results.
+	std::vector<std::filesystem::directory_entry> files;
+	for (const auto& entry : std::filesystem::directory_iterator(TempFolder))
+	{
+		files.emplace_back(entry);
+	}
+
+	// Sort the output by size and iterate it from the smallest to the largest file. The first valid file is the minimal version.
+	std::sort(files.begin(), files.end(),
+		[](const std::filesystem::directory_entry& a, const std::filesystem::directory_entry& b) -> bool
+		{
+			return a.file_size() < b.file_size();
+		});
+
+	std::optional<std::string> resultFound{};
+
+	// Attempt to compile each file. If successful, run it in LLDB and validate the error message and location.
+	for (const auto& entry : files)
+	{
+		const auto compilationExitCode = Compile(entry, globalContext.language);
+
+		if (compilationExitCode != 0)
+		{
+			// File could not be compiled, continue.
+			continue;
+		}
+
+		const auto currentVariantName = entry.path().filename().string();
+		const auto currentVariant = std::stol(currentVariantName.substr(0, currentVariantName.find('_')));
+
+		// Keep all LLDB logic written explicitly, not refactored in a function.
+		// The function could be called when the LLDBSentry is not initialized => unwanted behaviour.
+
+		// Create a debugger object - represents an instance of LLDB.
+		auto debugger(lldb::SBDebugger::Create());
+
+		if (!debugger.IsValid())
+		{
+			llvm::errs() << "Debugger could not be created.\n";
+			exit(EXIT_FAILURE);
+		}
+
+		const char* arguments[] = { nullptr };
+
+		lldb::SBError error;
+		lldb::SBLaunchInfo launchInfo(arguments);
+
+		launchInfo.SetWorkingDirectory(TempFolder);
+		launchInfo.SetLaunchFlags(lldb::eLaunchFlagExec | lldb::eLaunchFlagDebug);
+
+		const auto executable = TempFolder + entry.path().filename().replace_extension(".exe").string();
+		out::Verb() << "\nLLDB Target creation for " << executable << " ...\n";
+
+		// Create and launch a target - represents a debugging session of a single executable.
+		// Launching creates a new process in which the executable is ran.
+		auto target = debugger.CreateTarget(executable.c_str(), llvm::sys::getDefaultTargetTriple().c_str(), "", true, error);
+
+		out::Verb() << "error.Success()              = " << static_cast<int>(error.Success()) << "\n";
+		out::Verb() << "target.IsValid()             = " << static_cast<int>(target.IsValid()) << "\n";
+
+		out::Verb() << "\nLLDB Process launch ...\n";
+
+		auto process = target.Launch(launchInfo, error);
+		out::Verb() << "error.Success()              = " << static_cast<int>(error.Success()) << "\n";
+		out::Verb() << "process.IsValid()            = " << static_cast<int>(process.IsValid()) << "\n";
+		out::Verb() << "process.GetProcessID()       = " << process.GetProcessID() << "\n";
+		out::Verb() << "process.GetState()           = " << StateToString(process.GetState()) << "\n";
+		out::Verb() << "process.GetNumThreads()      = " << process.GetNumThreads() << "\n";
+
+		auto listener = debugger.GetListener();
+		out::Verb() << "listener.IsValid()           = " << static_cast<int>(listener.IsValid()) << "\n";
+
+		auto done = false;
+		const auto timeOut = 360;
+
+		// The debugger is set to run asynchronously (debugger.GetAsync() => true).
+		// The communication is done via events. Listen for events broadcast by the forked process.
+		// Events are handled depending on the state of the process, the most important is `eStateStopped`
+		// (stopped at a breakpoint, such as an exception) and `eStateExited` (ran without errors).
+		while (!done)
+		{
+			lldb::SBEvent event;
+
+			if (listener.WaitForEvent(timeOut /*seconds*/, event))
+			{
+				if (lldb::SBProcess::EventIsProcessEvent(event))
+				{
+					const auto state = lldb::SBProcess::GetStateFromEvent(event);
+
+					if (state == lldb::eStateInvalid)
+					{
+						out::Verb() << "Invalid process event: " << StateToString(state) << "\n";
+					}
+					else
+					{
+						out::Verb() << "Process state event changed to: " << StateToString(state) << "\n";
+
+						if (state == lldb::eStateStopped)
+						{
+							// The debugger stopped at a breakpoint. Since no breakpoints were set, this is most likely an exception.
+							// Analyze the current stack frame to determine the status and position of the error.
+
+							out::Verb() << "Stopped at a breakpoint.\n";
+							out::Verb() << "LLDB Threading ...\n";
+
+							auto thread = process.GetSelectedThread();
+							out::Verb() << "thread.IsValid()             = " << static_cast<int>(thread.IsValid()) << "\n";
+							out::Verb() << "thread.GetThreadID()         = " << thread.GetThreadID() << "\n";
+							out::Verb() << "thread.GetName()             = " << (thread.GetName() != nullptr
+								? thread.GetName()
+								: "(null)") << "\n";
+							out::Verb() << "thread.GetStopReason()       = " << StopReasonToString(thread.GetStopReason()) <<
+								"\n";
+							out::Verb() << "thread.IsSuspended()         = " << static_cast<int>(thread.IsSuspended()) <<
+								"\n";
+							out::Verb() << "thread.IsStopped()           = " << static_cast<int>(thread.IsStopped()) << "\n";
+							out::Verb() << "process.GetState()           = " << StateToString(process.GetState()) << "\n";
+
+							if (thread.GetStopReason() == lldb::StopReason::eStopReasonException)
+							{
+								out::Verb() << "An exception was hit, killing the process ...\n";
+								done = true;
+							}
+
+							auto frame = thread.GetSelectedFrame();
+							out::Verb() << "frame.IsValid()              = " << static_cast<int>(frame.IsValid()) << "\n";
+
+							auto function = frame.GetFunction();
+
+							if (function.IsValid())
+							{
+								out::Verb() << "function.GetDisplayName()   = " << (function.GetDisplayName() != nullptr
+									? function.GetDisplayName()
+									: "(null)") << "\n";
+							}
+
+							auto symbol = frame.GetSymbol();
+							out::Verb() << "symbol.IsValid()             = " << static_cast<int>(symbol.IsValid()) << "\n";
+
+							if (symbol.IsValid())
+							{
+								out::Verb() << "symbol.GetDisplayName()      = " << symbol.GetDisplayName() << "\n";
+
+								auto symbolContext = frame.GetSymbolContext(lldb::eSymbolContextLineEntry);
+
+								out::Verb() << "symbolContext.IsValid()      = " << static_cast<int>(symbolContext.IsValid())
+									<< "\n";
+
+								if (symbolContext.IsValid())
+								{
+									const auto fileName = symbolContext.GetLineEntry().GetFileSpec().GetFilename();
+									const auto lineNumber = symbolContext.GetLineEntry().GetLine();
+
+									out::Verb() << "symbolContext.GetFilename()  = " << fileName << "\n";
+									out::Verb() << "symbolContext.GetLine()      = " << lineNumber << "\n";
+									out::Verb() << "symbolContext.GetColumn()    = " << symbolContext
+										.GetLineEntry().GetColumn() << "\n";
+
+									// TODO: Confirm the message.
+
+									auto presumedErrorLine = globalContext.variantAdjustedErrorLocation[currentVariant];
+									
+									if (lineNumber == presumedErrorLine - 1 || 
+										lineNumber == presumedErrorLine || 
+										lineNumber == presumedErrorLine + 1)
+									{
+										resultFound.emplace(entry.path().string());
+										done = true;
+									}
+
+									// TODO: The location must be adjusted to the reduction - probably something that should be done inside a visitor.
+								}
+							}
+
+							process.Continue();
+						}
+						else if (state == lldb::eStateExited)
+						{
+							out::Verb() << "Process exited.\n";
+
+							auto description = process.GetExitDescription();
+
+							if (description != nullptr)
+							{
+								out::Verb() << "Exit status " << process.GetExitStatus() << ":" << description << "\n";
+							}
+							else
+							{
+								out::Verb() << "Exit status " << process.GetExitStatus() << "\n";
+							}
+
+							done = true;
+						}
+						else if (state == lldb::eStateCrashed)
+						{
+							out::Verb() << "Process crashed.\n";
+							done = true;
+						}
+						else if (state == lldb::eStateDetached)
+						{
+							out::Verb() << "Process detached.\n";
+							done = true;
+						}
+						else if (state == lldb::eStateUnloaded)
+						{
+							out::Verb() << "ERROR: Process unloaded!\n";
+							done = true;
+						}
+						else if (state == lldb::eStateConnected)
+						{
+							out::Verb() << "Process connected.\n";
+						}
+						else if (state == lldb::eStateAttaching)
+						{
+							out::Verb() << "Process attaching.\n";
+						}
+						else if (state == lldb::eStateLaunching)
+						{
+							out::Verb() << "Process launching.\n";
+						}
+					}
+				}
+				else
+				{
+					out::Verb() << "Event: " << lldb::SBEvent::GetCStringFromEvent(event) << "\n";
+				}
+			}
+			else
+			{
+				out::Verb() << "Process event has not occured in the last" << timeOut << " seconds, killing the process ...\n";
+				done = true;
+			}
+		}
+
+		process.Kill();
+		debugger.DeleteTarget(target);
+		lldb::SBDebugger::Destroy(debugger);
+
+		if (resultFound.has_value())
+		{
+			break;
+		}
+	}
+
+	// TODO: Conclude the result, print statistics (reduction rate, time consumed, variants created, variants compiled, etc.).
+
+	if (!resultFound.has_value())
+	{
+		return false;
+	}
+
+	out::All() << "Found the smallest error-inducing source file: " << resultFound.value() << "\n";
+
+	// TODO: Change the .c extension based on the programming language (in all instances, not just this one).
+	out::All() << "Renaming the file to '" << TempFolder << "autoPieOut.c'\n";
+
+	std::filesystem::rename(resultFound.value(), TempFolder + std::string("autoPieOut.c"));
 
 	return true;
 }
