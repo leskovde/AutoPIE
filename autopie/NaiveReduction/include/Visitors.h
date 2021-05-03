@@ -298,28 +298,31 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 		}
 	}
 
-	// TODO: Remove bidirectional dependencies and dependency duplicates.
-
 	/**
-	 * Checks whether a statement contains a declaration reference, i.e., a variable usage.\n
+	 * Checks whether an expression is a declaration reference, i.e., a variable usage.\n
 	 * If it does and the variable's declaration has been mapped, a dependency is created.\n
-	 * The dependency states that the current node is dependent on the declaring node.
+	 * The dependency states that the parent statement node (if encountered) is dependent on the declaring node.
 	 *
-	 * @param expr The statement to be checked for variable usages.
+	 * @param expr The expression to be checked for variable usages.
 	 */
 	void HandleVariableInstancesInExpressions(clang::Expr* expr)
 	{
 		// The statement / expression might contain a direct variable usage, e.g. `x = 5;`
 		if (expr != nullptr && llvm::isa<clang::DeclRefExpr>(expr))
 		{
-			const auto parentId = llvm::cast<clang::DeclRefExpr>(expr)->getFoundDecl()->getID();
-
-			llvm::outs() << "Found DeclRef (" <<  parentId << ", " << expr->getID(astContext_) << "): " << RangeToString(astContext_, expr->getSourceRange()) << "\n";
-			
+			const auto parentId = llvm::cast<clang::DeclRefExpr>(expr)->getFoundDecl()->getID();			
 			declReferences_.push_back(std::pair<int, int>(parentId, expr->getID(astContext_)));
 		}
 	}
 
+	/**
+	 * Determines whether a node given by the AST ID is in the subtree given by a statement node.\n
+	 * The search is conducted in a DFS manner.
+	 *
+	 * @param stmt The statement node that is the root of the searched subtree.
+	 * @param childId The AST ID of the node that is searched as a child.
+	 * @return True if the node is in the given subtree, otherwise false.
+	 */
 	bool IsRecursiveChild(clang::Stmt* stmt, const int childId) const
 	{
 		if (stmt != nullptr)
@@ -340,7 +343,17 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 
 		return false;
 	}
-	
+
+	/**
+	 * Processes all found declaration references (i.e., variable usages) with respect to the current traversed statement.\n
+	 * The current statement is given both by the `clang::Stmt*` parameter and by the `codeUnitsCount` traversal order number.\n
+	 * All found declaration references are checked. In order to be processed, the declaring node has to be mapped.\n
+	 * Additionally, the declaration reference's occurence node must be a recursive child of the current statement.\n
+	 * If a declaration reference is successfully recognized, it is added as a variable dependency and removed from
+	 * the list of unprocessed declaration references.
+	 *
+	 * @param stmt The current statement given by its `clang::Stmt*` instance.
+	 */
 	void CheckFoundDeclReferences(clang::Stmt* stmt)
 	{
 		std::vector<std::pair<int, int>> toBeKept;
@@ -439,6 +452,12 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 		}
 	}
 
+	/**
+	 * The body of VisitExpr.\n
+	 * Looks for declaration references (i.e., variable usages) in the code.
+	 *
+	 * @param expr The expression which is checked for declaration references.
+	 */
 	void ProcessExpression(clang::Expr* expr)
 	{
 		// Look for variable usages inside the current expression.
@@ -548,6 +567,27 @@ public:
 
 		return true;
 	}
+
+#pragma region Expressions
+	
+	/**
+	 * Overrides the parent visit method.\n
+	 * Visits all expressions. Serves primarily to find declaration references.
+	 */
+	bool VisitExpr(clang::Expr* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		ProcessExpression(expr);
+
+		return true;
+	}
 	
 	/**
 	 * Overrides the parent visit method.\n
@@ -568,21 +608,8 @@ public:
 		return true;
 	}
 
-	bool VisitExpr(clang::Expr* expr)
-	{
-		// Skip included files.
-		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
-			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
-			//if (loc.isValid() && loc.isInSystemHeader())
-		{
-			return true;
-		}
-
-		ProcessExpression(expr);
-
-		return true;
-	}
-
+#pragma endregion Expressions
+	
 	/**
 	 * Overrides the parent visit method.\n
 	 * Skips selected node types based on their importance.\n
