@@ -236,11 +236,45 @@ public:
 class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisitor>
 {
 	int errorLine_;
-	NodeMappingRef nodeMapping_;
 	clang::ASTContext& astContext_;
+
+	/**
+	 * A map of integers that serves as a recognition tool for traversed nodes.\n
+	 * Maps the node's AST ID (a unique replicable number that can be extracted from each node) to
+	 * the traversal order number (the position of the node in the postfix traversal of this visitor)
+	 * of the given node.
+	 */
+	NodeMappingRef nodeMapping_;
+	
+
+	/**
+	 * A map of integers that serves as a recognition tool for declarations.\n
+	 * Maps the node's AST ID (a unique replicable number that can be extracted from each node) to
+	 * the traversal order number (the position of the node in the postfix traversal of this visitor)
+	 * of a declaration node (a node that declares a function or a variable).
+	 */
 	NodeMappingRef declNodeMapping_;
+
+	/**
+	 * Keeps a list of found declaration references (i.e., variable usages).\n
+	 * Each entry consists of a pair.\n
+	 * The first value is the AST ID (a unique replicable number that can be extracted from each node) of
+	 * the declaration node.\n
+	 * The second value is the AST ID of the node in which the declared variable or function was referenced.
+	 */
 	std::vector<std::pair<int, int>> declReferences_;
+
+	// TODO: Rework the snippet set (if a statement is repeated in the code, it does not get recognized).
+	/**
+	 * Stores a snippet of source code and its recognition flag.\n
+	 * Upon discovering a node and successfully mapping it, the underlying source code is stored.\n
+	 */
 	std::unordered_map<std::string, bool> snippetSet_;
+
+	/**
+	 * Keeps note of which nodes should be skipped during traversal.\n
+	 * If a node is a duplicate of an already processed node, it is added to this map.
+	 */
 	SkippedMapRef skippedNodes_ = std::make_shared<std::unordered_map<int, bool>>();
 
 	/**
