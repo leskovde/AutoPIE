@@ -265,7 +265,6 @@ std::pair<bool, double> IsValid(BitMask& bitMask, DependencyGraph& dependencies)
 	{
 		if (!bitMask[i])
 		{
-			// TODO: Fix character count.
 			characterCount -= dependencies.GetNodeInfo(i).characterCount;
 			
 			if (dependencies.IsInCriterion(i))

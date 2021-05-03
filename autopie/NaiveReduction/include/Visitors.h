@@ -239,6 +239,7 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 	NodeMappingRef nodeMapping_;
 	clang::ASTContext& astContext_;
 	NodeMappingRef declNodeMapping_;
+	std::vector<std::pair<int, int>> declReferences_;
 	std::unordered_map<std::string, bool> snippetSet_;
 	SkippedMapRef skippedNodes_ = std::make_shared<std::unordered_map<int, bool>>();
 
@@ -304,47 +305,59 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 	 * If it does and the variable's declaration has been mapped, a dependency is created.\n
 	 * The dependency states that the current node is dependent on the declaring node.
 	 *
-	 * @param stmt The statement to be checked for variable usages.
+	 * @param expr The statement to be checked for variable usages.
 	 */
-	void HandleVariableInstancesInStatements(clang::Stmt* stmt)
+	void HandleVariableInstancesInExpressions(clang::Expr* expr)
 	{
-		if (stmt != nullptr && llvm::isa<clang::Expr>(stmt))
+		// The statement / expression might contain a direct variable usage, e.g. `x = 5;`
+		if (expr != nullptr && llvm::isa<clang::DeclRefExpr>(expr))
 		{
-			const auto id = stmt->getID(astContext_);
-			const auto typeName = stmt->getStmtClassName();
-			const auto codeSnippet = RangeToString(astContext_, stmt->getSourceRange());
-			const auto line = astContext_.getSourceManager().getSpellingLineNumber(stmt->getBeginLoc());
-			
-			for (auto it = stmt->child_begin(); it != stmt->child_end(); ++it)
-			{
-				const auto it_id = it->getID(astContext_);
-				const auto it_typeName = it->getStmtClassName();
-				const auto it_codeSnippet = RangeToString(astContext_, it->getSourceRange());
-				const auto it_line = astContext_.getSourceManager().getSpellingLineNumber(it->getBeginLoc());
-				
-				// The statement / expression might contain a direct variable usage, e.g. `x = 5;`
-				if (*it != nullptr && llvm::isa<clang::DeclRefExpr>(*it))
-				{
-					const auto parentID = llvm::cast<clang::DeclRefExpr>(*it)->getFoundDecl()->getID();
+			const auto parentId = llvm::cast<clang::DeclRefExpr>(expr)->getFoundDecl()->getID();
 
-					if (declNodeMapping_->find(parentID) != declNodeMapping_->end())
-					{
-						graph.InsertVariableDependency((*declNodeMapping_)[parentID], codeUnitsCount);
-					}
-				}
-				// Sometimes the variable is hidden beneath an implicit cast.
-				else if (*it != nullptr && llvm::isa<clang::ImplicitCastExpr>(*it))
+			llvm::outs() << "Found DeclRef (" <<  parentId << ", " << expr->getID(astContext_) << "): " << RangeToString(astContext_, expr->getSourceRange()) << "\n";
+			
+			declReferences_.push_back(std::pair<int, int>(parentId, expr->getID(astContext_)));
+		}
+	}
+
+	bool IsRecursiveChild(clang::Stmt* stmt, const int childId) const
+	{
+		if (stmt != nullptr)
+		{
+			for (auto& child : stmt->children())
+			{
+				if (child != nullptr && child->getID(astContext_) == childId)
 				{
-					HandleVariableInstancesInStatements(*it);
+					return true;
 				}
-				// Other times, the statement or expression might be using a variable inside an binary operator expression.
-				// e.g. `assert(x == 5);`
-				else if (*it != nullptr && llvm::isa<clang::BinaryOperator>(*it))
+
+				if (IsRecursiveChild(child, childId))
 				{
-					HandleVariableInstancesInStatements(*it);
+					return true;
 				}
 			}
 		}
+
+		return false;
+	}
+	
+	void CheckFoundDeclReferences(clang::Stmt* stmt)
+	{
+		std::vector<std::pair<int, int>> toBeKept;
+		
+		for (auto it = declReferences_.begin(); it != declReferences_.end(); ++it)
+		{
+			if (declNodeMapping_->find(it->first) != declNodeMapping_->end() && IsRecursiveChild(stmt, it->second))
+			{
+				graph.InsertVariableDependency((*declNodeMapping_)[it->first], codeUnitsCount);
+			}
+			else
+			{
+				toBeKept.push_back(*it);
+			}
+		}
+
+		declReferences_ = toBeKept;
 	}
 
 	/**
@@ -408,10 +421,9 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 			const auto codeSnippet = RangeToString(astContext_, expr->getSourceRange());
 			const auto line = astContext_.getSourceManager().getSpellingLineNumber(expr->getBeginLoc());
 
-			// Look for variable usages inside the current statement.
-			// If the statement uses a previously declared variable, it should be dependent on that declaration.
-			// e.g. `if (x < 2) { ... } `should depend on `int x = 0;`
-			HandleVariableInstancesInStatements(expr);
+			out::Verb() << "Node " << codeUnitsCount << ": Type " << typeName << "\n";
+			
+			CheckFoundDeclReferences(expr);
 
 			if (InsertMapping(id, codeSnippet, line))
 			{
@@ -425,6 +437,14 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 		{
 			out::Verb() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
 		}
+	}
+
+	void ProcessExpression(clang::Expr* expr)
+	{
+		// Look for variable usages inside the current expression.
+		// If the statement uses a previously declared variable, it should be dependent on that declaration.
+		// e.g. `if (x < 2) { ... } `should depend on `int x = 0;`
+		HandleVariableInstancesInExpressions(expr);
 	}
 
 	/**
@@ -450,16 +470,11 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, "darkorchid");
 
 				HandleDeclarationsInStatements(stmt);
-				//HandleVariableInstancesInStatements(stmt);
+				CheckFoundDeclReferences(stmt);
 
 				// Apparently only statements have children.
 				for (auto it = stmt->child_begin(); it != stmt->child_end(); ++it)
 				{
-					// Look for variable usages inside the current statement.
-					// If the statement uses a previously declared variable, it should be dependent on that declaration.
-					// e.g. `if (x < 2) { ... } `should depend on `int x = 0;`
-					HandleVariableInstancesInStatements(*it);
-
 					if (*it != nullptr && nodeMapping_->find(it->getID(astContext_)) != nodeMapping_->end())
 					{
 						graph.InsertStatementDependency(codeUnitsCount, nodeMapping_->at(it->getID(astContext_)));
@@ -533,7 +548,7 @@ public:
 
 		return true;
 	}
-
+	
 	/**
 	 * Overrides the parent visit method.\n
 	 * Determines whether the node is worth visiting and creates an ID to traversal order number mapping for the node.\n
@@ -549,6 +564,21 @@ public:
 		}
 		
 		ProcessCallExpression(expr);
+
+		return true;
+	}
+
+	bool VisitExpr(clang::Expr* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		ProcessExpression(expr);
 
 		return true;
 	}

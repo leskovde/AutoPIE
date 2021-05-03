@@ -53,4 +53,8 @@ main (int argc, char** argv) {
 7 -> 6;
 2 -> 1;
 1 -> 0;
+4 -> 7 [color=maroon];
+5 -> 7 [color=maroon];
+3 -> 6 [color=maroon];
+3 -> 8 [color=maroon];
 }
