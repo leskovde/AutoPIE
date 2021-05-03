@@ -453,20 +453,6 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 	}
 
 	/**
-	 * The body of VisitExpr.\n
-	 * Looks for declaration references (i.e., variable usages) in the code.
-	 *
-	 * @param expr The expression which is checked for declaration references.
-	 */
-	void ProcessExpression(clang::Expr* expr)
-	{
-		// Look for variable usages inside the current expression.
-		// If the statement uses a previously declared variable, it should be dependent on that declaration.
-		// e.g. `if (x < 2) { ... } `should depend on `int x = 0;`
-		HandleVariableInstancesInExpressions(expr);
-	}
-
-	/**
 	 * The body of VisitStmt after all invalid Stmt types have been ruled out.\n
 	 * Checks both statement and variable dependencies, variable declarations, and maps the node as valid.
 	 *
@@ -572,9 +558,9 @@ public:
 	
 	/**
 	 * Overrides the parent visit method.\n
-	 * Visits all expressions. Serves primarily to find declaration references.
+	 * Serves primarily to find declaration references.
 	 */
-	bool VisitExpr(clang::Expr* expr)
+	bool VisitDeclRefExpr(clang::DeclRefExpr* expr)
 	{
 		// Skip included files.
 		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
@@ -584,7 +570,10 @@ public:
 			return true;
 		}
 
-		ProcessExpression(expr);
+		// Look for variable usages inside the current expression.
+		// If the statement uses a previously declared variable, it should be dependent on that declaration.
+		// e.g. `if (x < 2) { ... } `should depend on `int x = 0;`
+		HandleVariableInstancesInExpressions(expr);
 
 		return true;
 	}
