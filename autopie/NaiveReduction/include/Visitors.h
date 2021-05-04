@@ -115,6 +115,18 @@ class VariantPrintingASTVisitor final : public clang::RecursiveASTVisitor<Varian
 		return false;
 	}
 
+	void ProcessRelevantExpression(clang::Expr* expr)
+	{
+		if (skippedNodes_->find(currentNode_) == skippedNodes_->end() && ShouldBeRemoved())
+		{
+			const auto range = expr->getSourceRange();
+
+			RemoveFromSource(range);
+		}
+
+		currentNode_++;
+	}
+
 public:
 	int AdjustedErrorLine;
 	
@@ -192,6 +204,23 @@ public:
 		return true;
 	}
 
+#pragma region Expressions
+
+	bool VisitAbstractConditionalOperator(clang::AbstractConditionalOperator* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		ProcessRelevantExpression(expr);
+
+		return true;
+	}
+
 	/**
 	 * Overrides the parent visit method.\n
 	 * Removes valid nodes based on the provided bit mask and dependency graph.
@@ -200,23 +229,158 @@ public:
 	{
 		// Skip included files.
 		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
-		//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
-		//if (loc.isValid() && loc.isInSystemHeader())
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
 		{
 			return true;
 		}
-		
-		if (skippedNodes_->find(currentNode_) == skippedNodes_->end() && ShouldBeRemoved())
-		{
-			const auto range = expr->getSourceRange();
 
-			RemoveFromSource(range);
-		}
-
-		currentNode_++;
+		ProcessRelevantExpression(expr);
 
 		return true;
 	}
+
+	bool VisitBinaryOperator(clang::BinaryOperator* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		if (llvm::isa<clang::CompoundAssignOperator>(expr) || !expr->isAssignmentOp())
+		{
+			return true;
+		}
+
+		ProcessRelevantExpression(expr);
+
+		return true;
+	}
+	
+	bool VisitCompoundAssignOperator(clang::CompoundAssignOperator* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		ProcessRelevantExpression(expr);
+
+		return true;
+	}
+
+	bool VisitChooseExpr(clang::ChooseExpr* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		ProcessRelevantExpression(expr);
+
+		return true;
+	}
+
+	bool VisitCXXConstructExpr(clang::CXXConstructExpr* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		ProcessRelevantExpression(expr);
+
+		return true;
+	}
+
+	bool VisitCXXDeleteExpr(clang::CXXDeleteExpr* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		ProcessRelevantExpression(expr);
+
+		return true;
+	}
+
+	bool VisitCXXNewExpr(clang::CXXNewExpr* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		ProcessRelevantExpression(expr);
+
+		return true;
+	}
+
+	bool VisitLambdaExpr(clang::LambdaExpr* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		ProcessRelevantExpression(expr);
+
+		return true;
+	}
+
+	bool VisitStmtExpr(clang::StmtExpr* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		ProcessRelevantExpression(expr);
+
+		return true;
+	}
+
+	bool VisitUnaryOperator(clang::UnaryOperator* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		ProcessRelevantExpression(expr);
+
+		return true;
+	}
+
+#pragma endregion Expressions
 
 	/**
 	 * Overrides the parent visit method.\n
@@ -480,12 +644,13 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 	}
 
 	/**
-	 * The body of VisitCallExpr after all invalid Expr types have been ruled out.\n
+	 * The body of VisitCallExpr, VisitCompoundAssignOperator, and others, after all invalid Expr types
+	 * have been ruled out.\n
 	 * Checks call's variable dependencies and maps the node as valid.
 	 *
 	 * @param expr The current processed declaration.
 	 */
-	void ProcessCallExpression(clang::CallExpr* expr)
+	void ProcessRelevantExpression(clang::Expr* expr, const std::string& color)
 	{
 		if (nodeMapping_->find(expr->getID(astContext_)) == nodeMapping_->end())
 		{
@@ -501,7 +666,7 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 			if (InsertMapping(id, codeSnippet, line))
 			{
 				snippetSet_[codeSnippet] = true;
-				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, "goldenrod");
+				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, color);
 			}
 
 			codeUnitsCount++;
@@ -615,6 +780,135 @@ public:
 	}
 
 #pragma region Expressions
+
+	bool VisitAbstractConditionalOperator(clang::AbstractConditionalOperator* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		ProcessRelevantExpression(expr, "darkorchid");
+
+		return true;
+	}
+	
+	/**
+	 * Overrides the parent visit method.\n
+	 * Determines whether the node is worth visiting and creates an ID to traversal order number mapping for the node.\n
+	 */
+	bool VisitCallExpr(clang::CallExpr* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+		//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+		//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+		
+		ProcessRelevantExpression(expr, "goldenrod");
+
+		return true;
+	}
+
+	bool VisitBinaryOperator(clang::BinaryOperator* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		if (llvm::isa<clang::CompoundAssignOperator>(expr) || !expr->isAssignmentOp())
+		{
+			return true;
+		}
+
+		ProcessRelevantExpression(expr, "darkorchid");
+
+		return true;
+	}
+	
+	bool VisitCompoundAssignOperator(clang::CompoundAssignOperator* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		ProcessRelevantExpression(expr, "darkorchid");
+
+		return true;
+	}
+
+	bool VisitChooseExpr(clang::ChooseExpr* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		ProcessRelevantExpression(expr, "darkorchid");
+
+		return true;
+	}
+
+	bool VisitCXXConstructExpr(clang::CXXConstructExpr* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		ProcessRelevantExpression(expr, "darkorchid");
+
+		return true;
+	}
+
+	bool VisitCXXDeleteExpr(clang::CXXDeleteExpr* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		ProcessRelevantExpression(expr, "darkorchid");
+
+		return true;
+	}
+
+	bool VisitCXXNewExpr(clang::CXXNewExpr* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		ProcessRelevantExpression(expr, "darkorchid");
+
+		return true;
+	}
 	
 	/**
 	 * Overrides the parent visit method.\n
@@ -637,22 +931,48 @@ public:
 
 		return true;
 	}
-	
-	/**
-	 * Overrides the parent visit method.\n
-	 * Determines whether the node is worth visiting and creates an ID to traversal order number mapping for the node.\n
-	 */
-	bool VisitCallExpr(clang::CallExpr* expr)
+
+	bool VisitLambdaExpr(clang::LambdaExpr* expr)
 	{
 		// Skip included files.
 		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
-		//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
-		//if (loc.isValid() && loc.isInSystemHeader())
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
 		{
 			return true;
 		}
-		
-		ProcessCallExpression(expr);
+
+		ProcessRelevantExpression(expr, "darkorchid");
+
+		return true;
+	}
+
+	bool VisitStmtExpr(clang::StmtExpr* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		ProcessRelevantExpression(expr, "darkorchid");
+
+		return true;
+	}
+
+	bool VisitUnaryOperator(clang::UnaryOperator* expr)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(expr->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(expr->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		ProcessRelevantExpression(expr, "darkorchid");
 
 		return true;
 	}
