@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 /*
  * Here, the ">" on line 5 should be "<". Even people who are not normally 

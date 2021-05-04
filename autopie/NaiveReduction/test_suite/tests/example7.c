@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 /*
  * The result when j=7 and i=6 is (sometimes) -5. Why? You might think there 

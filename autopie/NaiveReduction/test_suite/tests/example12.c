@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 /*
  * Oops! "hello" has a sixth character, the terminator. We just corrupted 

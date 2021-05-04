@@ -35,6 +35,7 @@ class VariantPrintingASTVisitor final : public clang::RecursiveASTVisitor<Varian
 
 	BitMask bitMask_;
 	int currentNode_ = 0; ///< The traversal order number.
+	int errorLineBackup_;
 	RewriterRef rewriter_;
 	DependencyGraph graph_;
 	SkippedMapRef skippedNodes_;
@@ -55,11 +56,23 @@ class VariantPrintingASTVisitor final : public clang::RecursiveASTVisitor<Varian
 				astContext_.getSourceManager());
 
 			const auto begin = astContext_.getSourceManager().getPresumedLineNumber(printableRange.getBegin());
-			const auto end = astContext_.getSourceManager().getPresumedLineNumber(printableRange.getEnd());
+			const auto snippet = GetSourceTextRaw(printableRange, astContext_.getSourceManager()).str();
 
-			if (begin < AdjustedErrorLine)
+			const auto lineBreaks = std::count_if(snippet.begin(), snippet.end(), [](const char c)
+				{
+					if (c == '\n')
+					{
+						return true;
+					}
+
+					return false;
+				});
+
+			
+			if (begin < errorLineBackup_)
 			{
-				AdjustedErrorLine -= AdjustedErrorLine < end ? end - begin + 1 : AdjustedErrorLine - begin + 1;
+				const int decrement = errorLineBackup_ >= begin + lineBreaks ? lineBreaks : errorLineBackup_ - begin;
+				AdjustedErrorLine -= decrement;
 			}
 			
 			rewriter_->RemoveText(printableRange);
@@ -105,7 +118,7 @@ class VariantPrintingASTVisitor final : public clang::RecursiveASTVisitor<Varian
 public:
 	int AdjustedErrorLine;
 	
-	explicit VariantPrintingASTVisitor(clang::CompilerInstance* ci, const int errorLine) : astContext_(ci->getASTContext()), AdjustedErrorLine(errorLine)
+	explicit VariantPrintingASTVisitor(clang::CompilerInstance* ci, const int errorLine) : astContext_(ci->getASTContext()), AdjustedErrorLine(errorLine), errorLineBackup_(errorLine)
 	{
 	}
 
@@ -121,6 +134,7 @@ public:
 		currentNode_ = 0;
 		bitMask_ = mask;
 		rewriter_ = rewriter;
+		AdjustedErrorLine = errorLineBackup_;
 	}
 
 	/**
