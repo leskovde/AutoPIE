@@ -584,6 +584,7 @@ bool ValidateResults(GlobalContext& globalContext)
 									out::Verb() << "symbolContext.GetColumn()    = " << symbolContext
 										.GetLineEntry().GetColumn() << "\n";
 
+									// TODO: The debugger location is sometimes off (function declaration line instead of function call) - fix it.
 									// TODO: Confirm the message.
 
 									auto presumedErrorLine = globalContext.variantAdjustedErrorLocation[currentVariant];
@@ -595,8 +596,6 @@ bool ValidateResults(GlobalContext& globalContext)
 										resultFound.emplace(entry.path().string());
 										done = true;
 									}
-
-									// TODO: The location must be adjusted to the reduction - probably something that should be done inside a visitor.
 								}
 							}
 

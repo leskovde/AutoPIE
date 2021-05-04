@@ -12,12 +12,12 @@
 // TODO : ADD WRAPPER (LINKED LIST) CODE
 
 main() {
-  Record city;
-  lnode *list = NULL;
+	Record city;
+	lnode *list = NULL;
 
-  while (data_to_read()) {
-    Readin_data(&city);
-    insert(&city, &list);
+	while (data_to_read()) {
+		Readin_data(&city);
+		insert(&city, &list);
   }
 }
 

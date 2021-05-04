@@ -12,11 +12,11 @@
 
 int different_narrative(int n) 
 { 
-    if (n == 1) 
-        return 1; 
+	if (n == 1)
+		return 1; 
   
-    return 1 + different_narrative(n -  
-               different_narrative(different_narrative(n - 1))); 
+	return 1 + different_narrative(n -  
+		different_narrative(different_narrative(n - 1))); 
 } 
 
 int

@@ -13,10 +13,10 @@
 
 // Return pointer to the node storing "val" if any; NULL otherwise
 void find(listnode **curr, val) {
-  while (*curr != NULL)
-    if (*curr->val == val) return;
-  else
-    *curr = *curr->next;
+	while (*curr != NULL)
+		if (*curr->val == val) return;
+	else
+		*curr = *curr->next;
 }
 
 int
