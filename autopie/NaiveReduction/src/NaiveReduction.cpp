@@ -41,7 +41,7 @@ int main(int argc, const char** argv)
 	                             DumpDot);
 
 	// Prompt the user to clear the temp directory.
-	if (!ClearTempDirectory(false))
+	if (!ClearTempDirectory())
 	{
 		errs() << "Terminating...\n";
 		return EXIT_FAILURE;
@@ -99,7 +99,7 @@ int main(int argc, const char** argv)
 		}
 		
 		out::All() << "Epoch " << i + 1 << " out of " << epochCount << ": A smaller program variant could not be found.\n";
-		ClearTempDirectory(false);
+		ClearTempDirectory();
 	}
 
 	return EXIT_FAILURE;

@@ -1,7 +1,7 @@
 digraph g {
 forcelabels=true;
 rankdir=TD;
-10[label="int
+13[label="int
 main (int argc, char** argv) {
 	int i = 0;
 	
@@ -12,8 +12,31 @@ main (int argc, char** argv) {
 	}
 
 	print(\"Result: %d\n\", i);
-}", xlabel="No. 10 (757), Function", color="crimson"];
+}", xlabel="No. 13 (757), Function", color="crimson"];
+0[label="x += 3;", xlabel="No. 0 (651), CompoundAssignOperator", color="darkorchid"];
+1[label="print(str, x);", xlabel="No. 1 (687), CallExpr", color="goldenrod"];
+2[label="{ 
+	x += 3;
+	print(str, x);
+}", xlabel="No. 2 (699), CompoundStmt", color="darkorchid"];
+3[label="void print(const char* str, int x) 
+{ 
+	x += 3;
+	print(str, x);
+}", xlabel="No. 3 (612), Function", color="crimson"];
+4[label="int i = 0;", xlabel="No. 4 (799), DeclStmt", color="darkorchid"];
+5[label="const int k = 0xffff;", xlabel="No. 5 (833), DeclStmt", color="darkorchid"];
+6[label="int j = 0;", xlabel="No. 6 (856), DeclStmt", color="darkorchid"];
+7[label="j++)", xlabel="No. 7 (885), UnaryOperator", color="darkorchid"];
+8[label="i++;", xlabel="No. 8 (892), UnaryOperator", color="darkorchid"];
 9[label="{
+		i++;
+	}", xlabel="No. 9 (895), CompoundStmt", color="darkorchid"];
+10[label="for (int j = 0; j < k; j++) {
+		i++;
+	}", xlabel="No. 10 (898), ForStmt", color="darkorchid"];
+11[label="print(\"Result: %d\n\", i);", xlabel="No. 11 (946), CallExpr", color="goldenrod"];
+12[label="{
 	int i = 0;
 	
 	const int k = 0xffff;
@@ -23,38 +46,22 @@ main (int argc, char** argv) {
 	}
 
 	print(\"Result: %d\n\", i);
-}", xlabel="No. 9 (958), CompoundStmt", color="darkorchid"];
-8[label="print(\"Result: %d\n\", i);", xlabel="No. 8 (946), CallExpr", color="goldenrod"];
-7[label="for (int j = 0; j < k; j++) {
-		i++;
-	}", xlabel="No. 7 (898), ForStmt", color="darkorchid"];
-6[label="{
-		i++;
-	}", xlabel="No. 6 (895), CompoundStmt", color="darkorchid"];
-5[label="int j = 0;", xlabel="No. 5 (856), DeclStmt", color="darkorchid"];
-4[label="const int k = 0xffff;", xlabel="No. 4 (833), DeclStmt", color="darkorchid"];
-3[label="int i = 0;", xlabel="No. 3 (799), DeclStmt", color="darkorchid"];
-2[label="void print(const char* str, int x) 
-{ 
-	x += 3;
-	print(str, x);
-}", xlabel="No. 2 (612), Function", color="crimson"];
-1[label="{ 
-	x += 3;
-	print(str, x);
-}", xlabel="No. 1 (699), CompoundStmt", color="darkorchid"];
-0[label="print(str, x);", xlabel="No. 0 (687), CallExpr", color="goldenrod"];
+}", xlabel="No. 12 (958), CompoundStmt", color="darkorchid"];
+13 -> 12;
+12 -> 4;
+12 -> 5;
+12 -> 10;
+12 -> 11;
+10 -> 6;
+10 -> 7;
 10 -> 9;
-9 -> 3;
-9 -> 4;
-9 -> 7;
 9 -> 8;
-7 -> 5;
-7 -> 6;
+3 -> 2;
+2 -> 0;
 2 -> 1;
-1 -> 0;
-4 -> 7 [color=maroon];
-5 -> 7 [color=maroon];
-3 -> 6 [color=maroon];
-3 -> 8 [color=maroon];
+5 -> 10 [color=maroon];
+4 -> 8 [color=maroon];
+4 -> 11 [color=maroon];
+6 -> 7 [color=maroon];
+6 -> 10 [color=maroon];
 }

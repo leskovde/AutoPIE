@@ -367,9 +367,10 @@ int Compile(const std::filesystem::directory_entry& entry, const clang::Language
  *
  * @param filePath The file to be checked.
  * @param lineNumber The line in the given file to be checked, numbering starts from 1.
+ * @param force Specifies whether the output (the printing part) should be flushed to the All stream or not.
  * @return True if the given file and line combination is accessible, false otherwise.
  */
-bool CheckLocationValidity(const std::string& filePath, const long lineNumber)
+bool CheckLocationValidity(const std::string& filePath, const long lineNumber, const bool force)
 {
 	// TODO: Add unit tests for this function (out of bounds testing, locked file, etc.)
 	
@@ -396,19 +397,40 @@ bool CheckLocationValidity(const std::string& filePath, const long lineNumber)
 	}
 
 	// Print the context of the error-inducing line.
-
+	
 	const auto contextSize = 3;
 	const auto contextStart = lineNumber - contextSize > 0 ? lineNumber - contextSize : 1;
 	const auto contextEnd = lineNumber + contextSize < lines.size() ? lineNumber + contextSize : lines.size();
 
-	out::All() << "===---------------- Context of the error-inducing line ------------------===\n";
+	if (force)
+	{
+		out::All() << "===---------------- Context of the error-inducing line ------------------===\n";
+	}
+	else
+	{
+		out::Verb() << "===---------------- Context of the error-inducing line ------------------===\n";
+	}
 	
 	for (auto i = contextStart; i <= contextEnd; i++)
 	{
-		out::All() << (i != lineNumber ? "    " : "[*] ") << i << ": " << lines[i - 1] << "\n";
+		if (force)
+		{
+			out::All() << (i != lineNumber ? "    " : "[*] ") << i << ": " << lines[i - 1] << "\n";
+		}
+		else
+		{
+			out::Verb() << (i != lineNumber ? "    " : "[*] ") << i << ": " << lines[i - 1] << "\n";
+		}
 	}
 
-	out::All() << "===----------------------------------------------------------------------===\n";
+	if (force)
+	{
+		out::All() << "===----------------------------------------------------------------------===\n";
+	}
+	else
+	{
+		out::Verb() << "===----------------------------------------------------------------------===\n";
+	}
 
 	return true;
 }
@@ -456,6 +478,12 @@ bool ValidateResults(GlobalContext& globalContext)
 		const auto currentVariantName = entry.path().filename().string();
 		const auto currentVariant = std::stol(currentVariantName.substr(0, currentVariantName.find('_')));
 
+		const auto presumedErrorLine = globalContext.variantAdjustedErrorLocation[currentVariant];
+
+		out::Verb() << "Processing file: " << entry.path().string() << "\n";
+		
+		CheckLocationValidity(entry.path().string(), presumedErrorLine, false);
+		
 		// Keep all LLDB logic written explicitly, not refactored in a function.
 		// The function could be called when the LLDBSentry is not initialized => unwanted behaviour.
 
@@ -586,8 +614,6 @@ bool ValidateResults(GlobalContext& globalContext)
 
 									// TODO: The debugger location is sometimes off (function declaration line instead of function call) - fix it.
 									// TODO: Confirm the message.
-
-									auto presumedErrorLine = globalContext.variantAdjustedErrorLocation[currentVariant];
 									
 									if (lineNumber == presumedErrorLine - 1 || 
 										lineNumber == presumedErrorLine || 

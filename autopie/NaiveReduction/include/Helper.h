@@ -126,7 +126,7 @@ llvm::StringRef GetSourceText(clang::SourceRange range, const clang::SourceManag
 //
 //===----------------------------------------------------------------------===//
 
-bool ClearTempDirectory(bool prompt);
+bool ClearTempDirectory(bool prompt = false);
 
 std::string RemoveFileExtensions(const std::string& filePath);
 
@@ -156,7 +156,7 @@ int Compile(const std::filesystem::directory_entry& entry, clang::Language langu
 
 bool ValidateResults(GlobalContext& context);
 
-bool CheckLocationValidity(const std::string& filePath, long lineNumber);
+bool CheckLocationValidity(const std::string& filePath, long lineNumber, bool force = true);
 
 std::string StateToString(lldb::StateType state);
 
