@@ -847,6 +847,34 @@ public:
 
 		return true;
 	}
+
+	/**
+	 * Overrides the parent visit method.\n
+	 * Visits a RecordDecl and traverses its children.\n
+	 * Those children that have already been traverses will be mapped as dependencies
+	 * of the current node.
+	 */
+	bool VisitEnumDecl(clang::EnumDecl* decl)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(decl->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(decl->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		// Map constants as dependencies.
+		for (auto it = decl->enumerator_begin(); it != decl->enumerator_end(); ++it)
+		{
+			if (*it != nullptr && nodeMapping_->find(it->getID()) != nodeMapping_->end())
+			{
+				graph.InsertStatementDependency(codeUnitsCount - 1, nodeMapping_->at(it->getID()));
+			}
+		}
+
+		return true;
+	}
 	
 #pragma endregion Declarations
 	

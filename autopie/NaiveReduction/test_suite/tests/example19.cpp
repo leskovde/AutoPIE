@@ -31,12 +31,15 @@ main()
 	
 	for (int i = 0; i < 5; i++)
 	{
-		Node* node = new SpecifiedNode() { type = PayloadType::OnePayload, payload = i, link = previousNode };
+		SpecifiedNode* node = new SpecifiedNode();
+		node->type = PayloadType::OnePayload;
+		node->payload = i;
+		node->link = previousNode;
 		previousNode = node;
 		nodes.push(node);
 	}
 
-	for (int i = 0; i < 5; i++)
+	for (int i = 0; i < 6; i++)
 	{
 		previousNode = previousNode->link;
 	}

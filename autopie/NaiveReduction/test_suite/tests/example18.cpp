@@ -1,4 +1,4 @@
-#include <istream>
+#include <iostream>
 
 /**
  * Error when working with private members.
@@ -8,12 +8,17 @@ class Record
 {
     Record* self = nullptr;
 
-    void Initialize()
+    void Join(Record* ptr)
     {
-        self.join(this);
+	self = ptr;
     }
 
-	void DebugPrint()
+    void Initialize()
+    {
+        self->Join(this);
+    }
+    
+    void DebugPrint()
     {
         std::cout << "Constructing at " << self << "\n";
     }
@@ -23,11 +28,16 @@ public:
     std::string str2;
     int year;
 
+    Record()
+    {
+
+    }
+
     Record(std::string b, std::string m, int y) : str1(b), str2(m), year(y)
     {
         DebugPrint();
     	
-        self = Initialize();
+        Initialize();
     }
 };
 
