@@ -619,7 +619,7 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 				snippetSet_[codeSnippet] = true;
 				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, "crimson");
 
-				if (llvm::cast<clang::FunctionDecl>(decl)->isMain())
+				if (llvm::isa<clang::FunctionDecl>(decl) && llvm::cast<clang::FunctionDecl>(decl)->isMain())
 				{
 					graph.AddCriterionNode(codeUnitsCount);
 				}
@@ -776,6 +776,28 @@ public:
 
 		ProcessDeclaration(decl);
 
+		return true;
+	}
+
+	bool VisitRecordDecl(clang::RecordDecl* decl)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(decl->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(decl->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		// Map fields as dependencies.
+		for (auto it = decl->field_begin(); it != decl->field_end(); ++it)
+		{
+			if (*it != nullptr && nodeMapping_->find(it->getID()) != nodeMapping_->end())
+			{
+				graph.InsertStatementDependency(codeUnitsCount - 1, nodeMapping_->at(it->getID()));
+			}
+		}
+		
 		return true;
 	}
 

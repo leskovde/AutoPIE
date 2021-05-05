@@ -1,67 +1,95 @@
 digraph g {
 forcelabels=true;
 rankdir=TD;
-13[label="int
-main (int argc, char** argv) {
-	int i = 0;
+20[label="int
+main()
+{
+	struct Record head;
+	struct Record tail;
+
+	strncpy(head.str1, \"h_str1\", 20);
+	strncpy(head.str2, \"h_str2\", 20);
+	strncpy(head.str3, \"h.str3\", 20);
+	head.link = &tail;
 	
-	const int k = 0xffff;
+	strncpy(tail.str1, \"t_str1\", 20);
+	strncpy(tail.str2, \"t_str2\", 20);
+	strncpy(tail.str3, \"t_str3\", 20);
 
-	for (int j = 0; j < k; j++) {
-		i++;
-	}
-
-	print(\"Result: %d\n\", i);
-}", xlabel="No. 13 (757), Function", color="crimson"];
-0[label="x += 3;", xlabel="No. 0 (651), CompoundAssignOperator", color="darkorchid"];
-1[label="print(str, x);", xlabel="No. 1 (687), CallExpr", color="goldenrod"];
-2[label="{ 
-	x += 3;
-	print(str, x);
-}", xlabel="No. 2 (699), CompoundStmt", color="darkorchid"];
-3[label="void print(const char* str, int x) 
-{ 
-	x += 3;
-	print(str, x);
-}", xlabel="No. 3 (612), Function", color="crimson"];
-4[label="int i = 0;", xlabel="No. 4 (799), DeclStmt", color="darkorchid"];
-5[label="const int k = 0xffff;", xlabel="No. 5 (833), DeclStmt", color="darkorchid"];
-6[label="int j = 0;", xlabel="No. 6 (856), DeclStmt", color="darkorchid"];
-7[label="j++)", xlabel="No. 7 (885), UnaryOperator", color="darkorchid"];
-8[label="i++;", xlabel="No. 8 (892), UnaryOperator", color="darkorchid"];
-9[label="{
-		i++;
-	}", xlabel="No. 9 (895), CompoundStmt", color="darkorchid"];
-10[label="for (int j = 0; j < k; j++) {
-		i++;
-	}", xlabel="No. 10 (898), ForStmt", color="darkorchid"];
-11[label="print(\"Result: %d\n\", i);", xlabel="No. 11 (946), CallExpr", color="goldenrod"];
-12[label="{
-	int i = 0;
+	printf(\"After head 0: %s\n\", head.str1);
+	printf(\"After head 1: %s\n\", head.link->str1);
+	printf(\"After head 2: %s\n\", head.link->link->str1);
 	
-	const int k = 0xffff;
+	return (0);
+}", xlabel="No. 20 (33467), Function", color="crimson"];
+19[label="{
+	struct Record head;
+	struct Record tail;
 
-	for (int j = 0; j < k; j++) {
-		i++;
-	}
+	strncpy(head.str1, \"h_str1\", 20);
+	strncpy(head.str2, \"h_str2\", 20);
+	strncpy(head.str3, \"h.str3\", 20);
+	head.link = &tail;
+	
+	strncpy(tail.str1, \"t_str1\", 20);
+	strncpy(tail.str2, \"t_str2\", 20);
+	strncpy(tail.str3, \"t_str3\", 20);
 
-	print(\"Result: %d\n\", i);
-}", xlabel="No. 12 (958), CompoundStmt", color="darkorchid"];
-13 -> 12;
-12 -> 4;
-12 -> 5;
-12 -> 10;
-12 -> 11;
-10 -> 6;
-10 -> 7;
-10 -> 9;
-9 -> 8;
-3 -> 2;
-2 -> 0;
-2 -> 1;
-5 -> 10 [color=maroon];
-4 -> 8 [color=maroon];
-4 -> 11 [color=maroon];
-6 -> 7 [color=maroon];
+	printf(\"After head 0: %s\n\", head.str1);
+	printf(\"After head 1: %s\n\", head.link->str1);
+	printf(\"After head 2: %s\n\", head.link->link->str1);
+	
+	return (0);
+}", xlabel="No. 19 (34053), CompoundStmt", color="darkorchid"];
+18[label="return (0);", xlabel="No. 18 (34051), ReturnStmt", color="darkorchid"];
+17[label="printf(\"After head 2: %s\n\", head.link->link->str1);", xlabel="No. 17 (34028), CallExpr", color="goldenrod"];
+16[label="printf(\"After head 1: %s\n\", head.link->str1);", xlabel="No. 16 (33969), CallExpr", color="goldenrod"];
+15[label="printf(\"After head 0: %s\n\", head.str1);", xlabel="No. 15 (33919), CallExpr", color="goldenrod"];
+14[label="strncpy(tail.str3, \"t_str3\", 20);", xlabel="No. 14 (33859), CallExpr", color="goldenrod"];
+13[label="strncpy(tail.str2, \"t_str2\", 20);", xlabel="No. 13 (33809), CallExpr", color="goldenrod"];
+0[label="char str1[20];", xlabel="No. 0 (33368), Field", color="crimson"];
+1[label="char str2[20];", xlabel="No. 1 (33389), Field", color="crimson"];
+2[label="char str3[20];", xlabel="No. 2 (33410), Field", color="crimson"];
+3[label="struct Record* link;", xlabel="No. 3 (33445), Field", color="crimson"];
+4[label="struct Record
+{
+	char str1[20];
+	char str2[20];
+	char str3[20];
+
+	struct Record* link;
+};", xlabel="No. 4 (33327), Record", color="crimson"];
+5[label="struct Record head;", xlabel="No. 5 (33504), DeclStmt", color="darkorchid"];
+6[label="struct Record tail;", xlabel="No. 6 (33524), DeclStmt", color="darkorchid"];
+7[label="strncpy(head.str1, \"h_str1\", 20);", xlabel="No. 7 (33573), CallExpr", color="goldenrod"];
+8[label="strncpy(head.str2, \"h_str2\", 20);", xlabel="No. 8 (33636), CallExpr", color="goldenrod"];
+9[label="strncpy(head.str3, \"h.str3\", 20);", xlabel="No. 9 (33686), CallExpr", color="goldenrod"];
+10[label="&tail;", xlabel="No. 10 (33719), UnaryOperator", color="darkorchid"];
+11[label="head.link = &tail;", xlabel="No. 11 (33722), BinaryOperator", color="darkorchid"];
+12[label="strncpy(tail.str1, \"t_str1\", 20);", xlabel="No. 12 (33757), CallExpr", color="goldenrod"];
+20 -> 19;
+19 -> 5;
+19 -> 6;
+19 -> 7;
+19 -> 8;
+19 -> 9;
+19 -> 11;
+19 -> 12;
+19 -> 13;
+19 -> 14;
+19 -> 15;
+19 -> 16;
+19 -> 17;
+19 -> 18;
 6 -> 10 [color=maroon];
+6 -> 12 [color=maroon];
+6 -> 13 [color=maroon];
+6 -> 14 [color=maroon];
+5 -> 7 [color=maroon];
+5 -> 8 [color=maroon];
+5 -> 9 [color=maroon];
+5 -> 11 [color=maroon];
+5 -> 15 [color=maroon];
+5 -> 16 [color=maroon];
+5 -> 17 [color=maroon];
 }
