@@ -52,6 +52,10 @@ int main(int argc, const char** argv)
 	auto context = GlobalContext(parsedInput, *op.getSourcePathList().begin(), epochCount);
 	clang::tooling::ClangTool tool(op.getCompilations(), context.parsedInput.errorLocation.filePath);
 
+	clang::tooling::ArgumentsAdjuster ardj1 =
+		clang::tooling::getInsertArgumentAdjuster("-I/usr/local/lib/clang/11.0.0/include/");
+	tool.appendArgumentsAdjuster(ardj1);
+	
 	auto inputLanguage = clang::Language::Unknown;
 	// Run a language check inside a separate scope so that all built ASTs get freed at the end.
 	{

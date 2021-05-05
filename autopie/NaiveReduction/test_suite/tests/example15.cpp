@@ -29,8 +29,15 @@ main()
     record2.str1 = "str1_1";
     record2.year = 51;
 
-    std::cout << record1.str1 << " " << record1.str2 << " " << record1.year << "\n";
-    std::cout << record2.str1 << " " << record2.str2 << " " << record2.year << "\n";
+    std::cout << "Record 1\n";
+    std::cout << record1.str1 << "\n";
+    std::cout << record1.str2 << "\n"; 
+    std::cout << record1.year << "\n";
 
-	return (0);
+    std::cout << "Record 2\n";
+    std::cout << record2.str1 << "\n"; 
+    std::cout << record2.str2 << "\n"; 
+    std::cout << record2.year << "\n";
+    
+    return (0);
 }

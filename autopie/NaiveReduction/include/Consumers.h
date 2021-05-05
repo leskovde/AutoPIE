@@ -198,6 +198,8 @@ public:
 		// The bins are then iterated in their respective epochs.
 		if (globalContext_.currentEpoch == 0)
 		{
+			out::All() << "Binning variants...\n";
+			
 			// Create ranges for each epoch.
 			for (auto i = 0; i < globalContext_.deepeningContext.epochCount; i++)
 			{
