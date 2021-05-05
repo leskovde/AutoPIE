@@ -156,6 +156,17 @@ std::string RemoveFileExtensions(const std::string& filePath)
 }
 
 /**
+ * Removes all but the last element of a path. Furthermore, the extension is also removed.
+ *
+ * @param filePath The path in a string form.
+ * @return The path stripped directories and the extension substring.
+ */
+std::string GetFileName(const std::string& filePath)
+{
+	return RemoveFileExtensions(filePath.substr(filePath.find_last_of("/\\") + 1));
+}
+
+/**
  * Adds an additional backslash character to each double-quote character.
  *
  * @param text The string in which double-quotes should be escaped.
@@ -304,6 +315,19 @@ std::pair<bool, double> IsValid(BitMask& bitMask, DependencyGraph& dependencies)
 //
 //===----------------------------------------------------------------------===//
 
+static std::string GetCompilerName(const clang::Language language)
+{
+	switch (language)
+	{
+	case clang::Language::C:
+		return "clang";
+	case clang::Language::CXX:
+		return "clang++";
+	default:
+		throw std::invalid_argument("Language not supported.");
+	}
+}
+
 /**
  * Attempts to compile a given source file entry.\n
  * The compilation is done using clang, the source is being compiled to an executable using
@@ -319,11 +343,11 @@ std::pair<bool, double> IsValid(BitMask& bitMask, DependencyGraph& dependencies)
  */
 int Compile(const std::filesystem::directory_entry& entry, const clang::Language language)
 {
-	// TODO: Change arguments and clangPath based on the input language.
+	// TODO: Change arguments based on the input language.
 	
 	const auto input = entry.path().string();
-	const auto output = TempFolder + entry.path().filename().replace_extension(".exe").string();
-	auto clangPath = llvm::sys::findProgramByName("clang");
+	const auto output = TempFolder + entry.path().filename().replace_extension(".out").string();
+	const auto clangPath = llvm::sys::findProgramByName(GetCompilerName(language));
 
 	const auto arguments = std::vector<const char*>{
 		clangPath->c_str(), /*"-v",*/ "-O0", "-g", "-o", output.c_str(), input.c_str()
@@ -342,7 +366,7 @@ int Compile(const std::filesystem::directory_entry& entry, const clang::Language
 
 	//driver.PrintActions(*compilation);
 
-	auto result = 1; // Set the initial value to invalid, since we don't need those imposter vibes in our lives.
+	auto result = 1; // Set the initial value to invalid, since we don't need that lame energy in our lives.
 	llvm::SmallVector<std::pair<int, const clang::driver::Command*>, 16> failingCommands;
 
 	if (compilation)
@@ -504,7 +528,7 @@ bool ValidateResults(GlobalContext& globalContext)
 		launchInfo.SetWorkingDirectory(TempFolder);
 		launchInfo.SetLaunchFlags(lldb::eLaunchFlagExec | lldb::eLaunchFlagDebug);
 
-		const auto executable = TempFolder + entry.path().filename().replace_extension(".exe").string();
+		const auto executable = TempFolder + entry.path().filename().replace_extension(".out").string();
 		out::Verb() << "\nLLDB Target creation for " << executable << " ...\n";
 
 		// Create and launch a target - represents a debugging session of a single executable.
@@ -614,13 +638,14 @@ bool ValidateResults(GlobalContext& globalContext)
 
 									// TODO: The debugger location is sometimes off (function declaration line instead of function call) - fix it.
 									// TODO: Confirm the message.
-									
-									if (lineNumber == presumedErrorLine - 1 || 
-										lineNumber == presumedErrorLine || 
+
+									if (lineNumber == presumedErrorLine - 1 ||
+										lineNumber == presumedErrorLine ||
 										lineNumber == presumedErrorLine + 1)
 									{
 										resultFound.emplace(entry.path().string());
 										done = true;
+										break;
 									}
 								}
 							}
@@ -703,11 +728,12 @@ bool ValidateResults(GlobalContext& globalContext)
 	}
 
 	out::All() << "Found the smallest error-inducing source file: " << resultFound.value() << "\n";
+	
+	const auto newFileName = TempFolder + std::string("autoPieOut") + LanguageToExtension(globalContext.language);
 
-	// TODO: Change the .c extension based on the programming language (in all instances, not just this one).
-	out::All() << "Renaming the file to '" << TempFolder << "autoPieOut.c'\n";
+	out::All() << "Changing the file path to '" << newFileName << "'\n";
 
-	std::filesystem::rename(resultFound.value(), TempFolder + std::string("autoPieOut.c"));
+	std::filesystem::rename(resultFound.value(), newFileName);
 
 	return true;
 }
@@ -815,5 +841,18 @@ std::string LanguageToString(const clang::Language lang)
 	case clang::Language::Unknown:
 	default:
 		return "Unknown";
+	}
+}
+
+std::string LanguageToExtension(const clang::Language lang)
+{
+	switch (lang)
+	{
+	case clang::Language::C:
+		return ".c";
+	case clang::Language::CXX:
+		return ".cpp";
+	default:
+		throw std::invalid_argument("Language not supported.");
 	}
 }

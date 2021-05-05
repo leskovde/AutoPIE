@@ -115,7 +115,7 @@ public:
 			mappingVisitor_->graph.PrintGraphForDebugging();
 		}
 
-		if (globalContext_.parsedInput.dumpDot)
+		if (globalContext_.parsedInput.dumpDot && globalContext_.currentEpoch == 0)
 		{
 			mappingVisitor_->graph.DumpDot(globalContext_.parsedInput.errorLocation.filePath);
 		}
@@ -243,8 +243,7 @@ public:
 
 			try
 			{
-				// TODO: Change the source file extension based on the programming language.
-				auto fileName = TempFolder + std::to_string(variantsCount) + "_tempFile.c";
+				auto fileName = TempFolder + std::to_string(variantsCount) + "_" + GetFileName(globalContext_.parsedInput.errorLocation.filePath) + LanguageToExtension(globalContext_.language);
 				printingConsumer_.HandleTranslationUnit(context, fileName, bitMask);
 
 				globalContext_.variantAdjustedErrorLocation[variantsCount] = printingConsumer_.GetAdjustedErrorLine();

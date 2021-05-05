@@ -130,6 +130,8 @@ bool ClearTempDirectory(bool prompt = false);
 
 std::string RemoveFileExtensions(const std::string& filePath);
 
+std::string GetFileName(const std::string& filePath);
+
 std::string EscapeQuotes(const std::string& text);
 
 //===----------------------------------------------------------------------===//
@@ -163,5 +165,7 @@ std::string StateToString(lldb::StateType state);
 std::string StopReasonToString(lldb::StopReason reason);
 
 std::string LanguageToString(clang::Language lang);
+
+std::string LanguageToExtension(clang::Language lang);
 
 #endif

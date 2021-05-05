@@ -232,7 +232,7 @@ public:
 	 *
 	 * @param fileName The currently processed source file.
 	 */
-	void DumpDot(const std::string& /*fileName*/) const
+	void DumpDot(const std::string& fileName) const
 	{
 		if (!std::filesystem::exists(VisualsFolder))
 		{
@@ -249,7 +249,7 @@ public:
 		}
 		
 		// TODO(Denis): Trim file names (they include full path instead of just the name).
-		const auto dotFileName = VisualsFolder + std::string("dotDump_test.dot");
+		const auto dotFileName = VisualsFolder + std::string("dotDump_") + GetFileName(fileName) + ".dot";
 		auto ofs = std::ofstream(dotFileName);
 
 		if (!ofs)
