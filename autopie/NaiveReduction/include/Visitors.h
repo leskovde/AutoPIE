@@ -666,6 +666,15 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 			{
 				snippetSet_[codeSnippet] = true;
 				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, color);
+
+				// Map children as dependencies.
+				for (auto it = expr->child_begin(); it != expr->child_end(); ++it)
+				{
+					if (*it != nullptr && nodeMapping_->find(it->getID(astContext_)) != nodeMapping_->end())
+					{
+						graph.InsertStatementDependency(codeUnitsCount, nodeMapping_->at(it->getID(astContext_)));
+					}
+				}
 			}
 
 			codeUnitsCount++;
