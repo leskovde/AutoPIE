@@ -118,6 +118,12 @@ public:
 			it = statementEdges_.insert(std::pair<int, std::vector<int>>(parent, std::vector<int>())).first;
 		}
 
+		if (std::find(it->second.begin(), it->second.end(), child) != it->second.end())
+		{
+			// The dependency has already been made, no need to reintroduce it.
+			return;
+		}
+		
 		it->second.push_back(child);
 
 		it = statementInverseEdges_.find(child);

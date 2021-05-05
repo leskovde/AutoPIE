@@ -169,7 +169,7 @@ public:
 	{
 		return true;
 	}
-
+	
 	/**
 	 * Overrides the parent visit method.\n
 	 * Skips selected node types based on their importance.\n
@@ -185,10 +185,11 @@ public:
 			return true;
 		}
 		
-		if (llvm::isa<clang::TranslationUnitDecl>(decl) || llvm::isa<clang::VarDecl>(decl))
+		if (llvm::isa<clang::TranslationUnitDecl>(decl) || llvm::isa<clang::VarDecl>(decl) || llvm::isa<clang::AccessSpecDecl>(decl))
 		{
 			// Ignore the translation unit decl since it won't be manipulated with.
 			// VarDecl have a DeclStmt counterpart that is easier to work with => avoid duplicates.
+			// There is no need to remove access specifiers (AccessSpecDecl) for now.
 			return true;
 		}
 
@@ -289,7 +290,7 @@ public:
 
 		return true;
 	}
-
+	/*
 	bool VisitCXXConstructExpr(clang::CXXConstructExpr* expr)
 	{
 		// Skip included files.
@@ -304,7 +305,7 @@ public:
 
 		return true;
 	}
-
+	*/
 	bool VisitCXXDeleteExpr(clang::CXXDeleteExpr* expr)
 	{
 		// Skip included files.
@@ -624,9 +625,7 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 					graph.AddCriterionNode(codeUnitsCount);
 				}
 
-				// Turns out declarations also have children.
-				// TODO(Denis): Handle structs, enums, etc. by getting DeclContext and using specific methods.
-				// http://clang-developers.42468.n3.nabble.com/How-to-traverse-all-children-FieldDecl-from-parent-CXXRecordDecl-td4045698.html
+				// Map the child as dependency.
 				const auto child = decl->getBody();
 
 				if (child != nullptr && nodeMapping_->find(child->getID(astContext_)) != nodeMapping_->end())
@@ -702,7 +701,7 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 				HandleDeclarationsInStatements(stmt);
 				CheckFoundDeclReferences(stmt);
 
-				// Apparently only statements have children.
+				// Map visited children as dependencies.
 				for (auto it = stmt->child_begin(); it != stmt->child_end(); ++it)
 				{
 					if (*it != nullptr && nodeMapping_->find(it->getID(astContext_)) != nodeMapping_->end())
@@ -750,6 +749,8 @@ public:
 		return true;
 	}
 
+#pragma region Declarations
+	
 	/**
 	 * Overrides the parent visit method.\n
 	 * Skips selected node types based on their importance.\n
@@ -766,11 +767,11 @@ public:
 			return true;
 		}
 		
-		// TODO(Denis): Decide how to handle Decl subclasses with Stmt counterparts (e.g., VarDecl and DeclStmt) - handle all possible options.
-		if (llvm::isa<clang::TranslationUnitDecl>(decl) || llvm::isa<clang::VarDecl>(decl))
+		if (llvm::isa<clang::TranslationUnitDecl>(decl) || llvm::isa<clang::VarDecl>(decl) || llvm::isa<clang::AccessSpecDecl>(decl))
 		{
 			// Ignore the translation unit decl since it won't be manipulated with.
 			// VarDecl have a DeclStmt counterpart that is easier to work with => avoid duplicates.
+			// There is no need to remove access specifiers (AccessSpecDecl) for now.
 			return true;
 		}
 
@@ -779,6 +780,12 @@ public:
 		return true;
 	}
 
+	/**
+	 * Overrides the parent visit method.\n
+	 * Visits a RecordDecl and traverses its children.\n
+	 * Those children that have already been traverses will be mapped as dependencies
+	 * of the current node.
+	 */
 	bool VisitRecordDecl(clang::RecordDecl* decl)
 	{
 		// Skip included files.
@@ -801,6 +808,39 @@ public:
 		return true;
 	}
 
+	bool VisitCXXRecordDecl(clang::CXXRecordDecl* decl)
+	{
+		// Skip included files.
+		if (!astContext_.getSourceManager().isInMainFile(decl->getBeginLoc()))
+			//const auto loc = clang::FullSourceLoc(decl->getBeginLoc(), astContext_.getSourceManager());
+			//if (loc.isValid() && loc.isInSystemHeader())
+		{
+			return true;
+		}
+
+		// Map constructors as dependencies.
+		for (auto it : decl->ctors())
+		{
+			if (it != nullptr && nodeMapping_->find(it->getID()) != nodeMapping_->end())
+			{
+				graph.InsertStatementDependency(codeUnitsCount - 1, nodeMapping_->at(it->getID()));
+			}
+		}
+
+		// Map methods as dependencies.
+		for (auto it : decl->methods())
+		{
+			if (it != nullptr && nodeMapping_->find(it->getID()) != nodeMapping_->end())
+			{
+				graph.InsertStatementDependency(codeUnitsCount - 1, nodeMapping_->at(it->getID()));
+			}
+		}
+
+		return true;
+	}
+	
+#pragma endregion Declarations
+	
 #pragma region Expressions
 
 	bool VisitAbstractConditionalOperator(clang::AbstractConditionalOperator* expr)
@@ -886,7 +926,7 @@ public:
 
 		return true;
 	}
-
+	/*
 	bool VisitCXXConstructExpr(clang::CXXConstructExpr* expr)
 	{
 		// Skip included files.
@@ -901,7 +941,7 @@ public:
 
 		return true;
 	}
-
+	*/
 	bool VisitCXXDeleteExpr(clang::CXXDeleteExpr* expr)
 	{
 		// Skip included files.

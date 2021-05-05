@@ -1,4 +1,4 @@
-#include <istream>
+#include <iostream>
 
 /**
  * Error when working with public members.
@@ -10,6 +10,10 @@ public:
     std::string str1 = nullptr;
     std::string str2 = nullptr;
     int year;
+
+    Record()
+    {
+    }
 
     Record(std::string b, std::string m, int y) : str1(b), str2(m), year(y)
 	{
