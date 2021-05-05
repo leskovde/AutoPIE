@@ -105,8 +105,6 @@ public:
 	 */
 	void HandleTranslationUnit(clang::ASTContext& context) override
 	{		
-		// TODO(Denis): Handle specific node types instead of just Stmt, Decl and Expr.
-
 		mappingVisitor_->TraverseDecl(context.getTranslationUnitDecl());
 
 		out::Verb() << "DEBUG: AST nodes counted: " << mappingVisitor_->codeUnitsCount << ", AST nodes actual: " <<
