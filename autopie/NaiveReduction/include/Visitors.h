@@ -631,6 +631,11 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 				if (child != nullptr && nodeMapping_->find(child->getID(astContext_)) != nodeMapping_->end())
 				{
 					graph.InsertStatementDependency(codeUnitsCount, nodeMapping_->at(child->getID(astContext_)));
+
+					if (graph.IsInCriterion(nodeMapping_->at(child->getID(astContext_))))
+					{
+						graph.AddCriterionNode(codeUnitsCount);
+					}
 				}
 			}
 
@@ -648,6 +653,7 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 	 * Checks call's variable dependencies and maps the node as valid.
 	 *
 	 * @param expr The current processed declaration.
+	 * @param color The color with which the node should be drawn in GraphViz visualization.
 	 */
 	void ProcessRelevantExpression(clang::Expr* expr, const std::string& color)
 	{
@@ -663,7 +669,7 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 			CheckFoundDeclReferences(expr);
 
 			if (InsertMapping(id, codeSnippet, line))
-			{
+			{	
 				snippetSet_[codeSnippet] = true;
 				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, color);
 
@@ -673,6 +679,11 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 					if (*it != nullptr && nodeMapping_->find(it->getID(astContext_)) != nodeMapping_->end())
 					{
 						graph.InsertStatementDependency(codeUnitsCount, nodeMapping_->at(it->getID(astContext_)));
+
+						if (graph.IsInCriterion(nodeMapping_->at(it->getID(astContext_))))
+						{
+							graph.AddCriterionNode(codeUnitsCount);
+						}
 					}
 				}
 			}
@@ -705,7 +716,7 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 			if (InsertMapping(id, codeSnippet, line))
 			{
 				snippetSet_[codeSnippet] = true;
-				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, "darkorchid");
+				graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName,"darkorchid");
 
 				HandleDeclarationsInStatements(stmt);
 				CheckFoundDeclReferences(stmt);
@@ -716,6 +727,11 @@ class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisi
 					if (*it != nullptr && nodeMapping_->find(it->getID(astContext_)) != nodeMapping_->end())
 					{
 						graph.InsertStatementDependency(codeUnitsCount, nodeMapping_->at(it->getID(astContext_)));
+
+						if (graph.IsInCriterion(nodeMapping_->at(it->getID(astContext_))))
+						{
+							graph.AddCriterionNode(codeUnitsCount);
+						}
 					}
 				}
 			}

@@ -96,6 +96,8 @@ public:
 	void AddCriterionNode(const int node)
 	{
 		criterion_.push_back(node);
+
+		debugNodeData_[node].dumpColor = "green";
 	}
 
 	/**
@@ -186,8 +188,19 @@ public:
 	void InsertNodeDataForDebugging(int traversalOrderNumber, const int astId, const std::string& snippet,
 	                                const std::string& type, const std::string& color)
 	{
+		auto actualColor = color;
+		
+		if (debugNodeData_.find(traversalOrderNumber) != debugNodeData_.end())
+		{
+			out::Verb() << "DEBUG: A node with the current traversal number already exists.\n";
+			
+			actualColor = debugNodeData_[traversalOrderNumber].dumpColor;
+
+			debugNodeData_.erase(traversalOrderNumber);
+		}
+		
 		const auto success = debugNodeData_.insert(std::pair<int, Node>(traversalOrderNumber,
-		                                                                Node(astId, traversalOrderNumber, snippet.size(), color,
+		                                                                Node(astId, traversalOrderNumber, snippet.size(), actualColor,
 		                                                                     snippet, type))).second;
 
 		if (!success)

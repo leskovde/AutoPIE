@@ -243,11 +243,18 @@ public:
 
 			out::Verb() << "DEBUG: Processing valid bitmask " << Stringify(bitMask) << "\n";
 
-			// TODO: Change the source file extension based on the programming language.
-			auto fileName = TempFolder + std::to_string(variantsCount) + "_tempFile.c";
-			printingConsumer_.HandleTranslationUnit(context, fileName, bitMask);
+			try
+			{
+				// TODO: Change the source file extension based on the programming language.
+				auto fileName = TempFolder + std::to_string(variantsCount) + "_tempFile.c";
+				printingConsumer_.HandleTranslationUnit(context, fileName, bitMask);
 
-			globalContext_.variantAdjustedErrorLocation[variantsCount] = printingConsumer_.GetAdjustedErrorLine();
+				globalContext_.variantAdjustedErrorLocation[variantsCount] = printingConsumer_.GetAdjustedErrorLine();
+			}
+			catch (...)
+			{
+				out::All() << "Could not process iteration no. " << variantsCount << " due to an internal exception.\n";
+			}
 		}
 
 		out::All() << "Finished. Done " << variantsCount << " variants.\n";
