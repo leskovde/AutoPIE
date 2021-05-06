@@ -7,11 +7,11 @@
 
 #include <filesystem>
 
-#include "../include/Actions.h"
-#include "../include/Context.h"
-#include "../include/Helper.h"
-#include "../include/Options.h"
-#include "../include/Streams.h"
+#include "../../Common/include/Actions.h"
+#include "../../Common/include/Context.h"
+#include "../../Common/include/Helper.h"
+#include "../../Common/include/Options.h"
+#include "../../Common/include/Streams.h"
 
 using namespace llvm;
 

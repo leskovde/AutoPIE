@@ -1,41 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="..\src\Actions.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\NaiveReduction.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Helper.cpp">
+    <ClCompile Include="..\..\Common\src\Actions.cpp">
       <Filter>src</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\include\Visitors.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\Actions.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\Consumers.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\Context.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\DependencyGraph.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\Helper.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\Streams.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\Options.h">
-      <Filter>include</Filter>
-    </ClInclude>
+    <ClCompile Include="..\..\Common\src\Helper.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -44,5 +18,31 @@
     <Filter Include="include">
       <UniqueIdentifier>{42f9446d-ae4d-400e-add9-99d309668d99}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Common\include\Actions.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\include\Consumers.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\include\Context.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\include\DependencyGraph.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\include\Helper.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\include\Options.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\include\Streams.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\include\Visitors.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
