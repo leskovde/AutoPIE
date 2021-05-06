@@ -32,7 +32,7 @@ namespace Delta
 		std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, llvm::StringRef /*file*/)
 			override
 		{
-			return std::unique_ptr<clang::ASTConsumer>(std::make_unique<Delta::DeltaDebuggingConsumer>(&ci, globalContext));
+			return std::unique_ptr<clang::ASTConsumer>(std::make_unique<DeltaDebuggingConsumer>(&ci, globalContext));
 		}
 	};
 }

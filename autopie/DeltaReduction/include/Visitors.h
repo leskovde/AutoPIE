@@ -14,10 +14,10 @@
 
 namespace Delta
 {
-	class VariantPrintingASTVisitor;
+	class DeltaIterationASTVisitor;
 
 	using RewriterRef = std::shared_ptr<clang::Rewriter>;
-	using VariantPrintingASTVisitorRef = std::unique_ptr<VariantPrintingASTVisitor>;
+	using VariantPrintingASTVisitorRef = std::unique_ptr<DeltaIterationASTVisitor>;
 	
 	/**
 	 * Traverses the AST and removes statements set by a given bitmask.\n
@@ -25,7 +25,7 @@ namespace Delta
 	 * The class requires additional setup using `SetData` and `Reset` methods to pass data
 	 * that could not be obtained during construction.
 	 */
-	class VariantPrintingASTVisitor final : public clang::RecursiveASTVisitor<VariantPrintingASTVisitor>
+	class DeltaIterationASTVisitor final : public clang::RecursiveASTVisitor<DeltaIterationASTVisitor>
 	{
 		clang::ASTContext& astContext_;
 
@@ -34,7 +34,7 @@ namespace Delta
 		int errorLineBackup_;
 		RewriterRef rewriter_;
 		DependencyGraph graph_;
-		Common::SkippedMapRef skippedNodes_;
+		SkippedMapRef skippedNodes_;
 
 		/**
 		 * Removes source code in a given range in the current rewriter.\n
@@ -164,7 +164,7 @@ namespace Delta
 	public:
 		int AdjustedErrorLine;
 
-		explicit VariantPrintingASTVisitor(clang::CompilerInstance* ci, const int errorLine) : astContext_(ci->getASTContext()), AdjustedErrorLine(errorLine), errorLineBackup_(errorLine)
+		explicit DeltaIterationASTVisitor(clang::CompilerInstance* ci, const int errorLine) : astContext_(ci->getASTContext()), AdjustedErrorLine(errorLine), errorLineBackup_(errorLine)
 		{
 		}
 
@@ -189,7 +189,7 @@ namespace Delta
 		 * @param skippedNodes A container of AST nodes that should not be processed.
 		 * @param graph The node dependency graph based on which nodes are removed.
 		 */
-		void SetData(Common::SkippedMapRef skippedNodes, DependencyGraph& graph)
+		void SetData(SkippedMapRef skippedNodes, DependencyGraph& graph)
 		{
 			skippedNodes_ = std::move(skippedNodes);
 			graph_ = graph;
