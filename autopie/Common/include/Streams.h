@@ -56,8 +56,8 @@ namespace out
 		}
 	};
 
-	Logger all_ = Logger(Common::LogFile);
-	FilteredLogger verb_ = FilteredLogger(all_);
+	inline Logger all_ = Logger(LogFile);
+	inline FilteredLogger verb_ = FilteredLogger(all_);
 
 	/**
 	 * A stream that outputs messages independently on the `Verbose` option.\n

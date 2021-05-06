@@ -29,7 +29,7 @@ namespace Naive
 	{
 		clang::ASTContext& astContext_;
 
-		Common::BitMask bitMask_;
+		BitMask bitMask_;
 		int currentNode_ = 0; ///< The traversal order number.
 		int errorLineBackup_;
 		RewriterRef rewriter_;
@@ -46,13 +46,13 @@ namespace Naive
 		{
 			if (rewriter_)
 			{
-				out::Verb() << "Removing node " << currentNode_ << ":\n" << Common::RangeToString(astContext_, range) << "\n";
+				out::Verb() << "Removing node " << currentNode_ << ":\n" << RangeToString(astContext_, range) << "\n";
 
-				const auto printableRange = Common::GetPrintableRange(Common::GetPrintableRange(range, astContext_.getSourceManager()),
+				const auto printableRange = GetPrintableRange(GetPrintableRange(range, astContext_.getSourceManager()),
 					astContext_.getSourceManager());
 
 				const auto begin = astContext_.getSourceManager().getPresumedLineNumber(printableRange.getBegin());
-				const auto snippet = Common::GetSourceTextRaw(printableRange, astContext_.getSourceManager()).str();
+				const auto snippet = GetSourceTextRaw(printableRange, astContext_.getSourceManager()).str();
 
 				const auto lineBreaks = std::count_if(snippet.begin(), snippet.end(), [](const char c)
 					{
@@ -175,7 +175,7 @@ namespace Naive
 		 * @param rewriter The source code container from which nodes are removed. Each iteration requires
 		 * a new, untouched rewriter.
 		 */
-		void Reset(const Common::BitMask& mask, RewriterRef& rewriter)
+		void Reset(const BitMask& mask, RewriterRef& rewriter)
 		{
 			currentNode_ = 0;
 			bitMask_ = mask;

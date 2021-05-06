@@ -39,7 +39,7 @@ namespace Naive
 		 * @param fileName The file to which the output should be written.
 		 * @param bitMask The specification of which nodes should be kept and which should be removed.
 		 */
-		void HandleTranslationUnit(clang::ASTContext& context, const std::string& fileName, const Common::BitMask& bitMask) const
+		void HandleTranslationUnit(clang::ASTContext& context, const std::string& fileName, const BitMask& bitMask) const
 		{
 			auto rewriter = std::make_shared<clang::Rewriter>(context.getSourceManager(), context.getLangOpts());
 
@@ -92,10 +92,10 @@ namespace Naive
 	{
 		Common::DependencyMappingASTConsumer mappingConsumer_;
 		VariantPrintingASTConsumer printingConsumer_;
-		Common::GlobalContext& globalContext_;
+		GlobalContext& globalContext_;
 
 	public:
-		VariantGeneratingConsumer(clang::CompilerInstance* ci, Common::GlobalContext& context) : mappingConsumer_(ci, context),
+		VariantGeneratingConsumer(clang::CompilerInstance* ci, GlobalContext& context) : mappingConsumer_(ci, context),
 			printingConsumer_(ci, context.parsedInput.errorLocation.lineNumber),
 			globalContext_(context)
 		{
@@ -136,22 +136,22 @@ namespace Naive
 				for (auto i = 0; i < globalContext_.deepeningContext.epochCount; i++)
 				{
 					globalContext_.deepeningContext.bitMasks.insert(
-						std::pair<double, std::vector<Common::BitMask>>((i + 1) * globalContext_.deepeningContext.epochStep,
-							std::vector<Common::BitMask>()));
+						std::pair<double, std::vector<BitMask>>((i + 1) * globalContext_.deepeningContext.epochStep,
+							std::vector<BitMask>()));
 				}
 
 				// Add the last range (of invalid bit masks).
-				globalContext_.deepeningContext.bitMasks.insert(std::pair<double, std::vector<Common::BitMask>>(1.0, std::vector<Common::BitMask>()));
-				globalContext_.deepeningContext.bitMasks.insert(std::pair<double, std::vector<Common::BitMask>>(INFINITY, std::vector<Common::BitMask>()));
+				globalContext_.deepeningContext.bitMasks.insert(std::pair<double, std::vector<BitMask>>(1.0, std::vector<BitMask>()));
+				globalContext_.deepeningContext.bitMasks.insert(std::pair<double, std::vector<BitMask>>(INFINITY, std::vector<BitMask>()));
 
-				auto bitMask = Common::BitMask(numberOfCodeUnits);
+				auto bitMask = BitMask(numberOfCodeUnits);
 
 				// Distribute bit masks into ranges.
-				while (!Common::IsFull(bitMask))
+				while (!IsFull(bitMask))
 				{
-					Common::Increment(bitMask);
+					Increment(bitMask);
 
-					const auto validation = Common::IsValid(bitMask, dependencies);
+					const auto validation = IsValid(bitMask, dependencies);
 
 					if (validation.first)
 					{
@@ -173,11 +173,11 @@ namespace Naive
 					out::All() << "Done " << variantsCount << " variants.\n";
 				}
 
-				out::Verb() << "DEBUG: Processing valid bitmask " << Common::Stringify(bitMask) << "\n";
+				out::Verb() << "DEBUG: Processing valid bitmask " << Stringify(bitMask) << "\n";
 
 				try
 				{
-					auto fileName = Common::TempFolder + std::to_string(variantsCount) + "_" + Common::GetFileName(globalContext_.parsedInput.errorLocation.filePath) + Common::LanguageToExtension(globalContext_.language);
+					auto fileName = TempFolder + std::to_string(variantsCount) + "_" + GetFileName(globalContext_.parsedInput.errorLocation.filePath) + LanguageToExtension(globalContext_.language);
 					printingConsumer_.HandleTranslationUnit(context, fileName, bitMask);
 
 					globalContext_.variantAdjustedErrorLocation[variantsCount] = printingConsumer_.GetAdjustedErrorLine();

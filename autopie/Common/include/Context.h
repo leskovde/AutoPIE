@@ -14,7 +14,7 @@ namespace Naive
 	{
 		const int epochCount;
 		const double epochStep;
-		std::map<double, std::vector<Common::BitMask>> bitMasks;
+		std::map<double, std::vector<BitMask>> bitMasks;
 
 		explicit IterativeDeepeningContext(const int epochs) : epochCount(epochs),
 		                                                       epochStep(static_cast<double>(ReductionRatio) / epochCount)
@@ -23,35 +23,31 @@ namespace Naive
 	};
 }
 
-namespace Common
+/**
+ * Serves as a container for all publicly available global information.
+ * Currently includes the parsed input.
+ */
+class GlobalContext
 {
-
-	/**
-	 * Serves as a container for all publicly available global information.
-	 * Currently includes the parsed input.
-	 */
-	class GlobalContext
+	GlobalContext() : parsedInput(InputData("", Location("", 0), 0.0, false)), deepeningContext(1)
 	{
-		GlobalContext() : parsedInput(InputData("", Location("", 0), 0.0, false)), deepeningContext(1)
-		{
-			out::Verb() << "DEBUG: GlobalContext - New default constructor call.\n";
-		}
+		out::Verb() << "DEBUG: GlobalContext - New default constructor call.\n";
+	}
 
-	public:
+public:
 
-		// Variant generation properties.
-		int currentEpoch{ 0 };
-		InputData parsedInput;
-		Naive::IterativeDeepeningContext deepeningContext;
-		clang::Language language{ clang::Language::Unknown };
-		std::unordered_map<int, int> variantAdjustedErrorLocation;
+	// Variant generation properties.
+	int currentEpoch{ 0 };
+	InputData parsedInput;
+	Naive::IterativeDeepeningContext deepeningContext;
+	clang::Language language{ clang::Language::Unknown };
+	std::unordered_map<int, int> variantAdjustedErrorLocation;
 
-		GlobalContext(InputData& input, const std::string& /*source*/, const int epochs) : parsedInput(input),
-			deepeningContext(epochs)
-		{
-			out::Verb() << "DEBUG: GlobalContext - New non-default constructor call.\n";
-		}
-	};
-}
+	GlobalContext(InputData& input, const std::string& /*source*/, const int epochs) : parsedInput(input),
+		deepeningContext(epochs)
+	{
+		out::Verb() << "DEBUG: GlobalContext - New non-default constructor call.\n";
+	}
+};
 
 #endif
