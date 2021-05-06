@@ -8,26 +8,26 @@
 #include "Consumers.h"
 #include "Context.h"
 
-std::unique_ptr<clang::tooling::FrontendActionFactory> CustomFrontendActionFactory(GlobalContext& context);
+std::unique_ptr<clang::tooling::FrontendActionFactory> VariantGeneratingFrontendActionFactory(GlobalContext& context);
 
 /**
  * Specifies the frontend action for generating source file variants.\n
  * Currently creates a unifying consumer.
  */
-class VariantGenerationAction final : public clang::ASTFrontendAction
+class VariantGeneratingAction final : public clang::ASTFrontendAction
 {
 	GlobalContext& globalContext;
 
 public:
 
-	explicit VariantGenerationAction(GlobalContext& context): globalContext(context)
+	explicit VariantGeneratingAction(GlobalContext& context): globalContext(context)
 	{
 	}
 
 	std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, llvm::StringRef /*file*/)
 	override
 	{
-		return std::unique_ptr<clang::ASTConsumer>(std::make_unique<VariantGenerationConsumer>(&ci, globalContext));
+		return std::unique_ptr<clang::ASTConsumer>(std::make_unique<VariantGeneratingConsumer>(&ci, globalContext));
 	}
 };
 #endif

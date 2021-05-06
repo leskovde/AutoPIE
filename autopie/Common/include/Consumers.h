@@ -156,14 +156,14 @@ public:
  * Unifies other consumers and uses them to describe the variant generation logic.\n
  * Single `HandleTranslationUnit` generates all source code variants.
  */
-class VariantGenerationConsumer final : public clang::ASTConsumer
+class VariantGeneratingConsumer final : public clang::ASTConsumer
 {
 	DependencyMappingASTConsumer mappingConsumer_;
 	VariantPrintingASTConsumer printingConsumer_;
 	GlobalContext& globalContext_;
 
 public:
-	VariantGenerationConsumer(clang::CompilerInstance* ci, GlobalContext& context) : mappingConsumer_(ci, context),
+	VariantGeneratingConsumer(clang::CompilerInstance* ci, GlobalContext& context) : mappingConsumer_(ci, context),
 	                                                                                 printingConsumer_(ci, context.parsedInput.errorLocation.lineNumber),
 																					 globalContext_(context)
 	{

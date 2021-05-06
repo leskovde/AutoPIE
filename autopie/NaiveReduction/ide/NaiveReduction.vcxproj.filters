@@ -18,31 +18,34 @@
     <Filter Include="include">
       <UniqueIdentifier>{42f9446d-ae4d-400e-add9-99d309668d99}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include\common">
+      <UniqueIdentifier>{0d161013-f54e-4d4f-ba4c-eac995a2783b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Common\include\Actions.h">
-      <Filter>include</Filter>
+      <Filter>include\common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Common\include\Consumers.h">
-      <Filter>include</Filter>
+      <Filter>include\common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Common\include\Context.h">
-      <Filter>include</Filter>
+      <Filter>include\common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Common\include\DependencyGraph.h">
-      <Filter>include</Filter>
+      <Filter>include\common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Common\include\Helper.h">
-      <Filter>include</Filter>
+      <Filter>include\common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Common\include\Options.h">
-      <Filter>include</Filter>
+      <Filter>include\common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Common\include\Streams.h">
-      <Filter>include</Filter>
+      <Filter>include\common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Common\include\Visitors.h">
-      <Filter>include</Filter>
+      <Filter>include\common</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
