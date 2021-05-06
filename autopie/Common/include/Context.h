@@ -5,7 +5,7 @@
 #include "Helper.h"
 #include "Streams.h"
 
-namespace Naive
+namespace Delta
 {
 	/**
 	 * Keeps the data concerned with iterative deepening, such as epoch count and bit masks for each epoch.
@@ -39,7 +39,7 @@ public:
 	// Variant generation properties.
 	int currentEpoch{ 0 };
 	InputData parsedInput;
-	Naive::IterativeDeepeningContext deepeningContext;
+	Delta::IterativeDeepeningContext deepeningContext;
 	clang::Language language{ clang::Language::Unknown };
 	std::unordered_map<int, int> variantAdjustedErrorLocation;
 
