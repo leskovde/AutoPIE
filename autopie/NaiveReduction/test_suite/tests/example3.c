@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 /*
  * Here, the ">" on line 5 should be "<". Even people who are not normally 
@@ -8,25 +9,25 @@
  */
 
 int minval(int *A, int n) {
-  int currmin = MAXINT;
+	int currmin = MAXINT;
 
-  for (int i=0; i<n; i++)
-    if (A[i] > currmin)
-      currmin = A[i];
-  return currmin;
+	for (int i=0; i<n; i++)
+		if (A[i] > currmin)
+			currmin = A[i];
+	return currmin;
 }
 
 unsigned long int different_narrative(unsigned int n)
 {
-    if (n <= 1)
-        return 1;
+	if (n <= 1)
+		return 1;
  
-    unsigned long int res = 0;
-    for (int i = 0; i < n; i++)
-        res += different_narrative(i) 
-            * different_narrative(n - i - 1);
+	unsigned long int res = 0;
+	for (int i = 0; i < n; i++)
+		res += different_narrative(i) 
+			* different_narrative(n - i - 1);
  
-    return res;
+	return res;
 }
 
 int

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 /*
  * Two bugs in one. These are usually caused by accident rather than 
@@ -12,13 +13,13 @@
 
 int different_narrative(int n, int k)
 {
-    if (k > n)
-        return 0;
-    if (k == 0 || k == n)
-        return 1;
+	if (k > n)
+		return 0;
+	if (k == 0 || k == n)
+		return 1;
  
-    return different_narrative(n - 1, k - 1)
-           + different_narrative(n - 1, k);
+	return different_narrative(n - 1, k - 1)
+		+ different_narrative(n - 1, k);
 }
 
 int
@@ -30,11 +31,11 @@ main()
 	int different_narrative2 = 2;
 
 	if (foo = 5)
-  		foo == 7;
+		foo == 7;
 
 	int different_narrative3 = different_narrative(different_narrative1, different_narrative2);
 	
-	assert(foo == 7);
+	assert(foo == 3);
 	
 	return (0);
 }

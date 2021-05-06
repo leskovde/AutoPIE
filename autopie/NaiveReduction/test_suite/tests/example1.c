@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 /*
  * Caused by a stray ";" on line 36. Accidental bugs are often caused by stray

@@ -15,13 +15,13 @@
 
 int different_narrative(int n) 
 { 
-    if (n == 0) 
-        return 0; 
+	if (n == 0) 
+		return 0; 
   
-    if (n == 1) 
-        return 1; 
+	if (n == 1) 
+		return 1; 
   
-    return different_narrative(n - 1) + 2 * different_narrative(n - 2); 
+	return different_narrative(n - 1) + 2 * different_narrative(n - 2); 
 } 
 
 int i = 5;
@@ -33,12 +33,12 @@ void do_nothing(int i)
 }
 
 int foo(int j) {
-  for (i=0; i<j; i++) do_nothing(i);
-  return j;
+	for (i=0; i<j; i++) do_nothing(i);
+	return j;
 }
 
 int ineedj(void) {
-  return j;
+	return j;
 }
 
 main() {

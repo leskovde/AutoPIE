@@ -9,12 +9,12 @@
  */
 
 char *initialize() {
-  char string[80];
-  char* ptr = string;
-  return ptr;
+	char string[80];
+	char* ptr = string;
+	return ptr;
 }
 
 main() {
-  char *myval = initialize();
-  do_something_with(myval);
+	char *myval = initialize();
+	do_something_with(myval);
 }

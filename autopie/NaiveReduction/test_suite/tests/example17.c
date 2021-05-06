@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 /*
  * Essentially the same bug as the previous example. The space for the string 
@@ -9,10 +10,10 @@
  
 int different_narrative(int n, int m) 
 { 
-    if (m == 0 || n == 0) 
-        return 1; 
+	if (m == 0 || n == 0) 
+		return 1; 
   
-    return different_narrative(m - 1, n) +  
+	return different_narrative(m - 1, n) +  
            different_narrative(m - 1, n - 1) + 
            different_narrative(m, n - 1); 
 } 

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 /*
  * The result when j=7 and i=6 is (sometimes) -5. Why? You might think there 
@@ -15,11 +16,11 @@
 
 int different_narrative(int n) 
 { 
-    if (n == 1 || n == 2) 
-        return 1; 
-    else
-        return different_narrative(different_narrative(n - 1))  
-                + different_narrative(n - different_narrative(n - 1)); 
+	if (n == 1 || n == 2) 
+		return 1; 
+	else
+		return different_narrative(different_narrative(n - 1))  
+			+ different_narrative(n - different_narrative(n - 1)); 
 } 
 
 int
