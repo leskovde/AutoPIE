@@ -98,9 +98,9 @@ struct InputData
 	const bool dumpDot;
 
 	InputData(std::string message, Location location, const double ratio, const bool dump) : errorMessage(std::move(message)),
-	                                                                                         errorLocation(std::move(location)),
-	                                                                                         reductionRatio(ratio),
-	                                                                                         dumpDot(dump)
+		errorLocation(std::move(location)),
+		reductionRatio(ratio),
+		dumpDot(dump)
 	{
 	}
 };
