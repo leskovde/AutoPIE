@@ -88,7 +88,7 @@ inline llvm::cl::opt<bool> Verbose("verbose",
  * The default path is specified as the variable `LogFile` in the Helper.h file.
  */
 inline llvm::cl::opt<bool> LogToFile("log",
-                               llvm::cl::desc("Specifies whether the tool should output its optional message (with timestamps) to an external file. Default path: '" + std::string(LogFile) + "'."),
+                               llvm::cl::desc("Specifies whether the tool should output its optional message (with timestamps) to an external file. Default path: '" + std::string(Common::LogFile) + "'."),
                                llvm::cl::init(false),
                                llvm::cl::cat(Args));
 

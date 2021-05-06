@@ -7,13 +7,14 @@
 
 #include <filesystem>
 
-#include "../../Common/include/Actions.h"
+#include "../include/Actions.h"
 #include "../../Common/include/Context.h"
 #include "../../Common/include/Helper.h"
 #include "../../Common/include/Options.h"
 #include "../../Common/include/Streams.h"
 
 using namespace llvm;
+using namespace Common;
 
 // TODO: Change all int instances to something consistent (int32_fast etc.).
 

@@ -5,8 +5,11 @@
 #include <clang/Frontend/FrontendAction.h>
 #include <clang/Tooling/Tooling.h>
 
+#include "../../Common/include/Context.h"
+#include "../../Common/include/Consumers.h"
 #include "Consumers.h"
-#include "Context.h"
+
+using namespace Common;
 
 std::unique_ptr<clang::tooling::FrontendActionFactory> VariantGeneratingFrontendActionFactory(GlobalContext& context);
 
@@ -27,7 +30,7 @@ public:
 	std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, llvm::StringRef /*file*/)
 	override
 	{
-		return std::unique_ptr<clang::ASTConsumer>(std::make_unique<VariantGeneratingConsumer>(&ci, globalContext));
+		return std::unique_ptr<clang::ASTConsumer>(std::make_unique<Naive::VariantGeneratingConsumer>(&ci, globalContext));
 	}
 };
 #endif

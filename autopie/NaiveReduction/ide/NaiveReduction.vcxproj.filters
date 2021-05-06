@@ -4,10 +4,10 @@
     <ClCompile Include="..\src\NaiveReduction.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Common\src\Actions.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Common\src\Helper.cpp">
+      <Filter>src\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Actions.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -21,15 +21,12 @@
     <Filter Include="include\common">
       <UniqueIdentifier>{0d161013-f54e-4d4f-ba4c-eac995a2783b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\common">
+      <UniqueIdentifier>{e2109d2a-5601-4ca7-b612-876af30d6c93}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Common\include\Actions.h">
-      <Filter>include\common</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Common\include\Consumers.h">
-      <Filter>include\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Common\include\Context.h">
       <Filter>include\common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Common\include\DependencyGraph.h">
@@ -45,6 +42,18 @@
       <Filter>include\common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Common\include\Visitors.h">
+      <Filter>include\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Actions.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Consumers.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Visitors.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\include\Context.h">
       <Filter>include\common</Filter>
     </ClInclude>
   </ItemGroup>

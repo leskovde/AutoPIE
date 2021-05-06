@@ -2,170 +2,173 @@
 #define HELPER_H
 #pragma once
 
+#include <clang/AST/ASTContext.h>
 #include <clang/Basic/SourceLocation.h>
 #include <clang/Basic/LangStandard.h>
 #include <clang/Lex/Lexer.h>
 
 #include <lldb/lldb-enumerations.h>
 #include <lldb/API/SBDebugger.h>
-#include <lldb/API/SBEvent.h>
 
 #include <filesystem>
 #include <utility>
+#include "DependencyGraph.h"
 
-/**
- * Path to the temporary directory into which source file variants and executables are generated.\n
- * This path is cleared on each invocation.
- */
-inline const char* TempFolder = "./temp/";
-
-/**
- * Path to the GraphViz output directory into which `.dot` files are generated.
- * This path is NOT cleared on each invocation.
- */
-inline const char* VisualsFolder = "./visuals/";
-
-/**
- * Path to the logger's output file.
- */
-inline const char* LogFile = "./autopie.log";
-
-class GlobalContext;
-class DependencyGraph;
-
-using BitMask = std::vector<bool>;
-
-//===----------------------------------------------------------------------===//
-//
-/// LLDB lock.
-//
-//===----------------------------------------------------------------------===//
-
-/**
- * Guards the LLDB module, destroying it upon exiting the scope.
- */
-struct LLDBSentry
+namespace Common
 {
+	using BitMask = std::vector<bool>;
+	
 	/**
-	 * Initializes the LLDB debugger.
+	 * Path to the temporary directory into which source file variants and executables are generated.\n
+	 * This path is cleared on each invocation.
 	 */
-	LLDBSentry()
-	{
-		lldb::SBDebugger::Initialize();
-	}
+	inline const char* TempFolder = "./temp/";
 
 	/**
-	 * Destroys the LLDB debugger.
+	 * Path to the GraphViz output directory into which `.dot` files are generated.
+	 * This path is NOT cleared on each invocation.
 	 */
-	~LLDBSentry()
+	inline const char* VisualsFolder = "./visuals/";
+
+	/**
+	 * Path to the logger's output file.
+	 */
+	inline const char* LogFile = "./autopie.log";
+
+	class GlobalContext;
+
+	//===----------------------------------------------------------------------===//
+	//
+	/// LLDB lock.
+	//
+	//===----------------------------------------------------------------------===//
+
+	/**
+	 * Guards the LLDB module, destroying it upon exiting the scope.
+	 */
+	struct LLDBSentry
 	{
-		lldb::SBDebugger::Terminate();
-	}
+		/**
+		 * Initializes the LLDB debugger.
+		 */
+		LLDBSentry()
+		{
+			lldb::SBDebugger::Initialize();
+		}
 
-	// Rule of three.
+		/**
+		 * Destroys the LLDB debugger.
+		 */
+		~LLDBSentry()
+		{
+			lldb::SBDebugger::Terminate();
+		}
 
-	LLDBSentry(const LLDBSentry& other) = delete;
-	LLDBSentry& operator=(const LLDBSentry& other) = delete;
-};
+		// Rule of three.
 
-//===----------------------------------------------------------------------===//
-//
-/// Input data structures.
-//
-//===----------------------------------------------------------------------===//
+		LLDBSentry(const LLDBSentry& other) = delete;
+		LLDBSentry& operator=(const LLDBSentry& other) = delete;
+	};
 
-/**
- * Keeps the file name and the line number of the error specified on the command line.
- */
-struct Location
-{
-	std::string filePath;
-	int lineNumber;
+	//===----------------------------------------------------------------------===//
+	//
+	/// Input data structures.
+	//
+	//===----------------------------------------------------------------------===//
 
-	Location(std::string locFile, const int locLine) : filePath(std::move(locFile)), lineNumber(locLine)
+	/**
+	 * Keeps the file name and the line number of the error specified on the command line.
+	 */
+	struct Location
 	{
-	}
-};
+		std::string filePath;
+		int lineNumber;
 
-/**
- * Keeps the data specified in the options on the command line.
- */
-struct InputData
-{
-	const std::string errorMessage;
-	const Location errorLocation;
-	const double reductionRatio;
-	const bool dumpDot;
+		Location(std::string locFile, const int locLine) : filePath(std::move(locFile)), lineNumber(locLine)
+		{
+		}
+	};
 
-	InputData(std::string message, Location location, const double ratio, const bool dump) : errorMessage(std::move(message)),
-	                                                                                         errorLocation(std::move(location)),
-	                                                                                         reductionRatio(ratio),
-	                                                                                         dumpDot(dump)
+	/**
+	 * Keeps the data specified in the options on the command line.
+	 */
+	struct InputData
 	{
-	}
-};
+		const std::string errorMessage;
+		const Location errorLocation;
+		const double reductionRatio;
+		const bool dumpDot;
 
-//===----------------------------------------------------------------------===//
-//
-/// Source range helper functions.
-//
-//===----------------------------------------------------------------------===//
+		InputData(std::string message, Location location, const double ratio, const bool dump) : errorMessage(std::move(message)),
+			errorLocation(std::move(location)),
+			reductionRatio(ratio),
+			dumpDot(dump)
+		{
+		}
+	};
 
-std::string RangeToString(clang::ASTContext& astContext, clang::SourceRange range);
+	//===----------------------------------------------------------------------===//
+	//
+	/// Source range helper functions.
+	//
+	//===----------------------------------------------------------------------===//
 
-clang::SourceRange GetPrintableRange(clang::SourceRange range, const clang::SourceManager& sm);
+	std::string RangeToString(clang::ASTContext& astContext, clang::SourceRange range);
 
-llvm::StringRef GetSourceTextRaw(clang::SourceRange range, const clang::SourceManager& sm);
+	clang::SourceRange GetPrintableRange(clang::SourceRange range, const clang::SourceManager& sm);
 
-llvm::StringRef GetSourceText(clang::SourceRange range, const clang::SourceManager& sm);
+	llvm::StringRef GetSourceTextRaw(clang::SourceRange range, const clang::SourceManager& sm);
+
+	llvm::StringRef GetSourceText(clang::SourceRange range, const clang::SourceManager& sm);
 
 
-//===----------------------------------------------------------------------===//
-//
-/// File, path, and directory helper functions.
-//
-//===----------------------------------------------------------------------===//
+	//===----------------------------------------------------------------------===//
+	//
+	/// File, path, and directory helper functions.
+	//
+	//===----------------------------------------------------------------------===//
 
-bool ClearTempDirectory(bool prompt = false);
+	bool ClearTempDirectory(bool prompt = false);
 
-std::string RemoveFileExtensions(const std::string& filePath);
+	std::string RemoveFileExtensions(const std::string& filePath);
 
-std::string GetFileName(const std::string& filePath);
+	std::string GetFileName(const std::string& filePath);
 
-std::string EscapeQuotes(const std::string& text);
+	std::string EscapeQuotes(const std::string& text);
 
-//===----------------------------------------------------------------------===//
-//
-/// BitMask helper functions.
-//
-//===----------------------------------------------------------------------===//
+	//===----------------------------------------------------------------------===//
+	//
+	/// BitMask helper functions.
+	//
+	//===----------------------------------------------------------------------===//
 
-std::string Stringify(BitMask& bitMask);
+	std::string Stringify(BitMask& bitMask);
 
-bool IsFull(BitMask& bitMask);
+	bool IsFull(BitMask& bitMask);
 
-void Increment(BitMask& bitMask);
+	void Increment(BitMask& bitMask);
 
-std::pair<bool, double> IsValid(BitMask& bitMask, DependencyGraph& dependencies);
+	std::pair<bool, double> IsValid(BitMask& bitMask, DependencyGraph& dependencies);
+	
+	//===----------------------------------------------------------------------===//
+	//
+	/// Variant validation helper functions.
+	//
+	//===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-/// Variant validation helper functions.
-//
-//===----------------------------------------------------------------------===//
+	int Compile(const std::filesystem::directory_entry& entry, clang::Language language);
 
-int Compile(const std::filesystem::directory_entry& entry, clang::Language language);
+	bool ValidateResults(GlobalContext& context);
 
-bool ValidateResults(GlobalContext& context);
+	bool CheckLocationValidity(const std::string& filePath, long lineNumber, bool force = true);
 
-bool CheckLocationValidity(const std::string& filePath, long lineNumber, bool force = true);
+	std::string StateToString(lldb::StateType state);
 
-std::string StateToString(lldb::StateType state);
+	std::string StopReasonToString(lldb::StopReason reason);
 
-std::string StopReasonToString(lldb::StopReason reason);
+	std::string LanguageToString(clang::Language lang);
 
-std::string LanguageToString(clang::Language lang);
-
-std::string LanguageToExtension(clang::Language lang);
+	std::string LanguageToExtension(clang::Language lang);
+}
 
 #endif

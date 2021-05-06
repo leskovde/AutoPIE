@@ -1,6 +1,7 @@
 #include <clang/Tooling/Tooling.h>
 
 #include "../include/Actions.h"
+#include "../../Common/include/Context.h"
 
 /**
  * Creates a `VariantGeneratingFrontendActionFactory` with a given `GlobalContext` member.\n
