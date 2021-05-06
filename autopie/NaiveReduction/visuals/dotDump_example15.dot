@@ -1,0 +1,126 @@
+digraph g {
+forcelabels=true;
+rankdir=TD;
+28[label="int
+main()
+{
+    Record record1(\"str1\", \"str2\", 42);
+
+    Record record2;
+    record2.str1 = \"str1_1\";
+    record2.year = 51;
+
+    std::cout << \"Record 1\n\";
+    std::cout << record1.str1 << \"\n\";
+    std::cout << record1.str2 << \"\n\"; 
+    std::cout << record1.year << \"\n\";
+
+    std::cout << \"Record 2\n\";
+    std::cout << record2.str1 << \"\n\"; 
+    std::cout << record2.str2 << \"\n\"; 
+    std::cout << record2.year << \"\n\";
+    
+    return (0);
+}", xlabel="No. 28 (872211), Function", color="green"];
+27[label="{
+    Record record1(\"str1\", \"str2\", 42);
+
+    Record record2;
+    record2.str1 = \"str1_1\";
+    record2.year = 51;
+
+    std::cout << \"Record 1\n\";
+    std::cout << record1.str1 << \"\n\";
+    std::cout << record1.str2 << \"\n\"; 
+    std::cout << record1.year << \"\n\";
+
+    std::cout << \"Record 2\n\";
+    std::cout << record2.str1 << \"\n\"; 
+    std::cout << record2.str2 << \"\n\"; 
+    std::cout << record2.year << \"\n\";
+    
+    return (0);
+}", xlabel="No. 27 (884058), CompoundStmt", color="green"];
+26[label="return (0);", xlabel="No. 26 (884056), ReturnStmt", color="darkorchid"];
+25[label="std::cout << record2.year << \"\n\";", xlabel="No. 25 (884040), CXXOperatorCallExpr", color="goldenrod"];
+24[label="std::cout << record2.year", xlabel="No. 24 (883576), CXXOperatorCallExpr", color="goldenrod"];
+23[label="std::cout << record2.str2 << \"\n\";", xlabel="No. 23 (883088), CXXOperatorCallExpr", color="green"];
+22[label="std::cout << record2.str2", xlabel="No. 22 (882624), CXXOperatorCallExpr", color="green"];
+21[label="std::cout << record2.str1 << \"\n\";", xlabel="No. 21 (882150), CXXOperatorCallExpr", color="goldenrod"];
+20[label="std::cout << record2.str1", xlabel="No. 20 (881686), CXXOperatorCallExpr", color="goldenrod"];
+19[label="std::cout << \"Record 2\n\";", xlabel="No. 19 (881212), CXXOperatorCallExpr", color="goldenrod"];
+18[label="std::cout << record1.year << \"\n\";", xlabel="No. 18 (880732), CXXOperatorCallExpr", color="goldenrod"];
+17[label="std::cout << record1.year", xlabel="No. 17 (880269), CXXOperatorCallExpr", color="goldenrod"];
+16[label="std::cout << record1.str2 << \"\n\";", xlabel="No. 16 (879294), CXXOperatorCallExpr", color="goldenrod"];
+15[label="std::cout << record1.str2", xlabel="No. 15 (878830), CXXOperatorCallExpr", color="goldenrod"];
+14[label="std::cout << record1.str1 << \"\n\";", xlabel="No. 14 (878356), CXXOperatorCallExpr", color="goldenrod"];
+13[label="std::cout << record1.str1", xlabel="No. 13 (877413), CXXOperatorCallExpr", color="goldenrod"];
+0[label="std::string str1 = nullptr;", xlabel="No. 0 (871569), Field", color="crimson"];
+1[label="std::string str2 = nullptr;", xlabel="No. 1 (871589), Field", color="crimson"];
+2[label="int year;", xlabel="No. 2 (871602), Field", color="crimson"];
+3[label="{
+    }", xlabel="No. 3 (872127), CompoundStmt", color="darkorchid"];
+4[label="Record()
+    {
+    }", xlabel="No. 4 (871625), CXXConstructor", color="crimson"];
+5[label="{
+	}", xlabel="No. 5 (872204), CompoundStmt", color="darkorchid"];
+6[label="Record(std::string b, std::string m, int y) : str1(b), str2(m), year(y)
+	{
+	}", xlabel="No. 6 (871734), CXXConstructor", color="crimson"];
+7[label="class Record
+{
+public:
+    std::string str1 = nullptr;
+    std::string str2 = nullptr;
+    int year;
+
+    Record()
+    {
+    }
+
+    Record(std::string b, std::string m, int y) : str1(b), str2(m), year(y)
+	{
+	}
+};", xlabel="No. 7 (871489), CXXRecord", color="crimson"];
+8[label="Record record1(\"str1\", \"str2\", 42);", xlabel="No. 8 (872349), DeclStmt", color="darkorchid"];
+9[label="Record record2;", xlabel="No. 9 (872372), DeclStmt", color="darkorchid"];
+10[label="record2.str1 = \"str1_1\";", xlabel="No. 10 (872463), CXXOperatorCallExpr", color="goldenrod"];
+11[label="record2.year = 51;", xlabel="No. 11 (872485), BinaryOperator", color="darkorchid"];
+12[label="std::cout << \"Record 1\n\";", xlabel="No. 12 (876373), CXXOperatorCallExpr", color="goldenrod"];
+28 -> 27;
+25 -> 24;
+23 -> 22;
+21 -> 20;
+18 -> 17;
+16 -> 15;
+27 -> 8;
+27 -> 9;
+27 -> 10;
+27 -> 11;
+27 -> 12;
+27 -> 14;
+27 -> 16;
+27 -> 18;
+27 -> 19;
+27 -> 21;
+27 -> 23;
+27 -> 25;
+27 -> 26;
+14 -> 13;
+7 -> 0;
+7 -> 1;
+7 -> 2;
+7 -> 4;
+7 -> 6;
+6 -> 5;
+4 -> 3;
+8 -> 13 [color=maroon];
+8 -> 15 [color=maroon];
+8 -> 17 [color=maroon];
+9 -> 10 [color=maroon];
+9 -> 11 [color=maroon];
+9 -> 20 [color=maroon];
+9 -> 22 [color=maroon];
+9 -> 24 [color=maroon];
+}

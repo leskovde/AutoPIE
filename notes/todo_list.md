@@ -13,7 +13,7 @@
 - [ ] **rework zpusobu, kterym se odebira source code z AST - rewriter momentalne nedela to, co bych chtel, pridat decl a expr visitory, opravit include**
 - [ ] podivat se na bezne veci v AST sliceru (help, option handling, ...) a zkusit neco ukrast
 - [ ] zjistit, jak udelat pomoci CMake crossplatform cpp projekt
-- [ ] migrovat projekt na linux
+- [x] migrovat projekt na linux
 - [ ] napsat shell script na propojeni sliceru s projektem
 - [ ] udelat vizualizaci delta debuggingu, abych se ujistil, ze vse funguje spravne - pro kusy kodu udelat nodes, z nich sestrojit strom a ten pak vykreslit tak, aby slo videt, ktere nodes odstranuji
 - [x] ~~zvyraznit chybu v obou slicerech - v example.c neni ve slice promenna k, i presto, ze by tam byt mela~~
@@ -28,3 +28,4 @@
 - [ ] vymyslet, jak minimalizovat cely program a ne jen main
 - [ ] udelat experimenty na soutezi SV-COMP
 - [ ] nechavat v redukovanem kodu relevantni konstanty (QoL, protoze slicing konstanty ignoruje)
+- [ ] pridat testy specificky pro c++ (zatim mam jen .c files)
