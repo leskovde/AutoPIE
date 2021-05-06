@@ -1,5 +1,5 @@
-#ifndef VISITORS_NAIVE_H
-#define VISITORS_NAIVE_H
+#ifndef VISITORS_DELTA_H
+#define VISITORS_DELTA_H
 #pragma once
 
 #include <clang/AST/RecursiveASTVisitor.h>

@@ -1,5 +1,5 @@
-#ifndef ACTIONS_H
-#define ACTIONS_H
+#ifndef ACTIONS_DELTA_H
+#define ACTIONS_DELTA_H
 #pragma once
 
 #include <clang/Frontend/FrontendAction.h>
@@ -11,26 +11,30 @@
 
 using namespace Common;
 
-std::unique_ptr<clang::tooling::FrontendActionFactory> DeltaDebuggingFrontendActionFactory(GlobalContext& context);
-
-/**
- * Specifies the frontend action for running the Delta debugging algorithm.\n
- * Currently creates a unifying consumer.
- */
-class DeltaDebuggingAction final : public clang::ASTFrontendAction
+namespace Delta
 {
-	GlobalContext& globalContext;
+	std::unique_ptr<clang::tooling::FrontendActionFactory> DeltaDebuggingFrontendActionFactory(GlobalContext& context);
 
-public:
-
-	explicit DeltaDebuggingAction(GlobalContext& context): globalContext(context)
+	/**
+	 * Specifies the frontend action for running the Delta debugging algorithm.\n
+	 * Currently creates a unifying consumer.
+	 */
+	class DeltaDebuggingAction final : public clang::ASTFrontendAction
 	{
-	}
+		GlobalContext& globalContext;
 
-	std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, llvm::StringRef /*file*/)
-	override
-	{
-		return std::unique_ptr<clang::ASTConsumer>(std::make_unique<Delta::DeltaDebuggingConsumer>(&ci, globalContext));
-	}
-};
+	public:
+
+		explicit DeltaDebuggingAction(GlobalContext& context) : globalContext(context)
+		{
+		}
+
+		std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, llvm::StringRef /*file*/)
+			override
+		{
+			return std::unique_ptr<clang::ASTConsumer>(std::make_unique<Delta::DeltaDebuggingConsumer>(&ci, globalContext));
+		}
+	};
+}
+
 #endif

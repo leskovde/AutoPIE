@@ -1,5 +1,5 @@
-#ifndef CONSUMERS_NAIVE_H
-#define CONSUMERS_NAIVE_H
+#ifndef CONSUMERS_DELTA_H
+#define CONSUMERS_DELTA_H
 #pragma once
 
 #include <clang/AST/ASTConsumer.h>

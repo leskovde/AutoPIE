@@ -89,7 +89,7 @@ int main(int argc, const char** argv)
 	LLDBSentry sentry;
 		
 	// Run all Clang AST related actions.
-	auto result = tool.run(DeltaDebuggingFrontendActionFactory(context).get());
+	auto result = tool.run(Delta::DeltaDebuggingFrontendActionFactory(context).get());
 
 	if (result)
 	{

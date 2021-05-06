@@ -93,7 +93,7 @@ int main(int argc, const char** argv)
 		context.currentEpoch = i;
 		
 		// Run all Clang AST related actions.
-		auto result = tool.run(VariantGeneratingFrontendActionFactory(context).get());
+		auto result = tool.run(Naive::VariantGeneratingFrontendActionFactory(context).get());
 
 		if (result)
 		{
