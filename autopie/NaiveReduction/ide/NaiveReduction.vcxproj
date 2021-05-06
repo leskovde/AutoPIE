@@ -19,12 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Common\src\Actions.cpp" />
     <ClCompile Include="..\..\Common\src\Helper.cpp" />
+    <ClCompile Include="..\src\Actions.cpp" />
     <ClCompile Include="..\src\NaiveReduction.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Common\include\Actions.h" />
     <ClInclude Include="..\..\Common\include\Consumers.h" />
     <ClInclude Include="..\..\Common\include\Context.h" />
     <ClInclude Include="..\..\Common\include\DependencyGraph.h" />
@@ -32,6 +31,9 @@
     <ClInclude Include="..\..\Common\include\Options.h" />
     <ClInclude Include="..\..\Common\include\Streams.h" />
     <ClInclude Include="..\..\Common\include\Visitors.h" />
+    <ClInclude Include="..\include\Actions.h" />
+    <ClInclude Include="..\include\Consumers.h" />
+    <ClInclude Include="..\include\Visitors.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

@@ -279,13 +279,13 @@ void Increment(BitMask& bitMask)
 std::pair<bool, double> IsValid(BitMask& bitMask, DependencyGraph& dependencies)
 {
 	auto characterCount = dependencies.GetTotalCharacterCount();
-	
+
 	for (size_t i = 0; i < bitMask.size(); i++)
 	{
 		if (!bitMask[i])
 		{
 			characterCount -= dependencies.GetNodeInfo(i).characterCount;
-			
+
 			if (dependencies.IsInCriterion(i))
 			{
 				// Criterion nodes should be present.
@@ -302,7 +302,7 @@ std::pair<bool, double> IsValid(BitMask& bitMask, DependencyGraph& dependencies)
 				{
 					return  std::pair<bool, double>(false, 0);
 				}
-			}		
+			}
 		}
 	}
 
@@ -344,7 +344,7 @@ static std::string GetCompilerName(const clang::Language language)
 int Compile(const std::filesystem::directory_entry& entry, const clang::Language language)
 {
 	// TODO: Change arguments based on the input language.
-	
+
 	const auto input = entry.path().string();
 	const auto output = TempFolder + entry.path().filename().replace_extension(".out").string();
 	const auto clangPath = llvm::sys::findProgramByName(GetCompilerName(language));
@@ -397,14 +397,14 @@ int Compile(const std::filesystem::directory_entry& entry, const clang::Language
 bool CheckLocationValidity(const std::string& filePath, const long lineNumber, const bool force)
 {
 	// TODO: Add unit tests for this function (out of bounds testing, locked file, etc.)
-	
+
 	std::ifstream ifs(filePath);
 
 	if (!ifs)
 	{
 		return false;
 	}
-	
+
 	// Read all content and split it into lines.
 
 	auto ss = std::stringstream(std::string(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>()));
@@ -421,7 +421,7 @@ bool CheckLocationValidity(const std::string& filePath, const long lineNumber, c
 	}
 
 	// Print the context of the error-inducing line.
-	
+
 	const auto contextSize = 3;
 	const auto contextStart = lineNumber - contextSize > 0 ? lineNumber - contextSize : 1;
 	const auto contextEnd = lineNumber + contextSize < lines.size() ? lineNumber + contextSize : lines.size();
@@ -434,7 +434,7 @@ bool CheckLocationValidity(const std::string& filePath, const long lineNumber, c
 	{
 		out::Verb() << "===---------------- Context of the error-inducing line ------------------===\n";
 	}
-	
+
 	for (auto i = contextStart; i <= contextEnd; i++)
 	{
 		if (force)
@@ -505,9 +505,9 @@ bool ValidateResults(GlobalContext& globalContext)
 		const auto presumedErrorLine = globalContext.variantAdjustedErrorLocation[currentVariant];
 
 		out::Verb() << "Processing file: " << entry.path().string() << "\n";
-		
+
 		CheckLocationValidity(entry.path().string(), presumedErrorLine, false);
-		
+
 		// Keep all LLDB logic written explicitly, not refactored in a function.
 		// The function could be called when the LLDBSentry is not initialized => unwanted behaviour.
 
@@ -728,7 +728,7 @@ bool ValidateResults(GlobalContext& globalContext)
 	}
 
 	out::All() << "Found the smallest error-inducing source file: " << resultFound.value() << "\n";
-	
+
 	const auto newFileName = TempFolder + std::string("autoPieOut") + LanguageToExtension(globalContext.language);
 
 	out::All() << "Changing the file path to '" << newFileName << "'\n";

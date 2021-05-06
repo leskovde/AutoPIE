@@ -6,8 +6,11 @@
 #include <queue>
 #include <utility>
 
-#include "Helper.h"
 #include "Streams.h"
+#include "Helper.h"
+
+namespace Common {}
+using namespace Common;
 
 /**
  * Represents a single code unit.\n
