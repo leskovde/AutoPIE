@@ -1,5 +1,5 @@
 - [ ] **!!!** https://stackoverflow.com/questions/52220534/how-to-use-ast-for-both-custom-front-end-action-and-clang-static-analysis
-- [ ] HandleTopLevelDecl v ASTConsumer mozna muze pomoct s include fily, vice tady: https://eli.thegreenplace.net/2014/05/01/modern-source-to-source-transformation-with-clang-and-libtooling
+- [x] HandleTopLevelDecl v ASTConsumer mozna muze pomoct s include fily, vice tady: https://eli.thegreenplace.net/2014/05/01/modern-source-to-source-transformation-with-clang-and-libtooling
 - [x] FrontendActionFactory udajne poskytuje moznost predat data nove FrontendAction, viz: https://eli.thegreenplace.net/2014/05/01/modern-source-to-source-transformation-with-clang-and-libtooling
 - [x] `--` se do argv uz nepocita! muzu to teda z komentaru a z kodu smazat a upravit argc a argv checky
 - [x] Eventualne migrovat gitlab na github pro release.
@@ -14,7 +14,7 @@
 - [x] doplnit algoritmus - slicing a jak spolupracuje s ostatnimi programy, co by se muselo menit, aby to dohromady fungovalo - viz. poznamka mobil
 - [x] doplnit notes
 - [x] napsat shell script na propojeni obou sliceru
-- [ ] **rework zpusobu, kterym se odebira source code z AST - rewriter momentalne nedela to, co bych chtel, pridat decl a expr visitory, opravit include**
+- [x] **rework zpusobu, kterym se odebira source code z AST - rewriter momentalne nedela to, co bych chtel, pridat decl a expr visitory, opravit include**
 - [x] podivat se na bezne veci v AST sliceru (help, option handling, ...) a zkusit neco ukrast
 - [x] ~~zjistit, jak udelat pomoci CMake crossplatform cpp projekt~~ (nerelevantni, projekt nebude fungovat na Windows kvuli LLDB)
 - [x] migrovat projekt na linux
@@ -25,7 +25,7 @@
 - [x] pripravit test suite, osnova k textu (napr. ke kazde sekci mit 5 odrazek, co tam bude)
 - [ ] **zkontrolovat implementaci Delta Debuggingu podle pseudokodu v textu**
 - [x] odebirat krome statementu i decl a expr
-- [ ] pouzit static slicer v naivnim zpusobu pro urychleni
+- [x] ~~pouzit static slicer v naivnim zpusobu pro urychleni~~
 - [x] ~~zkusit portnout giri na novejsi LLVM~~
 - [ ] zkusit heuristiku - urcit, zda je vyhodne pouzivat dynamicky slicer podle toho, jak moc se kod branchuje
 - [x] ~~zkusit formulovat a dokazat vetu "program je konecny prave tehdy, kdyz je kazdy jeho podprogram konecny"~~ (neresitelne, Rice theorem)
@@ -44,14 +44,14 @@
 - [x] ~~popsat, proc je v moji domene determinismus - spusteni typickeho programu nekolikrat probehne pokazde jinym zpusobem (co se tyce naplanovani instrukci atd.), ale dojde se ke stejnemu vysledku... chci minimalizovat nedeterminismus~~ paragraf jsem vypustil, neni potreba vysvetlovat
 - [ ] premyslet o zpusobu prevedeni na bytecode (to uz umim pres ` Compile()`) a ten pak prohnat pres pattern recognition
 - [ ] k introduction dopsat goals
-- [ ] zjistit si neco o C-Reduce a pripadne to i zminit v textu
+- [x] zjistit si neco o C-Reduce a pripadne to i zminit v textu
 - [ ] vytvorit rozumne readme (s logem atd.), pridat ho na hlavni stranku doxygenu (https://stackoverflow.com/questions/9502426/how-to-make-an-introduction-page-with-doxygen)
 - [x] pridat verbose option pro zapnuti debug vypisu do konzole (nejspis pomoci noveho outstreamu a operatoru `<<`)
 - [x] pridat log option pro vypisovani do souboru misto do konzole (taky pres `<<` operator)
 - [x] zkontrolovat, ze soubor a cislo radku dane uzivatelem opravdu existuje - vypsat sousedni radky a zvyraznit ten zadany na vstupu
 - [x] zjistit, jaky jazyk je na vstupu a podle nej menit nektere prikazy (napr. kompilace)
 - [ ] makefile - pridat debug target
-- [ ] pridat testy specificky pro c++ (zatim mam jen .c files)
+- [x] pridat testy specificky pro c++ (zatim mam jen .c files)
 - [x] pridat dependence mezi deklaracemi promennych a jejich pouzitim
 - [x] naivni reseni provest zpusobem iterativniho prohlubovani
 - [x] zprovoznit reduction ratio

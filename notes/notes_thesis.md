@@ -203,3 +203,91 @@
   	- removing chunks of code, starting from the size of the input file and halving down to one line - similar to Berkley delta
   	- running a formating tool to fix indentations, etc. - done inside the loop, not as a pre/postprocessing step
 
+------
+
+========== DD general:
+
+- two algorithms:
+	- simplification: reducing the input's size while it still preserves failure
+	- isolation: finds a passing configuration and an element that, when added, guarantees failure
+- isolation is faster, but not useful for programmers, since the element that guarantees failure isn't necessarily the cause of the error
+
+- ddmin: the simplifying DD algorithm
+	- input: failure inducing configuration = list of input that makes a program fail
+	- output: a subset of the input such that no (not even one) element can be removed while preserving the failure = 1-minimal test case
+	- steps:
+		1. reduce to subset: split the current configuration into n partitions, test each partition and if it produces failure, treat it as the current configuration and repeat step 1
+		2. reduce to complement: test the complement of each partition and if it produces failure, treat is as the current configuration and repeat step 1
+		3. increase granularity: split the current configuration into 2*n smaller partition (n is the size of the current configuration) and repeat step 1 - if no further reduction can be made, terminate
+
+	- similar to binary search
+	- if successful, the configuration can be reduced by half each iteration - this will usually not be the case since portions of the output might be scattered throughout the file
+
+========== DD detail:
+
+- input determines how the program runs
+- we are interested in the difference between a failing run (rx, has a failure-inducing input) and a passing run (rv, input produces success)
+- the difference between rv and rx is noted using a mapping D (letter delta in the paper)
+- relevant change is D(rv) = rx
+- D can be decomposed into D1, ..., Dn
+- the process of decomposition is not relevant
+- we need a validation function that produces three types of output - success, failure, and indeterminate result
+- validate(rx) = x, validate(rv) = v
+- cv = a set of changes being applied to rv
+- cv = {} (no changes) => rv
+- cx = {D1, ..., Dn} (all changes) = rx = (D1(D2(...(rv))))
+- we call subsets of cx test cases
+- test function - applies a set of changes c to rv and validates the run
+- test(c) = validate(D1(D2(...(rv)))), c = {D1, ..., Dn}
+- test(cv) = test({}) = v
+- test(cx) = test({D1, D2, ..., Dn}) = x
+- minimizing test cases = minimizing the difference between cv and cx
+- minimizing the difference leads to minimizing cx itself
+- c is a (global) minimum if there is no smaller subset of cx that causes failure
+- global minimum is practically impossible to compute due to exponential complexity
+- local minimum = none of the test case's subset cause failure
+- local minimum is not the smallest variant, but at least it guarantees that no other portion can be removed while perserving the error
+- local minimum is a test case in which all elements are significant to the production of the failure
+- checking whether c is a local minimum takes exponential time as well
+- n-minimality - removing any combination of up to n changes cases the failure to go away
+- c is |c|-minimal => c is minimal
+- approximation - 1-minimality - removing any statement changes the result from failure to sucess
+- the larger the n in n-minimality is, the smaller the output will be
+- but 1-minimality is still significant
+- removing a line (or element) at a time would take too long, further modifications need to be made
+- binary search:
+	- split cx into two partitions and test them
+	- if the first fails, it is a smaller test case
+	- if the first does not fail, but the second does, it is a smaller test case
+	- if both pass, neither is a simplification
+- worst case - all subsets pass or are unresolved
+- increase the chance of getting a failing subset:
+	- testing larger subsets (removing smaller parts) is slower and increases the chance of getting a failing subset
+	- testing smaller substest (removing larger parts) if faster if the test fails, but the chances of it failing are smaller
+- compromise - split into small subsets and their complements
+- four possible outcomes: 
+	- reduce to subset - a smaller failure-inducing subset if found and it is considered for future reduction into n = 2 subsets
+	- reduce to complement - a failure-inducing complement is found, which is still smaller then the intial test case and it is considered for future reduction into n = n - 1 subsets (the n - 1 is designed so that it can reuse previous validation results - requires us to implement test cache)
+	- increase granularity - no test has failed, try again with n = 2 * n (if 2*n > |cx|, try with |cx| instead)
+	- done - granularity cannot be increased
+complexity:
+	- worst case - two options:
+		- every test is unresolved: 2 + 4 + 8 + ... + 2*|cx| = 4*|cx|
+		- last complement fails and ddmin is reinvoked: 2 * (|cx| - 1) + 2* (|cx| - 2) + ... + 2 = |cx|^2 - |cx|
+		- combined = |cx|^2 + 3*|cx|
+	- best case:
+		- if searching of only one failure-inducing change, then the complexity is the same as with binary search: number of tests <= 2 * log (|cx|)
+
+========== HDD overview:
+
+- ddmin ignores the input's structure
+- requires parsing - the input must be syntactically correct
+- prunes elements level by level
+- each level uses ddmin algorithm
+- each level counts all nodes and names them - required for choosing a configuration for testing
+- nodes included in the configuration are then printed out (similar to my naive reduction)
+- if the configuration should be used in future iterations, it can either be saved and reparsed, or pruned
+- pruning removes nodes from a specified level
+- much smaller number of tests compared to ddmin
+- instead of pruning, it is possible to replace the nodes with the smallest possible syntax fragment
+- the algorithm is unclear, try to find a better explanation before implementing it
