@@ -96,72 +96,107 @@ static and dynamic slicing.
 
 \section{Delta debugging}\label{chap:delta}
 
-Delta debugging is an iterative approach described by Zeller \citep{Zeller99}.
-It does not perform any static analysis of~the~debugged program, as it 
-is~not meant to find failures in~the code. 
+Delta debugging is an iterative approach described by Zeller\citep{Zeller99}. 
+It has two primary goals for a given program and the program's 
+failure-inducing input. 
+The first is to simplify the input by keeping only those parts that lead to 
+the failure. 
+The second is to isolate a part of the input that guarantees the failure. 
 
-Delta debugging instead intends to 
-minimize the~debugged program's incorrect input to isolate the~input's 
-failure-inducing part. 
-Therefore, it requires the~program in~question and the~specific input 
-and the~expected output. 
-In other words, Delta debugging requires a~set of~test cases, which attempts to 
-minimize and isolate the~failure-inducing input. 
-In order to understand where
-this app\-roach came from, we need to define several important properties of~
-programs and test cases presented by Zeller and Hildebrandt\citep*{Zeller02}.
+The first goal is especially relevant in the context of this project and 
+will be described in more detail in this section.
+The simplifying algorithm, also known as the minimizing algorithm, reduces 
+the size of a failure-inducing input. 
+For a given program, a test case, and an input for that test case, it 
+simplifies the test case's input. 
+It assumes that each execution of the program has the following results: 
+pass, fail, inconclusive. 
+
+Zeller and Hildebrandt\citep*{Zeller02} have presented the following 
+definitions to be more precise with the terminology.
 
 \begin{defn}[Test case]\label{def02:1}
   Let $c_\mathcal{F}$ be a~set of~all changes $\delta_1,\dots,\delta_n$ 
-  between a~passing program run $r_\mathcal{P}$ and a~failing program run
-  $r_\mathcal{F}$ such that 
+  between a~passing program's input $r_\mathcal{P}$ and a~failing 
+  program's input $r_\mathcal{F}$ such that 
   \begin{align}
 	r_\mathcal{F} = (\delta_1(\delta_2(\dots(\delta_n(r_\mathcal{P}))))). \nonumber 
   \end{align}
   We call a~subset $c \subseteq c_\mathcal{F}$ a~\emph{test case}.
 \end{defn}
 
-Test runs should differ based on program's code. 
-The definition states that making changes to the~program,
-i.e. applying a~function that alters the~code, enough times
-and well enough to transform a~passing program to a~failing one,
-results in~a test case.
+To understand the definition, we must first assume two inputs for 
+the debugged programs. 
+Say we have an input $r_\mathcal{P}$ with which the program terminates 
+successfully. 
+Let us consider that the passing input is trivial, i.e., empty. 
+Now consider an input $r_\mathcal{F}$ that leads to a failure when 
+the program is executed. 
+The difference between these two inputs is what $c_\mathcal{F}$ represents. 
+
+The difference in the definition is decomposed into several more minor 
+differences. 
+In simple terms, one can think about the difference between $r_\mathcal{P}$ 
+and $r_\mathcal{F}$ as the string $r_\mathcal{F}$ (since $r_\mathcal{P}$ is 
+trivial). 
+The decomposed differences $\delta_1, \dots, \delta_n$ represent substrings 
+of the string $r_\mathcal{F}$. When composed and applied to $r_\mathcal{P}$, 
+$\delta_1, \ldots, \delta_n$ transform $r_\mathcal{P}$ into $r_\mathcal{F}$. 
+Subsets of ${\delta_1, \dots, \delta_n}$ are called test cases.
+
+The goal of the minimizing algorithm is to find the minimal test case. 
+The minimal test case can be interpreted as the smallest set of 
+the failure-inducing input that still fails.
 
 \begin{defn}[Global minimum]\label{def02:2}
-  a~test case $c \subset c_\mathcal{F}$ is called a~\emph{global minimum}
+  A~test case $c \subset c_\mathcal{F}$ is called a~\emph{global minimum}
   of~$c_\mathcal{F}$ if $\forall c_i \subseteq c_\mathcal{F}:
   (|c_i| < |c| \implies c_i$ does not cause the~program to fail.$)$
 \end{defn}
 
-Global minimum can be interpreted as the~smallest set of~changes able to
-make the~program fail.
+The global minimum is practically impossible to compute. 
+Since we are looking for a subset with specific properties, we must test 
+all subsets. 
+This results in exponential running time complexity. 
+Instead, we can find a local minimum.
 
 \begin{defn}[Local minimum]\label{def02:3}
-  a~test case $c \subset c_\mathcal{F}$ is called a~\emph{local minimum}
+  A~test case $c \subset c_\mathcal{F}$ is called a~\emph{local minimum}
   of~$c_\mathcal{F}$ if $\forall c_i \subseteq c:
   (c_i$ does not cause the~program to fail.$)$
 \end{defn}
 
-The aforementioned minimality is defined as follows.
+The rule for a local minimum is that no test case's subset causes failure. 
+Unlike the global minimum, the local minimum is not the smallest input 
+variant. 
+However, it still preserves an interesting property. 
+All elements of the local minimum are significant to producing the failure. 
+In other words, no element can be removed.
+Calculating a local minimum is also an exponentially complex operation. 
+To be more efficient, we need to deploy approximations. 
 
 \begin{defn}[$n$-minimality]\label{def02:4}
-  a~test case $c \subset c_\mathcal{F}$ is \emph{$n$-minimal}
+  A~test case $c \subset c_\mathcal{F}$ is \emph{$n$-minimal}
   if $\forall c_i \subseteq c:
   (|c| - |c_i| \leq n \implies c_i$ does not cause the~program to fail.$)$
 \end{defn}
 
-The minimizing Delta debugging algorithm attempts to find a~1-minimal test case.
+This approximation dictates how throughout the element removal will be. 
+The larger the $n$ in $n$-minimality is, the smaller the output will be. 
+Delta debugging is generally interested in $1$-minimal test cases, i.e., 
+removing any element results in passing a test case. 
+Though, testing for $1$-minimality might take more time than necessary.
+The minimizing algorithm utilizes binary search to reduce the number of its 
+iterations.
 
-Delta debugging seems to bet on the~premise that large-scale applications are written
-with automated testing in~mind. On the~same note, it is the~recommended practice to
-develop programs while at the~same time dedicating resources to write tests for that
-program.
-
-The defined minimality can be used to construct the~minimizing algorithm. 
-However, the~delta debugging algorithm can be easily and more comprehensively explained 
-without the~definition as well.
-
-\change[inline]{TODO: Move comments more towards the~center.}
+The algorithm attempts to increase its chances of finding a failing subset
+by using a following modification. It tests the binary search's partitions 
+as well as their complements. By testing small subsets (partitions split by
+the binary search), the algorithm reduces its chances of achieving a smaller
+failing test case. On the other hand, testing larger subsets (complements
+of those partitions) improves the chances of finding a failing test case.
+While testing larger subsets increases the chances of getting a result, it
+is considerably slower.
 
 \begin{figure}[h]
 	\hrule height.8pt depth0pt \kern2pt
@@ -189,7 +224,7 @@ without the~definition as well.
 				\State goto (2).
 			\EndIf
 		\Else
-			\Comment $\beta_i$ failed.
+			\LeftComment{$\beta_i$ failed.}
 			\State $\sigma \leftarrow \beta_i$.
 			\State $n \leftarrow n - 1$.
 			\State goto (2).
@@ -200,42 +235,37 @@ without the~definition as well.
 	\label{alg:dd}
 \end{figure}
 
-The simplified algorithm seen in figure~\ref{alg:dd} splits the~input into 
-$n$ even-sized parts and their respective complements. 
-Tests are then applied to these snippets, which can result in~three different outcomes. 
-If all tests pass correctly, the~granularity, i.e., $n$, is doubled, and the~input is split
-into more even-sized parts. 
-On the~other hand, if a~snippet fails a~test, the~granularity is reset to its initial value.
-Furthermore, the~snippet now becomes the~input. 
+The simplified algorithm description seen in figure~\ref{alg:dd} splits 
+the~test case into $n$ even-sized partitions and their respective complements. 
+These partitions are tested first, followed by all complements. 
+The testing can result in~three different outcomes.
+If all tests pass correctly, the~granularity, i.e., $n$, is doubled, and 
+the~test case is split into more even-sized partitions. 
+On the~other hand, if a~partition fails a~test, the~granularity is reset to 
+its initial value.
+Additionally, the~partition now becomes the~test case. 
 If neither of~the~two mentioned scenarios happens, 
-then a~snippet's complement must have failed to pass a~test. 
+then a~partition's complement must have failed to pass a~test. 
 This case results in~the granularity being decreased, 
-and the~input is set to the~failure causing complement.
-These three actions repeat iteratively, updating the~input and 
+and the~test case is set to the~failure causing complement.
+These three steps repeat iteratively, updating the~test case and 
 splitting it systematically with different granularities. 
-Once the~granularity is greater than the~input's size, 
+Once the~granularity is greater than the~test cases's size, 
 the most recent failure-inducing snippet is returned. 
-The same case holds when the~input is of~size $1$, i.e., it cannot be further divided.
+The same case holds when the~test case is of~size $1$, i.e., it cannot be 
+further divided.
 
-Additionally, minimizing is not the~only approach Delta debugging suggests.
-A more sophisticated one is isolation. Minimization can be described as removing parts
-while the~failure persists, which means that the~output changes are only made in~failing
-iterations.
-Isolation extends this by adding failure-inducing differences while the~program passes tests.
-This addition results in~changes in~both the~passing and failing iterations.
-
-One can quickly transform the~input minimalization of~Delta debugging into either source
-code minimalization or error isolation at both the~compile-time and runtime.
-This transformation can be achieved for the~compile-time by first setting the~input
-as the~debugged program's source code. 
-Second, it is required to set the~expected
-output to either 'compiled' or 'failed to compile'. 
-Finally, the~input is fed into a~compiler, for example, GCC, which produces
-one of~the~two set outputs. 
-
-The runtime variant only differs in~two points—first, changing the~expected outputs. 
-Second, changing the~compiler to a~compiler-debugger pipeline so that the~source 
-can be compiled and run.
+For the sake of this project, we can quickly transform test case 
+minimization into source code minimization:
+\begin{enumerate}
+  \item We consider the source code as the input of the algorithm.
+  \item We compile and execute that input in an appropriate execution 
+  environment.
+  \item We test each iteration on whether it contains the desired runtime 
+  error.
+\end{enumerate}
+The details on the usage of Delta debugging are described in section~
+\ref{chap:deltaimplementation}.
 
 \section{Static slicing}
 
