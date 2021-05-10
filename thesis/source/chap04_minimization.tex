@@ -370,81 +370,71 @@ employ structured or object-oriented programming.
 
 Zeller's Delta debugging \cite{Zeller99, Zeller02, Zeller01} has been 
 described in detail in section~\ref{chap:delta}.
-Although it serves primarily to find failure-inducing parts of inputs when 
-run on test cases, it can tremendously help with program minimization.
-For a given input, Delta debugging attempts to find and isolate the input's 
-smallest failure-inducing subset.
-Other than the input, Delta debugging also requires the debugged program 
-(in its executable form) and expected output.
+It is an automated debugging technique that focuses on input size reduction.
+For a given input, Delta debugging attempts to find the input's 
+smallest failure-inducing subset and isolate the a failure-inducing element 
+using two algorithms.
+This project is only concerned with the minimizing algorithm described in
+section~\ref{chap:delta} and in the figure~\ref{alg:dd}.
 
+For the rest of this section, the input will be referred to as 
+a \emph{test case}.
+Other than the test case, Delta debugging also requires the debugged program 
+(in its executable form) and a method of validating its output.
 Let us draw parallels between the mentioned requirements and this project's 
 minimization task.
 The input for program minimization is the given program's source code.
-The code can be labeled as the input Delta debugging takes.
+The code can be labeled as the test case Delta debugging takes.
 It is essential to clarify that this Delta debugging usage does not utilize 
 the source code as the debugged program.
-Instead, it considers it as a given input.
-Then, we must specify the expected output.
+Instead, it considers it as a given test case.
+Then, we must specify the expected output and a method to validate it.
 It is required that the program terminates with a given runtime error.
 Let us label that runtime error and its location as the expected output.
+Whenever the executed test case results in that particular error, we 
+interpret the run as a failing one.
+Every other terminating run will be interpreted as a passing one.
 Lastly, we must define the debugged program.
-In our case, to get from the test's input (source code) to the expected 
-output (a specific runtime error), the input must first be compiled 
+In our case, to get from the test case (source code) to the expected 
+output (a specific runtime error), the code must first be compiled 
 and then executed.
 The fitting debugged program is, therefore, a pipeline of a compiler and 
 an execution environment.
 
-The result is what we need - a minimal program variant that fails with 
-a particular error.
-As was already mentioned, the location of the error might differ based 
-on the variant's structure.
+The minimizing algorithm uses binary search in a greedy manner.
+We have modified the way binary search is performed to better fit the input's
+structure.
+The original minimizing algorithm operates with partitions of equal size.
+That is not necessarily the best approach for structured test cases such
+as source code.
+To give a concrete example, we can look at splitting a function definition
+into two partitions.
+Originally, we would get two syntactically invalid code snippets.
+One would contain the function's head and the first half of its body.
+The body would not contain the terminating curly bracket.
+Similarly, the second would be missing an opening curly bracket.
+Instead, it makes more sense to operate on code units.
+A more detailed description of code units can be found in 
+section~\ref{chap:naive}.
+
+Initially, the test case is split into $k$ code units.
+Those code units are then assigned into $n$ partitions of roughly the same 
+size.
+The number of partitions changes based on the current iteration, as described
+in figure~\ref{alg:dd}.
+In our case, each iteration compiles current test case subsets and executes 
+them.
+Executions are validated as described earlier and the algorithm reduces
+the size of the test case gradually.
+The result is roughly what we need - a minimal program variant approximation 
+that fails with a particular error.
+As was already mentioned in this chapter's introduction, the location of 
+the error might differ based on the variant's structure.
 Nonetheless, the location could be aligned based on the source code in 
-an additional step.
-
-\change[inline]{TODO: Take the following paragraph (equal sizes) with 
-a grain of salt.
-Think about the implementation of DD for this project.
-Is it better to only consider leaf nodes or always look at full 
-code constructs (functions, classes, ...)?}
-
-The minimizing Delta debugging algorithm works iteratively.
-Initially, during each iteration, the input is split into $n$ code units 
-of equal size.
-Equal sizes do not fit the nature of our input very well.
-A better solution would be to split the source code into $n$ or fewer units 
-based on the code constructs present in the code.
-For example, there is no point in splitting a function definition in half.
-Instead, it would make more sense to leave its head and body as a single 
-code unit.
-The body could then be divided more gradually in further iterations.
-Each iteration runs a test on each of the $n$ code units and its 
-complements, resulting in $n * 2$ tests run per iteration.
-In our case, the test consists of compiling a snippet of 
-source code, executing it, and checking the presence of the desired runtime
-error.
+an additional step, so that Invariant~\ref{invar04:1} holds.
 
 The requirement to run this many executions significantly hinders 
 the performance of the algorithm.
-Delta debugging can also be done in another manner.
-The isolating algorithm can make an overall better use of iterations.
-When minimizing using Delta debugging, the result of each iteration 
-only changes when the test fails.
-On the other hand, the isolating approach also contributes changes 
-to the result when the test passes.
-However, passing cases are sporadic when working with source code.\change{TODO: Verify 
-that the following is true! 
-Make sure to understand the DD approach correctly and its 
-verification (compilation and execution of snippets).}
-They only arise when every executed bin of code units ends with the same 
-desired result.
-It is unlikely that those bins would compile on their own since 
-they would probably represent only a snippet of code, not a stand-alone 
-subprogram.
-Furthermore, it is even less likely that the code units would result 
-in the same runtime error when executed.
-
-\change[inline]{TODO: Come up with a way to guess the time complexity of DD.}
-
 
 \section{Slicing-based solution}\label{chap:systematic}
 
