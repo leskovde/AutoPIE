@@ -296,7 +296,7 @@ variant generating algoritm results in $2^n$ possible variants.
 	\label{alg:naive}
 \end{figure}
 
-The naive time complexity is, therefore, the abysmal $O(2^n)$.
+The naive time complexity is, therefore, the abysmal $\mathcal{O}(2^n)$.
 Moreover, the $2^n$ variants require some verification and classification 
 to determine whether they are minimal or not.
 The correctness of many of the invalid variants can be ruled out at 
@@ -433,8 +433,34 @@ the error might differ based on the variant's structure.
 Nonetheless, the location could be aligned based on the source code in 
 an additional step, so that Invariant~\ref{invar04:1} holds.
 
-The requirement to run this many executions significantly hinders 
-the performance of the algorithm.
+The running time complexity of this modified algorithm, which is measured 
+for the number of executed validations $v$, remains unchanged. 
+Let us assume the test case consists of $k$ code units. 
+Zeller and Hildebrandt\citep*{Zeller02} presented both the worst 
+and the best case complexity as follows.
+
+\paragraph{Worst case.} Two possible scenarios lead to the worst time 
+complexity. 
+First, every executed validation is inconclusive. 
+That would lead to $v = 2 + 4 + 8 + \ldots + 2 * k = 4 * k$ validations. 
+Second, the validation succeeds, i.e., finds a failing subset, for every 
+last complement. 
+This case given us $v = (k - 1) + (k - 2) + \ldots + 2 = k^2 - k$ validations.
+Combined, these two scenarios lead to $k^2 + 3 * k$ validations at worst.
+
+\paragraph{Best case.} The best case is the ideal scenario for utilizing 
+binary search. 
+We would be searching for a single failure-inducing code unit. 
+This scenario leads to $2 * \log{}k$ validations.
+
+Extracting an approximation of the minimal program variant after 
+$\mathcal{O}(k^2)$ validations is undoubtedly practical. 
+Especially when compared to the exponential time complexity of the naive 
+approach described in section~\ref{chap:naive}. 
+Those who desire the minimal variant might want to get the approximation 
+first and provide it to the naive reduction. 
+Nevertheless, there is no way of avoiding the exponential complexity when 
+searching for optimal results.
 
 \section{Slicing-based solution}\label{chap:systematic}
 
