@@ -13,7 +13,8 @@ using namespace Common;
 
 namespace Delta
 {
-	std::unique_ptr<clang::tooling::FrontendActionFactory> DeltaDebuggingFrontendActionFactory(GlobalContext& context);
+	std::unique_ptr<clang::tooling::FrontendActionFactory> DeltaDebuggingFrontendActionFactory(
+		GlobalContext& context, int iteration, int partitionCount);
 
 	/**
 	 * Specifies the frontend action for running the Delta debugging algorithm.\n
@@ -21,18 +22,23 @@ namespace Delta
 	 */
 	class DeltaDebuggingAction final : public clang::ASTFrontendAction
 	{
-		GlobalContext& globalContext;
+		int iteration_;
+		int partitionCount_;
+		GlobalContext& globalContext_;
 
 	public:
 
-		explicit DeltaDebuggingAction(GlobalContext& context) : globalContext(context)
+		DeltaDebuggingAction(GlobalContext& context, const int iteration,
+		                              const int partitionCount) : iteration_(iteration),
+		                                                          partitionCount_(partitionCount),
+		                                                          globalContext_(context)
 		{
 		}
 
 		std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, llvm::StringRef /*file*/)
 			override
 		{
-			return std::unique_ptr<clang::ASTConsumer>(std::make_unique<DeltaDebuggingConsumer>(&ci, globalContext));
+			return std::unique_ptr<clang::ASTConsumer>(std::make_unique<DeltaDebuggingConsumer>(&ci, globalContext_, iteration_, partitionCount_));
 		}
 	};
 }

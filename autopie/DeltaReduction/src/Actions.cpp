@@ -12,27 +12,34 @@ namespace Delta
 	 * and passing data to created instances.
 	 *
 	 * @param context A reference to the global context which should be passed onto created instances.
+	 * @param iteration The number of the current DD iteration (used for file manipulation).
+	 * @param partititonCount The number of subsets to be tested.
 	 * @return A `DeltaDebuggingFrontendActionFactory` instance with the given context as a member.
 	 */
-	std::unique_ptr<clang::tooling::FrontendActionFactory> DeltaDebuggingFrontendActionFactory(GlobalContext& context)
+	std::unique_ptr<clang::tooling::FrontendActionFactory> DeltaDebuggingFrontendActionFactory(GlobalContext& context, const int iteration, const int partititonCount)
 	{
 		class DeltaDebuggingFrontendActionFactory : public clang::tooling::FrontendActionFactory
 		{
+			int iteration_;
+			int partitionCount_;
 			GlobalContext& context_;
 
 		public:
 
-			explicit DeltaDebuggingFrontendActionFactory(GlobalContext& context) : context_(context)
+			DeltaDebuggingFrontendActionFactory(GlobalContext& context, const int iteration,
+			                                    const int partitionCount) : iteration_(iteration),
+			                                                                partitionCount_(partitionCount),
+			                                                                context_(context)
 			{
 			}
 
 			std::unique_ptr<clang::FrontendAction> create() override
 			{
-				return std::make_unique<DeltaDebuggingAction>(context_);
+				return std::make_unique<DeltaDebuggingAction>(context_, iteration_, partitionCount_);
 			}
 		};
 
 		return std::unique_ptr<clang::tooling::FrontendActionFactory>(
-			std::make_unique<DeltaDebuggingFrontendActionFactory>(context));
+			std::make_unique<DeltaDebuggingFrontendActionFactory>(context, iteration, partititonCount));
 	}
 }

@@ -87,14 +87,31 @@ int main(int argc, const char** argv)
 	}
 
 	LLDBSentry sentry;
-		
-	// Run all Clang AST related actions.
-	auto result = tool.run(Delta::DeltaDebuggingFrontendActionFactory(context).get());
 
-	if (result)
+	auto partitionCount = 2;
+
+	auto iteration = 0;
+	const auto cutOffLimit = 0xffff;
+
+	while (iteration < cutOffLimit)
 	{
-		errs() << "The tool returned a non-standard value: " << result << "\n";
+		iteration++;
+
+		if (iteration % 50 == 0)
+		{
+			out::All() << "Done " << iteration << " DD iterations.\n";
+		}
+
+		// Run all Clang AST related actions.
+		auto result = tool.run(Delta::DeltaDebuggingFrontendActionFactory(context, iteration, partitionCount).get());
+
+		if (result)
+		{
+			errs() << "The tool returned a non-standard value: " << result << "\n";
+		}
 	}
+
+	out::All() << "Finished. Done " << iteration << " DD iterations.\n";
 		
 	return EXIT_FAILURE;
 }

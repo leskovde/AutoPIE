@@ -21,18 +21,18 @@ namespace Naive
 	 */
 	class VariantGeneratingAction final : public clang::ASTFrontendAction
 	{
-		GlobalContext& globalContext;
+		GlobalContext& globalContext_;
 
 	public:
 
-		explicit VariantGeneratingAction(GlobalContext& context) : globalContext(context)
+		explicit VariantGeneratingAction(GlobalContext& context) : globalContext_(context)
 		{
 		}
 
 		std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, llvm::StringRef /*file*/)
 			override
 		{
-			return std::unique_ptr<clang::ASTConsumer>(std::make_unique<VariantGeneratingConsumer>(&ci, globalContext));
+			return std::unique_ptr<clang::ASTConsumer>(std::make_unique<VariantGeneratingConsumer>(&ci, globalContext_));
 		}
 	};
 }

@@ -21,12 +21,17 @@ namespace Delta
 	{
 		DependencyMappingASTConsumer mappingConsumer_;
 		VariantPrintingASTConsumer printingConsumer_;
+		int iteration_;
+		int partitionCount_;
 		GlobalContext& globalContext_;
 
 	public:
-		DeltaDebuggingConsumer(clang::CompilerInstance* ci, GlobalContext& context) : mappingConsumer_(ci, context),
+		DeltaDebuggingConsumer(clang::CompilerInstance* ci, GlobalContext& context, const int iteration,
+		                       const int partitionCount) : mappingConsumer_(ci, context),
 			printingConsumer_(ci, context.parsedInput.errorLocation.lineNumber),
+			iteration_(iteration), partitionCount_(partitionCount),
 			globalContext_(context)
+		
 		{
 		}
 
@@ -43,96 +48,79 @@ namespace Delta
 		 * @param context The AST context.
 		 */
 		void HandleTranslationUnit(clang::ASTContext& context) override
-		{
-			auto partitionCount = 2;
+		{		
+			mappingConsumer_.HandleTranslationUnit(context);
+			const auto numberOfCodeUnits = mappingConsumer_.GetCodeUnitsCount();
+
+			globalContext_.variantAdjustedErrorLocation.clear();
+			printingConsumer_.SetData(mappingConsumer_.GetSkippedNodes(), mappingConsumer_.GetDependencyGraph());
+
+			auto dependencies = mappingConsumer_.GetDependencyGraph();
 			
-			auto iteration = 0;
-			const auto cutOffLimit = 0xffff;
+			// 1. Split into a container of equal sized bins.
+			// 2. Get a container of complements.
+			// 3. Loop over the first container and test each bin (generate variant and execute).
+			// 4. If a variant fails, set n to 2 and the file to that variant.
+			// 5. Loop over the second container and test --||--.
+			// 6. If a variant fails, decrement n and set the file to that variant/
+			// 7. If nothing fails, set n to 2 *n.
 
-			while (iteration < cutOffLimit)
+			std::vector<BitMask> partitions;
+			std::vector<BitMask> complements;
+			const auto partitionSize = numberOfCodeUnits / partitionCount_;
+			
+			for (auto i = 0; i < partitionCount_; i++)
 			{
-				iteration++;
+				auto partition = BitMask(numberOfCodeUnits);
+				auto complement = BitMask(numberOfCodeUnits);
 
-				if (iteration % 50 == 0)
+				// Assign code units into partitions.
+				for (auto j = 0; j < numberOfCodeUnits; j++)
 				{
-					out::All() << "Done " << iteration << " DD iterations.\n";
-				}
-
-				// TODO: Feed the current file to the mapping consumer.
-				
-				mappingConsumer_.HandleTranslationUnit(context);
-				const auto numberOfCodeUnits = mappingConsumer_.GetCodeUnitsCount();
-
-				globalContext_.variantAdjustedErrorLocation.clear();
-				printingConsumer_.SetData(mappingConsumer_.GetSkippedNodes(), mappingConsumer_.GetDependencyGraph());
-
-				auto dependencies = mappingConsumer_.GetDependencyGraph();
-				
-				// 1. Split into a container of equal sized bins.
-				// 2. Get a container of complements.
-				// 3. Loop over the first container and test each bin (generate variant and execute).
-				// 4. If a variant fails, set n to 2 and the file to that variant.
-				// 5. Loop over the second container and test --||--.
-				// 6. If a variant fails, decrement n and set the file to that variant/
-				// 7. If nothing fails, set n to 2 *n.
-
-				std::vector<BitMask> partitions;
-				std::vector<BitMask> complements;
-				const auto partitionSize = numberOfCodeUnits / partitionCount;
-				
-				for (auto i = 0; i < partitionCount; i++)
-				{
-					auto partition = BitMask(numberOfCodeUnits);
-					auto complement = BitMask(numberOfCodeUnits);
-
-					// Assign code units into partitions.
-					for (auto j = 0; j < numberOfCodeUnits; j++)
+					if (i * partitionSize <= j && (j < (i + 1) * partitionSize || i == partitionCount_ - 1))
 					{
-						if (i * partitionSize <= j && (j < (i + 1) * partitionSize || i == partitionCount - 1))
-						{
-							partition[j] = true;
-							complement[j] = false;
-						}
-						else
-						{
-							partition[j] = false;
-							complement[j] = true;
-						}
+						partition[j] = true;
+						complement[j] = false;
 					}
-
-					partitions.emplace_back(partition);
-					complements.emplace_back(complement);
+					else
+					{
+						partition[j] = false;
+						complement[j] = true;
+					}
 				}
 
-				for (auto& partition : partitions)
-				{
-					
-				}
+				partitions.emplace_back(partition);
+				complements.emplace_back(complement);
+			}
 
-				for (auto& complement : complements)
-				{
-					
-				}
-
-				// No smaller subset found, increase granularity.
-				partitionCount *= 2;
-
-				if (partitionCount > numberOfCodeUnits)
-				{
-					
-				}
+			for (auto& partition : partitions)
+			{
 				
-				try
-				{
-					auto fileName = TempFolder + std::to_string(iteration) + "_" + GetFileName(globalContext_.parsedInput.errorLocation.filePath) + LanguageToExtension(globalContext_.language);
-					printingConsumer_.HandleTranslationUnit(context, fileName);
+			}
 
-					globalContext_.variantAdjustedErrorLocation[iteration] = printingConsumer_.GetAdjustedErrorLine();
-				}
-				catch (...)
-				{
-					out::All() << "Could not process iteration no. " << iteration << " due to an internal exception.\n";
-				}
+			for (auto& complement : complements)
+			{
+				
+			}
+
+			// No smaller subset found, increase granularity.
+			partitionCount_ *= 2;
+
+			if (partitionCount > numberOfCodeUnits)
+			{
+				
+			}
+			
+			try
+			{
+				auto fileName = TempFolder + std::to_string(iteration) + "_" + GetFileName(globalContext_.parsedInput.errorLocation.filePath) + LanguageToExtension(globalContext_.language);
+				printingConsumer_.HandleTranslationUnit(context, fileName);
+
+				globalContext_.variantAdjustedErrorLocation[iteration] = printingConsumer_.GetAdjustedErrorLine();
+			}
+			catch (...)
+			{
+				out::All() << "Could not process iteration no. " << iteration << " due to an internal exception.\n";
 			}
 
 			out::All() << "Finished. Done " << iteration << " DD iterations.\n";
