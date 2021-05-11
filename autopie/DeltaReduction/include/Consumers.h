@@ -44,15 +44,7 @@ namespace Delta
 		 */
 		void HandleTranslationUnit(clang::ASTContext& context) override
 		{
-			mappingConsumer_.HandleTranslationUnit(context);
-			const auto numberOfCodeUnits = mappingConsumer_.GetCodeUnitsCount();
-
-			globalContext_.variantAdjustedErrorLocation.clear();
-			printingConsumer_.SetData(mappingConsumer_.GetSkippedNodes(), mappingConsumer_.GetDependencyGraph());
-
-			auto dependencies = mappingConsumer_.GetDependencyGraph();
-
-			auto binCount = 2;
+			auto partitionCount = 2;
 			
 			auto iteration = 0;
 			const auto cutOffLimit = 0xffff;
@@ -66,6 +58,16 @@ namespace Delta
 					out::All() << "Done " << iteration << " DD iterations.\n";
 				}
 
+				// TODO: Feed the current file to the mapping consumer.
+				
+				mappingConsumer_.HandleTranslationUnit(context);
+				const auto numberOfCodeUnits = mappingConsumer_.GetCodeUnitsCount();
+
+				globalContext_.variantAdjustedErrorLocation.clear();
+				printingConsumer_.SetData(mappingConsumer_.GetSkippedNodes(), mappingConsumer_.GetDependencyGraph());
+
+				auto dependencies = mappingConsumer_.GetDependencyGraph();
+				
 				// 1. Split into a container of equal sized bins.
 				// 2. Get a container of complements.
 				// 3. Loop over the first container and test each bin (generate variant and execute).
@@ -73,6 +75,52 @@ namespace Delta
 				// 5. Loop over the second container and test --||--.
 				// 6. If a variant fails, decrement n and set the file to that variant/
 				// 7. If nothing fails, set n to 2 *n.
+
+				std::vector<BitMask> partitions;
+				std::vector<BitMask> complements;
+				const auto partitionSize = numberOfCodeUnits / partitionCount;
+				
+				for (auto i = 0; i < partitionCount; i++)
+				{
+					auto partition = BitMask(numberOfCodeUnits);
+					auto complement = BitMask(numberOfCodeUnits);
+
+					// Assign code units into partitions.
+					for (auto j = 0; j < numberOfCodeUnits; j++)
+					{
+						if (i * partitionSize <= j && (j < (i + 1) * partitionSize || i == partitionCount - 1))
+						{
+							partition[j] = true;
+							complement[j] = false;
+						}
+						else
+						{
+							partition[j] = false;
+							complement[j] = true;
+						}
+					}
+
+					partitions.emplace_back(partition);
+					complements.emplace_back(complement);
+				}
+
+				for (auto& partition : partitions)
+				{
+					
+				}
+
+				for (auto& complement : complements)
+				{
+					
+				}
+
+				// No smaller subset found, increase granularity.
+				partitionCount *= 2;
+
+				if (partitionCount > numberOfCodeUnits)
+				{
+					
+				}
 				
 				try
 				{
