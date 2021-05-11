@@ -34,6 +34,7 @@ enum DeltaIterationResults
 {
 	FailingPartition,
 	FailingComplement,
+	Unsplitable,
 	Passing
 };
 

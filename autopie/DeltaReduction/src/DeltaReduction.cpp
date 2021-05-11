@@ -53,9 +53,8 @@ int main(int argc, const char** argv)
 	auto context = GlobalContext(parsedInput, *op.getSourcePathList().begin(), epochCount);
 	clang::tooling::ClangTool tool(op.getCompilations(), context.parsedInput.errorLocation.filePath);
 
-	clang::tooling::ArgumentsAdjuster ardj1 =
-		clang::tooling::getInsertArgumentAdjuster("-I/usr/local/lib/clang/11.0.0/include/");
-	tool.appendArgumentsAdjuster(ardj1);
+	auto includes = clang::tooling::getInsertArgumentAdjuster("-I/usr/local/lib/clang/11.0.0/include/");
+	tool.appendArgumentsAdjuster(includes);
 	
 	auto inputLanguage = clang::Language::Unknown;
 	// Run a language check inside a separate scope so that all built ASTs get freed at the end.
@@ -88,12 +87,16 @@ int main(int argc, const char** argv)
 
 	LLDBSentry sentry;
 
-	auto partitionCount = 2;
 
 	auto iteration = 0;
 	const auto cutOffLimit = 0xffff;
 
-	while (iteration < cutOffLimit)
+	auto partitionCount = 2;
+	auto currentTestCase = context.parsedInput.errorLocation.filePath;
+
+	auto done = false;
+	
+	while (!done && iteration < cutOffLimit)
 	{
 		iteration++;
 
@@ -104,21 +107,34 @@ int main(int argc, const char** argv)
 
 		DeltaIterationResults iterationResult;
 
+		clang::tooling::ClangTool newTool(op.getCompilations(), context.parsedInput.errorLocation.filePath);
+		newTool.appendArgumentsAdjuster(includes);
+
 		// Run all Clang AST related actions.
-		auto result = tool.run(
-			Delta::DeltaDebuggingFrontendActionFactory(context, iteration, partitionCount, &iterationResult).get());
+		auto result = newTool.run(Delta::DeltaDebuggingFrontendActionFactory(context, iteration, partitionCount, &iterationResult).get());
 
 		if (result)
 		{
 			errs() << "The tool returned a non-standard value: " << result << "\n";
 		}
 
-		// No smaller subset found, increase granularity.
-		partitionCount *= 2;
-
-		if (partitionCount > numberOfCodeUnits)
+		switch (iterationResult)
 		{
-
+		case DeltaIterationResults::FailingPartition:
+			partitionCount = 2;
+			currentTestCase = TempFolder + std::to_string(iteration) + "_" + GetFileName(context.parsedInput.errorLocation.filePath) + LanguageToExtension(context.language);
+			break;
+		case DeltaIterationResults::FailingComplement:
+			partitionCount -= 1;
+			currentTestCase = TempFolder + std::to_string(iteration) + "_" + GetFileName(context.parsedInput.errorLocation.filePath) + LanguageToExtension(context.language);
+			break;
+		case DeltaIterationResults::Passing:
+			partitionCount *= 2;			
+			break;
+		case DeltaIterationResults::Unsplitable:
+			done = true;
+		default:
+			throw std::invalid_argument("Invalid iteration result.");
 		}
 	}
 

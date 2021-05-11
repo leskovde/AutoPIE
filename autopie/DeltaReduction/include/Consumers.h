@@ -66,6 +66,12 @@ namespace Delta
 			// 6. If a variant fails, decrement n and set the file to that variant/
 			// 7. If nothing fails, set n to 2 *n.
 
+			if (partitionCount_ > numberOfCodeUnits)
+			{
+				result_ = DeltaIterationResults::Unsplitable;
+				return;
+			}
+			
 			std::vector<BitMask> partitions;
 			std::vector<BitMask> complements;
 			const auto partitionSize = numberOfCodeUnits / partitionCount_;
@@ -97,11 +103,13 @@ namespace Delta
 			for (auto& partition : partitions)
 			{
 				result_ = DeltaIterationResults::FailingPartition;
+				return;
 			}
 
 			for (auto& complement : complements)
 			{
 				result_ = DeltaIterationResults::FailingComplement;
+				return;
 			}
 
 			result_ = DeltaIterationResults::Passing;
