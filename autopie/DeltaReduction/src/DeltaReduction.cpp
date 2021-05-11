@@ -102,12 +102,23 @@ int main(int argc, const char** argv)
 			out::All() << "Done " << iteration << " DD iterations.\n";
 		}
 
+		DeltaIterationResults iterationResult;
+
 		// Run all Clang AST related actions.
-		auto result = tool.run(Delta::DeltaDebuggingFrontendActionFactory(context, iteration, partitionCount).get());
+		auto result = tool.run(
+			Delta::DeltaDebuggingFrontendActionFactory(context, iteration, partitionCount, &iterationResult).get());
 
 		if (result)
 		{
 			errs() << "The tool returned a non-standard value: " << result << "\n";
+		}
+
+		// No smaller subset found, increase granularity.
+		partitionCount *= 2;
+
+		if (partitionCount > numberOfCodeUnits)
+		{
+
 		}
 	}
 

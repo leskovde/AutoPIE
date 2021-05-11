@@ -13,33 +13,35 @@ namespace Delta
 	 *
 	 * @param context A reference to the global context which should be passed onto created instances.
 	 * @param iteration The number of the current DD iteration (used for file manipulation).
-	 * @param partititonCount The number of subsets to be tested.
+	 * @param partitionCount The number of subsets to be tested.
 	 * @return A `DeltaDebuggingFrontendActionFactory` instance with the given context as a member.
 	 */
-	std::unique_ptr<clang::tooling::FrontendActionFactory> DeltaDebuggingFrontendActionFactory(GlobalContext& context, const int iteration, const int partititonCount)
+	std::unique_ptr<clang::tooling::FrontendActionFactory> DeltaDebuggingFrontendActionFactory(
+		GlobalContext& context, const int iteration, const int partitionCount, DeltaIterationResults& result)
 	{
 		class DeltaDebuggingFrontendActionFactory : public clang::tooling::FrontendActionFactory
 		{
 			int iteration_;
 			int partitionCount_;
 			GlobalContext& context_;
+			DeltaIterationResults& result_;
 
 		public:
 
 			DeltaDebuggingFrontendActionFactory(GlobalContext& context, const int iteration,
-			                                    const int partitionCount) : iteration_(iteration),
+			                                    const int partitionCount, DeltaIterationResults& result) : iteration_(iteration),
 			                                                                partitionCount_(partitionCount),
-			                                                                context_(context)
+			                                                                context_(context), result_(result)
 			{
 			}
 
 			std::unique_ptr<clang::FrontendAction> create() override
 			{
-				return std::make_unique<DeltaDebuggingAction>(context_, iteration_, partitionCount_);
+				return std::make_unique<DeltaDebuggingAction>(context_, iteration_, partitionCount_, result_);
 			}
 		};
 
 		return std::unique_ptr<clang::tooling::FrontendActionFactory>(
-			std::make_unique<DeltaDebuggingFrontendActionFactory>(context, iteration, partititonCount));
+			std::make_unique<DeltaDebuggingFrontendActionFactory>(context, iteration, partitionCount, result));
 	}
 }

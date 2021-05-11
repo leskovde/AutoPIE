@@ -30,6 +30,13 @@ inline const char* VisualsFolder = "./visuals/";
  */
 inline const char* LogFile = "./autopie.log";
 
+enum DeltaIterationResults
+{
+	FailingPartition,
+	FailingComplement,
+	Passing
+};
+
 class GlobalContext;
 class DependencyGraph;
 

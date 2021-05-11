@@ -24,13 +24,14 @@ namespace Delta
 		int iteration_;
 		int partitionCount_;
 		GlobalContext& globalContext_;
+		DeltaIterationResults& result_;
 
 	public:
 		DeltaDebuggingConsumer(clang::CompilerInstance* ci, GlobalContext& context, const int iteration,
-		                       const int partitionCount) : mappingConsumer_(ci, context),
+		                       const int partitionCount, DeltaIterationResults& result) : mappingConsumer_(ci, context),
 			printingConsumer_(ci, context.parsedInput.errorLocation.lineNumber),
 			iteration_(iteration), partitionCount_(partitionCount),
-			globalContext_(context)
+			globalContext_(context), result_(result)
 		
 		{
 		}
@@ -95,21 +96,15 @@ namespace Delta
 
 			for (auto& partition : partitions)
 			{
-				
+				result_ = DeltaIterationResults::FailingPartition;
 			}
 
 			for (auto& complement : complements)
 			{
-				
+				result_ = DeltaIterationResults::FailingComplement;
 			}
 
-			// No smaller subset found, increase granularity.
-			partitionCount_ *= 2;
-
-			if (partitionCount > numberOfCodeUnits)
-			{
-				
-			}
+			result_ = DeltaIterationResults::Passing;
 			
 			try
 			{
