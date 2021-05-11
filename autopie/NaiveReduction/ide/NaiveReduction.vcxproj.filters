@@ -50,9 +50,6 @@
     <ClInclude Include="..\include\Consumers.h">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\Visitors.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Common\include\Context.h">
       <Filter>include\common</Filter>
     </ClInclude>
