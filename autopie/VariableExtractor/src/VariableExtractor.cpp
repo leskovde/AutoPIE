@@ -19,6 +19,7 @@
 #include "../include/Context.h"
 #include "../include/Actions.h"
 #include "../../Common/include/Helper.h"
+#include "../../Common/include/Streams.h"
 
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 
@@ -26,45 +27,59 @@ using namespace clang;
 using namespace ast_matchers;
 using namespace llvm;
 
-cl::OptionCategory VarExtractorArgs("my-tool options");
+namespace VarExtractor
+{
+	cl::OptionCategory Args("VariableExtractor Options");
 
-/**
- * Specifies the source file in which an error was found.\n
- * The value is later used for location confirmation.
- */
-inline cl::opt<std::string> SourceFile("loc-file",
-	cl::desc("The name of the file in which the error occured."),
-	cl::init(""),
-	cl::cat(VarExtractorArgs));
+	/**
+	 * Specifies the source file in which an error was found.\n
+	 * The value is later used for location confirmation.
+	 */
+	cl::opt<std::string> SourceFile("loc-file",
+		cl::desc("The name of the file in which the error occured."),
+		cl::init(""),
+		cl::cat(Args));
 
-/**
- * Specifies the line number in the previously specified source file on which an error was found.\n
- * The value is later used for location confirmation.
- */
-inline cl::opt<int> LineNumber("loc-line",
-	cl::desc("The line number on which the error occured."),
-	cl::init(0),
-	cl::cat(VarExtractorArgs));
+	/**
+	 * Specifies the line number in the previously specified source file on which an error was found.\n
+	 * The value is later used for location confirmation.
+	 */
+	cl::opt<int> LineNumber("loc-line",
+		cl::desc("The line number on which the error occured."),
+		cl::init(0),
+		cl::cat(Args));
 
-/**
- * If set to true, the tool provides the user with more detailed information about the process of the reduction.\n
- * Such information contains debug information concerning the parsed AST, the steps taken while processing each
- * variant, the result of the compilation of each variant and its debugging session.
- */
-inline cl::opt<bool> Verbose("verbose",
-	cl::desc("Specifies whether the tool should flood the standard output with its optional messages."),
-	cl::init(false),
-	cl::cat(VarExtractorArgs));
+	/**
+	 * If set to true, the tool provides the user with more detailed information about the process of the reduction.\n
+	 * Such information contains debug information concerning the parsed AST, the steps taken while processing each
+	 * variant, the result of the compilation of each variant and its debugging session.
+	 */
+	inline cl::opt<bool> Verbose("verbose",
+		cl::desc("Specifies whether the tool should flood the standard output with its optional messages."),
+		cl::init(false),
+		cl::cat(Args));
 
-/**
- * If set to true, the tool directs all of its current output messages into a set path.\n
- * The default path is specified as the variable `LogFile` in the Helper.h file.
- */
-inline cl::opt<bool> LogToFile("log",
-	cl::desc("Specifies whether the tool should output its optional message (with timestamps) to an external file. Default path: '" + std::string(LogFile) + "'."),
-	cl::init(false),
-	cl::cat(VarExtractorArgs));
+	cl::alias VerboseAlias("v",
+		cl::desc(
+			"Specifies whether the tool should flood the standard output with its optional messages."),
+		cl::aliasopt(Verbose));
+	
+	/**
+	 * If set to true, the tool directs all of its current output messages into a set path.\n
+	 * The default path is specified as the variable `LogFile` in the Helper.h file.
+	 */
+	cl::opt<bool> LogToFile("log",
+		cl::desc("Specifies whether the tool should output its optional message (with timestamps) to an external file. Default path: '" + std::string(LogFile) + "'."),
+		cl::init(false),
+		cl::cat(Args));
 
+	cl::alias LogToFileAlias("l",
+		cl::desc(
+			"Specifies whether the tool should output its optional message (with timestamps) to an external file. Default path: '"
+			+ std::string(LogFile) + "'."),
+		cl::aliasopt(LogToFile));
+}
+	
 class DeclRefHandler : public MatchFinder::MatchCallback
 {
 public:
@@ -99,29 +114,55 @@ public:
 };
 
 /**
- * Generates a minimal program variant by naively removing statements.
+ * Extract variables on a given line in a given file.
  *
  * Call:\n
- * > NaiveReduction.exe [file with error] [line with error] [error description message] [reduction ratio] <source path 0> [... <source path N>] --
- * e.g. NaiveReduction.exe --loc-file="example.cpp" --loc-line=17 --error-message="segmentation fault" --ratio=0.5 example.cpp --
+ * > VariableExtractor.exe [file with error] [line with error] <source path> --
+ * e.g. VariableExtractor.exe --loc-file="example.cpp" --loc-line=17 example.cpp --
  */
 int main(int argc, const char** argv)
 {
 	// Parse the command-line args passed to the tool.
-	tooling::CommonOptionsParser op(argc, argv, VarExtractorArgs);
+	tooling::CommonOptionsParser op(argc, argv, VarExtractor::Args);
 
-	// TODO(Denis): Create multi-file support.
 	if (op.getSourcePathList().size() > 1)
 	{
 		errs() << "Only a single source file is supported.\n";
 		return EXIT_FAILURE;
 	}
 
-	auto parsedInput = InputData(static_cast<std::basic_string<char>>(ErrorMessage),
-		Location(static_cast<std::basic_string<char>>(SourceFile), LineNumber), ReductionRatio,
-		DumpDot);
+	tooling::ClangTool tool(op.getCompilations(), SourceFile);
 
+	auto includes = tooling::getInsertArgumentAdjuster("-I/usr/local/lib/clang/11.0.0/include/");
+	tool.appendArgumentsAdjuster(includes);
 
+	auto inputLanguage = Language::Unknown;
+	// Run a language check inside a separate scope so that all built ASTs get freed at the end.
+	{
+		out::Verb() << "Checking the language...\n";
+
+		std::vector<std::unique_ptr<ASTUnit>> trees;
+		tool.buildASTs(trees);
+
+		if (trees.size() != 1)
+		{
+			errs() << "Although only one AST was expected, " << trees.size() << " ASTs have been built.\n";
+			return EXIT_FAILURE;
+		}
+
+		inputLanguage = (*trees.begin())->getInputKind().getLanguage();
+
+		out::Verb() << "File: " << (*trees.begin())->getOriginalSourceFileName() << ", language: " << LanguageToString(inputLanguage) << "\n";
+	}
+
+	assert(inputLanguage != clang::Language::Unknown);
+
+	if (!CheckLocationValidity(SourceFile, LineNumber))
+	{
+		errs() << "The specified error location is invalid!\nSource path: " << SourceFile
+			<< ", line: " << LineNumber << " could not be found.\n";
+	}
+	
 	std::string line;
 	std::ifstream ifs(argv[3]);
 	std::vector<int> sliceLines;

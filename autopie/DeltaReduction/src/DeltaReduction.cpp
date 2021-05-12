@@ -28,7 +28,7 @@ using namespace Common;
 int main(int argc, const char** argv)
 {
 	// Parse the command-line args passed to the tool.
-	clang::tooling::CommonOptionsParser op(argc, argv, Args);
+	clang::tooling::CommonOptionsParser op(argc, argv, NaiveReductionArgs);
 
 	// TODO(Denis): Create multi-file support.
 	if (op.getSourcePathList().size() > 1)

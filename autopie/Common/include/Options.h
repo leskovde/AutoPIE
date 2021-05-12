@@ -1,13 +1,12 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 #pragma once
-#include <llvm/ADT/ArrayRef.h>
 #include <llvm/Support/CommandLine.h>
 #include <clang/Tooling/CommonOptionsParser.h>
 
 #include "Helper.h"
 
-inline llvm::cl::OptionCategory Args("AutoPIE Options");
+inline llvm::cl::OptionCategory NaiveReductionArgs("NaiveReduction Options");
 
 /**
  * Defines a --help option for the tool. Shows all available options and their descriptions.\n
@@ -26,20 +25,20 @@ inline llvm::cl::extrahelp MoreHelp("\nMore help text...");
  * The value is later used for location confirmation.
  */
 inline llvm::cl::opt<std::string> SourceFile("loc-file",
-                                       llvm::cl::desc("The name of the file in which the error occured."),
-                                       llvm::cl::value_desc("filename"),
-									   llvm::cl::Required,
-                                       llvm::cl::cat(Args));
+                                             llvm::cl::desc("The name of the file in which the error occured."),
+                                             llvm::cl::value_desc("filename"),
+                                             llvm::cl::Required,
+                                             llvm::cl::cat(NaiveReductionArgs));
 
 /**
  * Specifies the line number in the previously specified source file on which an error was found.\n
  * The value is later used for location confirmation.
  */
 inline llvm::cl::opt<int> LineNumber("loc-line",
-                               llvm::cl::desc("The line number on which the error occured."),
-                               llvm::cl::value_desc("int"),
-							   llvm::cl::Required,
-                               llvm::cl::cat(Args));
+                                     llvm::cl::desc("The line number on which the error occured."),
+                                     llvm::cl::value_desc("int"),
+                                     llvm::cl::Required,
+                                     llvm::cl::cat(NaiveReductionArgs));
 
 /**
  * A description of a runtime error. The description should be reproducible, e.g., 'segmentation fault'.\n
@@ -47,10 +46,11 @@ inline llvm::cl::opt<int> LineNumber("loc-line",
  * The value is later used for location confirmation.
  */
 inline llvm::cl::opt<std::string> ErrorMessage("error-message",
-                                         llvm::cl::desc("A part of the error message specifying the nature of the error."),
-                                         llvm::cl::value_desc("string"),
-									     llvm::cl::Required,
-                                         llvm::cl::cat(Args));
+                                               llvm::cl::desc(
+	                                               "A part of the error message specifying the nature of the error."),
+                                               llvm::cl::value_desc("string"),
+                                               llvm::cl::Required,
+                                               llvm::cl::cat(NaiveReductionArgs));
 
 // TODO: Implement reduction ratio to cut the variant search.
 /**
@@ -61,10 +61,10 @@ inline llvm::cl::opt<std::string> ErrorMessage("error-message",
  * its size in bytes, with three quarters being removed.
  */
 inline llvm::cl::opt<double> ReductionRatio("ratio",
-                                      llvm::cl::desc("Limits the reduction to a specific ratio between 0 and 1."),
-                                      llvm::cl::init(1.0),
-                                      llvm::cl::value_desc("double"),
-                                      llvm::cl::cat(Args));
+                                            llvm::cl::desc("Limits the reduction to a specific ratio between 0 and 1."),
+                                            llvm::cl::init(1.0),
+                                            llvm::cl::value_desc("double"),
+                                            llvm::cl::cat(NaiveReductionArgs));
 
 /**
  * If set to true, the program generates a .dot file containing a graph of code units.\n
@@ -72,16 +72,16 @@ inline llvm::cl::opt<double> ReductionRatio("ratio",
  * The value is used after the first few AST passes to check whether an output .dot file should be generated.
  */
 inline llvm::cl::opt<bool> DumpDot("dump-dot",
-                             llvm::cl::desc(
-        "Specifies whether a GraphViz file containing relationships of code units should be created."),
-                             llvm::cl::init(false),
-                             llvm::cl::value_desc("bool"),
-                             llvm::cl::cat(Args));
+                                   llvm::cl::desc(
+	                                   "Specifies whether a GraphViz file containing relationships of code units should be created."),
+                                   llvm::cl::init(false),
+                                   llvm::cl::value_desc("bool"),
+                                   llvm::cl::cat(NaiveReductionArgs));
 
 inline llvm::cl::alias DumpDotAlias("d",
-    llvm::cl::desc(
-        "Specifies whether a GraphViz file containing relationships of code units should be created."),
-    llvm::cl::aliasopt(DumpDot));
+                                    llvm::cl::desc(
+	                                    "Specifies whether a GraphViz file containing relationships of code units should be created."),
+                                    llvm::cl::aliasopt(DumpDot));
 
 /**
  * If set to true, the tool provides the user with more detailed information about the process of the reduction.\n
@@ -89,27 +89,33 @@ inline llvm::cl::alias DumpDotAlias("d",
  * variant, the result of the compilation of each variant and its debugging session.
  */
 inline llvm::cl::opt<bool> Verbose("verbose",
-                             llvm::cl::desc("Specifies whether the tool should flood the standard output with its optional messages."),
-                             llvm::cl::init(false),
-                             llvm::cl::value_desc("bool"),
-                             llvm::cl::cat(Args));
+                                   llvm::cl::desc(
+	                                   "Specifies whether the tool should flood the standard output with its optional messages."),
+                                   llvm::cl::init(false),
+                                   llvm::cl::value_desc("bool"),
+                                   llvm::cl::cat(NaiveReductionArgs));
 
 inline llvm::cl::alias VerboseAlias("v",
-						    llvm::cl::desc("Specifies whether the tool should flood the standard output with its optional messages."),
-						    llvm::cl::aliasopt(Verbose));
+                                    llvm::cl::desc(
+	                                    "Specifies whether the tool should flood the standard output with its optional messages."),
+                                    llvm::cl::aliasopt(Verbose));
 
 /**
  * If set to true, the tool directs all of its current output messages into a set path.\n
  * The default path is specified as the variable `LogFile` in the Helper.h file.
  */
 inline llvm::cl::opt<bool> LogToFile("log",
-                               llvm::cl::desc("Specifies whether the tool should output its optional message (with timestamps) to an external file. Default path: '" + std::string(LogFile) + "'."),
-                               llvm::cl::init(false),
-                               llvm::cl::value_desc("bool"),
-                               llvm::cl::cat(Args));
+                                     llvm::cl::desc(
+	                                     "Specifies whether the tool should output its optional message (with timestamps) to an external file. Default path: '"
+	                                     + std::string(LogFile) + "'."),
+                                     llvm::cl::init(false),
+                                     llvm::cl::value_desc("bool"),
+                                     llvm::cl::cat(NaiveReductionArgs));
 
 inline llvm::cl::alias LogToFileAlias("l",
-							    llvm::cl::desc("Specifies whether the tool should output its optional message (with timestamps) to an external file. Default path: '" + std::string(LogFile) + "'."),
-							    llvm::cl::aliasopt(LogToFile));
+                                      llvm::cl::desc(
+	                                      "Specifies whether the tool should output its optional message (with timestamps) to an external file. Default path: '"
+	                                      + std::string(LogFile) + "'."),
+                                      llvm::cl::aliasopt(LogToFile));
 
 #endif
