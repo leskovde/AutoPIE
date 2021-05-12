@@ -33,6 +33,11 @@ namespace Delta
 			{
 				try
 				{
+					if (std::filesystem::exists(fileName_))
+					{
+						std::filesystem::remove(fileName_);
+					}
+					
 					printingConsumer_.HandleTranslationUnit(context, fileName_, bitmask);
 					globalContext_.variantAdjustedErrorLocation[iteration_] = printingConsumer_.GetAdjustedErrorLine();
 
@@ -53,7 +58,7 @@ namespace Delta
 		
 	public:
 		DeltaDebuggingConsumer(clang::CompilerInstance* ci, GlobalContext& context, const int iteration,
-		                       const int partitionCount, DeltaIterationResults& result) : mappingConsumer_(ci, context),
+		                       const int partitionCount, DeltaIterationResults& result) : mappingConsumer_(ci, context, iteration),
 			printingConsumer_(ci, context.parsedInput.errorLocation.lineNumber),
 			iteration_(iteration), partitionCount_(partitionCount),
 			fileName_(
@@ -95,6 +100,10 @@ namespace Delta
 			// 5. Loop over the second container and test --||--.
 			// 6. If a variant fails, decrement n and set the file to that variant/
 			// 7. If nothing fails, set n to 2 *n.
+
+			out::Verb() << "Current iteration: " << iteration_ << ".\n";
+			out::Verb() << "Current code unit count: " << numberOfCodeUnits << ".\n";
+			out::Verb() << "Current partition count: " << partitionCount_ << ".\n"; 
 
 			if (partitionCount_ > numberOfCodeUnits)
 			{

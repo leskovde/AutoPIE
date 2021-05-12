@@ -47,8 +47,9 @@ namespace Common
 		 * The range is only removed if the rewriter instance is valid.
 		 *
 		 * @param range The source range to be removed.
+		 * @param replace Specifies whether the range should be replaced with a single semicolon.
 		 */
-		void RemoveFromSource(const clang::SourceRange range)
+		void RemoveFromSource(const clang::SourceRange range, const bool replace = false)
 		{
 			if (rewriter_)
 			{
@@ -77,7 +78,14 @@ namespace Common
 					AdjustedErrorLine -= decrement;
 				}
 
-				rewriter_->RemoveText(printableRange);
+				if (replace)
+				{
+					rewriter_->ReplaceText(printableRange, ";");
+				}
+				else
+				{
+					rewriter_->RemoveText(printableRange);
+				}
 			}
 			else
 			{
@@ -397,7 +405,14 @@ namespace Common
 			{
 				const auto range = stmt->getSourceRange();
 
-				RemoveFromSource(range);
+				if (llvm::isa<clang::CompoundStmt>(stmt))
+				{
+					RemoveFromSource(range, true);
+				}
+				else
+				{
+					RemoveFromSource(range);
+				}
 			}
 
 			currentNode_++;
