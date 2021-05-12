@@ -48,7 +48,7 @@ public:
 			const auto range = GetPrintableRange(GetPrintableRange(expr->getSourceRange(), *result.SourceManager),
 				*result.SourceManager);
 
-			for (int i = result.SourceManager->getSpellingLineNumber(range.getBegin()); 
+			for (auto i = result.SourceManager->getSpellingLineNumber(range.getBegin()); 
 				i <= result.SourceManager->getSpellingLineNumber(range.getEnd()); i++)
 			{
 				if (i == LineNumber)

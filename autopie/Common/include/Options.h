@@ -10,7 +10,7 @@ inline llvm::cl::OptionCategory GeneralArgs("General Options");
 inline llvm::cl::OptionCategory DeltaReductionArgs("DeltaReduction Options");
 inline llvm::cl::OptionCategory NaiveReductionArgs("NaiveReduction Options");
 inline llvm::cl::OptionCategory VarExtractorArgs("VariableExtractor Options");
-
+inline llvm::cl::OptionCategory SliceExtractorArgs("SliceExtractor Options");
 
 /**
  * Defines a --help option for the tool. Shows all available options and their descriptions.\n
@@ -35,7 +35,8 @@ inline llvm::cl::opt<std::string> SourceFile("loc-file",
                                              llvm::cl::cat(GeneralArgs),
                                              llvm::cl::cat(NaiveReductionArgs),
                                              llvm::cl::cat(DeltaReductionArgs),
-                                             llvm::cl::cat(VarExtractorArgs));
+                                             llvm::cl::cat(VarExtractorArgs),
+                                             llvm::cl::cat(SliceExtractorArgs));
 
 /**
  * Specifies the line number in the previously specified source file on which an error was found.\n
@@ -44,7 +45,6 @@ inline llvm::cl::opt<std::string> SourceFile("loc-file",
 inline llvm::cl::opt<int> LineNumber("loc-line",
                                      llvm::cl::desc("The line number on which the error occured."),
                                      llvm::cl::value_desc("int"),
-                                     llvm::cl::Required,
                                      llvm::cl::cat(GeneralArgs),
                                      llvm::cl::cat(NaiveReductionArgs),
                                      llvm::cl::cat(DeltaReductionArgs),
@@ -106,7 +106,8 @@ inline llvm::cl::opt<bool> Verbose("verbose",
                                    llvm::cl::cat(GeneralArgs),
                                    llvm::cl::cat(NaiveReductionArgs),
                                    llvm::cl::cat(DeltaReductionArgs),
-                                   llvm::cl::cat(VarExtractorArgs));
+                                   llvm::cl::cat(VarExtractorArgs),
+                                   llvm::cl::cat(SliceExtractorArgs));
 
 inline llvm::cl::alias VerboseAlias("v",
                                     llvm::cl::desc(
@@ -126,7 +127,8 @@ inline llvm::cl::opt<bool> LogToFile("log",
                                      llvm::cl::cat(GeneralArgs),
                                      llvm::cl::cat(NaiveReductionArgs),
                                      llvm::cl::cat(DeltaReductionArgs),
-                                     llvm::cl::cat(VarExtractorArgs));
+                                     llvm::cl::cat(VarExtractorArgs),
+                                     llvm::cl::cat(SliceExtractorArgs));
 
 inline llvm::cl::alias LogToFileAlias("l",
                                       llvm::cl::desc(
@@ -141,10 +143,19 @@ inline llvm::cl::opt<std::string> OutputFile("out-file",
     llvm::cl::desc("The name of the file to which the result should be dumped."),
     llvm::cl::value_desc("filename"),
     llvm::cl::init("output.txt"),
-    llvm::cl::cat(VarExtractorArgs));
+    llvm::cl::cat(VarExtractorArgs),
+    llvm::cl::cat(SliceExtractorArgs));
 
 inline llvm::cl::alias OutputFileAlias("o",
     llvm::cl::desc("The name of the file to which the result should be dumped."),
     llvm::cl::aliasopt(OutputFile));
+
+/**
+ * Specifies the output text file to which the result should be dumped.
+ */
+inline llvm::cl::opt<std::string> SliceFile("slice-file",
+    llvm::cl::desc("The name of the file containing line numbers of the slice."),
+    llvm::cl::value_desc("filename"),
+    llvm::cl::cat(SliceExtractorArgs));
 
 #endif

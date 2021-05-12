@@ -106,7 +106,6 @@ int main(int argc, const char** argv)
 	}
 
 	FuncDeclHandler handlerForMain;
-
 	MatchFinder finder;
 	finder.addMatcher(functionDecl(hasName("main")).bind("mainFunction"), &handlerForMain);
 
@@ -114,25 +113,35 @@ int main(int argc, const char** argv)
 
 	if (result)
 	{
-		throw std::invalid_argument("Could not compile the given file!");
+		errs() << "The tool returned a non-standard value: " << result << "\n";
 	}
 
+	// Get all lines of the slice.
+	std::ifstream ifs(SliceFile);
+
+	
+	
+	// Keep only the relevant lines.
+	ifs.close();
+	ifs.open(SourceFile);
 	std::ofstream ofs(OutputFile);
 
-	if (ofs)
+	if (ifs && ofs)
 	{
-		out::Verb() << "List of found variables:\n";
+		out::Verb() << "Source code after slice extraction:\n";
 
-		for (auto& var : varHandler.declRefNames)
+		std::string line;
+		
+		for (auto i = 1; std::getline(ifs, line); i++)
 		{
-			out::Verb() << LineNumber << ":" << var << "\n";
+			out::Verb() << line;
 
-			ofs << LineNumber << ":" << var << "\n";
+			ofs << line;
 		}
 	}
 	else
 	{
-		errs() << "The output file could not be opened.\n";
+		errs() << "The input or output file could not be opened.\n";
 		return EXIT_FAILURE;
 	}
 
