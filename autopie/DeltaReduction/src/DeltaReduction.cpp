@@ -129,10 +129,18 @@ int main(int argc, const char** argv)
 			currentTestCase = TempFolder + std::to_string(iteration) + "_" + GetFileName(context.parsedInput.errorLocation.filePath) + LanguageToExtension(context.language);
 			break;
 		case DeltaIterationResults::Passing:
-			partitionCount *= 2;			
+			if (partitionCount * 2 < context.deltaContext.latestCodeUnitCount || partitionCount == context.deltaContext.latestCodeUnitCount)
+			{
+				partitionCount *= 2;
+			}
+			else
+			{
+				partitionCount = context.deltaContext.latestCodeUnitCount;
+			}
 			break;
 		case DeltaIterationResults::Unsplitable:
 			done = true;
+			break;
 		default:
 			throw std::invalid_argument("Invalid iteration result.");
 		}

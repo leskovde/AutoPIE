@@ -276,7 +276,7 @@ void Increment(BitMask& bitMask)
  * @return A pair of values. True if the bitmask results in a valid source file variant in terms of code unit
  * relationships. If valid, the second value is set to the variant's size ratio when compared to the original size.
  */
-std::pair<bool, double> IsValid(BitMask& bitMask, DependencyGraph& dependencies)
+std::pair<bool, double> IsValid(const BitMask& bitMask, DependencyGraph& dependencies)
 {
 	auto characterCount = dependencies.GetTotalCharacterCount();
 

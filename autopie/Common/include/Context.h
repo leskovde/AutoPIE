@@ -23,6 +23,14 @@ namespace Naive
 	};
 }
 
+namespace Delta
+{
+	struct DeltaAlgorithmContext
+	{
+		int latestCodeUnitCount{0};
+	};
+}
+
 /**
  * Serves as a container for all publicly available global information.
  * Currently includes the parsed input.
@@ -39,6 +47,7 @@ public:
 	// Variant generation properties.
 	int currentEpoch{ 0 };
 	InputData parsedInput;
+	Delta::DeltaAlgorithmContext deltaContext;
 	Naive::IterativeDeepeningContext deepeningContext;
 	clang::Language language{ clang::Language::Unknown };
 	std::unordered_map<int, int> variantAdjustedErrorLocation;

@@ -27,22 +27,25 @@ namespace Delta
 		GlobalContext& globalContext_;
 		DeltaIterationResults& result_;
 
-		bool IsFailureInducingSubset(clang::ASTContext& context, const BitMask& bitmask) const
+		bool IsFailureInducingSubset(clang::ASTContext& context, const BitMask& bitmask, DependencyGraph& dependencyGraph) const
 		{
-			try
+			if (IsValid(bitmask, dependencyGraph).first)
 			{
-				printingConsumer_.HandleTranslationUnit(context, fileName_, bitmask);
-				globalContext_.variantAdjustedErrorLocation[iteration_] = printingConsumer_.GetAdjustedErrorLine();
-
-				if (ValidateVariant(globalContext_, std::filesystem::directory_entry(fileName_)))
+				try
 				{
-					out::All() << "Iteration " << iteration_ << ": smaller subset found.\n";
-					return true;
+					printingConsumer_.HandleTranslationUnit(context, fileName_, bitmask);
+					globalContext_.variantAdjustedErrorLocation[iteration_] = printingConsumer_.GetAdjustedErrorLine();
+
+					if (ValidateVariant(globalContext_, std::filesystem::directory_entry(fileName_)))
+					{
+						out::All() << "Iteration " << iteration_ << ": smaller subset found.\n";
+						return true;
+					}
 				}
-			}
-			catch (...)
-			{
-				out::All() << "Could not process a subset due to an internal exception.\n";
+				catch (...)
+				{
+					out::All() << "Could not process a subset due to an internal exception.\n";
+				}
 			}
 			
 			return false;
@@ -55,7 +58,7 @@ namespace Delta
 			iteration_(iteration), partitionCount_(partitionCount),
 			fileName_(
 				TempFolder + std::to_string(iteration_) + "_" + GetFileName(
-					globalContext_.parsedInput.errorLocation.filePath) + LanguageToExtension(globalContext_.language)), globalContext_(context),
+					context.parsedInput.errorLocation.filePath) + LanguageToExtension(context.language)), globalContext_(context),
 			result_(result)
 		
 		{
@@ -78,7 +81,9 @@ namespace Delta
 			mappingConsumer_.HandleTranslationUnit(context);
 			const auto numberOfCodeUnits = mappingConsumer_.GetCodeUnitsCount();
 
+			globalContext_.deltaContext.latestCodeUnitCount = numberOfCodeUnits;
 			globalContext_.variantAdjustedErrorLocation.clear();
+
 			printingConsumer_.SetData(mappingConsumer_.GetSkippedNodes(), mappingConsumer_.GetDependencyGraph());
 
 			auto dependencies = mappingConsumer_.GetDependencyGraph();
@@ -106,7 +111,7 @@ namespace Delta
 
 			// Split into `n` partition and their complements.
 			out::Verb() << "Splitting " << numberOfCodeUnits << " code units into " << partitionCount_
-				<< " partitions of size " << partitionSize << " units.\n";
+				<< " partitions of size " << partitionSize << " units...\n";
 			
 			for (auto i = 0; i < partitionCount_; i++)
 			{
@@ -137,7 +142,7 @@ namespace Delta
 			
 			for (auto& partition : partitions)
 			{
-				if (IsFailureInducingSubset(context, partition))
+				if (IsFailureInducingSubset(context, partition, dependencies))
 				{
 					result_ = DeltaIterationResults::FailingPartition;
 					return;
@@ -148,7 +153,7 @@ namespace Delta
 			
 			for (auto& complement : complements)
 			{
-				if (IsFailureInducingSubset(context, complement))
+				if (IsFailureInducingSubset(context, complement, dependencies))
 				{
 					result_ = DeltaIterationResults::FailingComplement;
 					return;
