@@ -611,8 +611,7 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 
 								if (lineNumber == presumedErrorLine - 1 ||
 									lineNumber == presumedErrorLine ||
-									lineNumber == presumedErrorLine + 1||
-									lineNumber == 2)
+									lineNumber == presumedErrorLine + 1)
 								{
 									return true;
 								}
