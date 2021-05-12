@@ -83,7 +83,7 @@ namespace VarExtractor
 class DeclRefHandler : public MatchFinder::MatchCallback
 {
 public:
-	std::tuple<int, int> lineRange;
+	std::vector<const DeclRefExpr*> declRefs;
 
 	DeclRefHandler()
 	{
@@ -91,24 +91,25 @@ public:
 
 	void run(const MatchFinder::MatchResult& result) override
 	{
-		if (const FunctionDecl *FD = result.Nodes.getNodeAs<FunctionDecl>("mainFunction"))
+		if (auto expr = result.Nodes.getNodeAs<DeclRefExpr>("declRefs"))
 		{
-			//FD->dump();
+			expr->dump();
 
-			auto bodyRange = FD->getBody()->getSourceRange();
-			
-			const auto startLineNumber = result.Context->getSourceManager().getSpellingLineNumber(bodyRange.getBegin());
-			const auto endLineNumber = result.Context->getSourceManager().getSpellingLineNumber(bodyRange.getEnd());
+			const auto range = GetPrintableRange(GetPrintableRange(expr->getSourceRange(), *result.SourceManager),
+				*result.SourceManager);
 
-			const auto endTokenLoc = result.Context->getSourceManager().getSpellingLoc(bodyRange.getEnd());
+			for (int i = result.SourceManager->getSpellingLineNumber(range.getBegin()); 
+				i <= result.SourceManager->getSpellingLineNumber(range.getEnd()); i++)
+			{
+				if (i == VarExtractor::LineNumber)
+				{
+					declRefs.push_back(expr);
+					auto name1 = expr->getNameInfo().getAsString();
+					auto name2 = expr->getNameInfo().getName();
 
-			const auto startLoc = result.Context->getSourceManager().getSpellingLoc(bodyRange.getBegin());
-			const auto endLoc = Lexer::getLocForEndOfToken(endTokenLoc, 0, result.Context->getSourceManager(), LangOptions());
-
-			bodyRange = SourceRange(startLoc, endLoc);
-			lineRange = std::make_tuple(startLineNumber, endLineNumber);
-			
-			outs() << "Range: " << bodyRange.printToString(result.Context->getSourceManager()) << " (lines " << startLineNumber << " - " << endLineNumber << ")\n";
+					1 + 1;
+				}
+			}
 		}
 	}
 };
@@ -131,7 +132,7 @@ int main(int argc, const char** argv)
 		return EXIT_FAILURE;
 	}
 
-	tooling::ClangTool tool(op.getCompilations(), SourceFile);
+	tooling::ClangTool tool(op.getCompilations(), VarExtractor::SourceFile);
 
 	auto includes = tooling::getInsertArgumentAdjuster("-I/usr/local/lib/clang/11.0.0/include/");
 	tool.appendArgumentsAdjuster(includes);
@@ -157,26 +158,24 @@ int main(int argc, const char** argv)
 
 	assert(inputLanguage != clang::Language::Unknown);
 
-	if (!CheckLocationValidity(SourceFile, LineNumber))
+	if (!CheckLocationValidity(VarExtractor::SourceFile, VarExtractor::LineNumber))
 	{
-		errs() << "The specified error location is invalid!\nSource path: " << SourceFile
-			<< ", line: " << LineNumber << " could not be found.\n";
-	}
-	
-	std::string line;
-	std::ifstream ifs(argv[3]);
-	std::vector<int> sliceLines;
-	
-	while (std::getline(ifs, line))
-	{
-		sliceLines.push_back(std::stoi(line, nullptr, 10));
+		errs() << "The specified error location is invalid!\nSource path: " << VarExtractor::SourceFile
+			<< ", line: " << VarExtractor::LineNumber << " could not be found.\n";
 	}
 
-	// Clean the temp directory.
-	std::filesystem::remove_all("temp/");
-	std::filesystem::create_directory("temp");
+	DeclRefHandler varHandler;
+	MatchFinder finder;
+	finder.addMatcher(declRefExpr(isExpansionInMainFile()).bind("declRefs"), &varHandler);
 
-	auto context = GlobalContext::GetInstance(*op.getSourcePathList().begin());
+	auto result = tool.run(tooling::newFrontendActionFactory(&finder).get());
+
+	if (result)
+	{
+		errs() << "The tool returned a non-standard value: " << result << "\n";
+	}
+
+	
 
 	return 0;
 }
