@@ -27,7 +27,8 @@ inline llvm::cl::extrahelp MoreHelp("\nMore help text...");
  */
 inline llvm::cl::opt<std::string> SourceFile("loc-file",
                                        llvm::cl::desc("The name of the file in which the error occured."),
-                                       llvm::cl::init(""),
+                                       llvm::cl::value_desc("filename"),
+									   llvm::cl::Required,
                                        llvm::cl::cat(Args));
 
 /**
@@ -36,7 +37,8 @@ inline llvm::cl::opt<std::string> SourceFile("loc-file",
  */
 inline llvm::cl::opt<int> LineNumber("loc-line",
                                llvm::cl::desc("The line number on which the error occured."),
-                               llvm::cl::init(0),
+                               llvm::cl::value_desc("int"),
+							   llvm::cl::Required,
                                llvm::cl::cat(Args));
 
 /**
@@ -46,7 +48,8 @@ inline llvm::cl::opt<int> LineNumber("loc-line",
  */
 inline llvm::cl::opt<std::string> ErrorMessage("error-message",
                                          llvm::cl::desc("A part of the error message specifying the nature of the error."),
-                                         llvm::cl::init(""),
+                                         llvm::cl::value_desc("string"),
+									     llvm::cl::Required,
                                          llvm::cl::cat(Args));
 
 // TODO: Implement reduction ratio to cut the variant search.
@@ -60,6 +63,7 @@ inline llvm::cl::opt<std::string> ErrorMessage("error-message",
 inline llvm::cl::opt<double> ReductionRatio("ratio",
                                       llvm::cl::desc("Limits the reduction to a specific ratio between 0 and 1."),
                                       llvm::cl::init(1.0),
+                                      llvm::cl::value_desc("double"),
                                       llvm::cl::cat(Args));
 
 /**
@@ -71,7 +75,13 @@ inline llvm::cl::opt<bool> DumpDot("dump-dot",
                              llvm::cl::desc(
         "Specifies whether a GraphViz file containing relationships of code units should be created."),
                              llvm::cl::init(false),
+                             llvm::cl::value_desc("bool"),
                              llvm::cl::cat(Args));
+
+inline llvm::cl::alias DumpDotAlias("d",
+    llvm::cl::desc(
+        "Specifies whether a GraphViz file containing relationships of code units should be created."),
+    llvm::cl::aliasopt(DumpDot));
 
 /**
  * If set to true, the tool provides the user with more detailed information about the process of the reduction.\n
@@ -81,7 +91,12 @@ inline llvm::cl::opt<bool> DumpDot("dump-dot",
 inline llvm::cl::opt<bool> Verbose("verbose",
                              llvm::cl::desc("Specifies whether the tool should flood the standard output with its optional messages."),
                              llvm::cl::init(false),
+                             llvm::cl::value_desc("bool"),
                              llvm::cl::cat(Args));
+
+inline llvm::cl::alias VerboseAlias("v",
+						    llvm::cl::desc("Specifies whether the tool should flood the standard output with its optional messages."),
+						    llvm::cl::aliasopt(Verbose));
 
 /**
  * If set to true, the tool directs all of its current output messages into a set path.\n
@@ -90,6 +105,11 @@ inline llvm::cl::opt<bool> Verbose("verbose",
 inline llvm::cl::opt<bool> LogToFile("log",
                                llvm::cl::desc("Specifies whether the tool should output its optional message (with timestamps) to an external file. Default path: '" + std::string(LogFile) + "'."),
                                llvm::cl::init(false),
+                               llvm::cl::value_desc("bool"),
                                llvm::cl::cat(Args));
+
+inline llvm::cl::alias LogToFileAlias("l",
+							    llvm::cl::desc("Specifies whether the tool should output its optional message (with timestamps) to an external file. Default path: '" + std::string(LogFile) + "'."),
+							    llvm::cl::aliasopt(LogToFile));
 
 #endif
