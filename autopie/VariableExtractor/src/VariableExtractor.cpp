@@ -25,7 +25,7 @@ using namespace clang;
 using namespace ast_matchers;
 using namespace llvm;
 
-class DeclRefHandler : public MatchFinder::MatchCallback
+class DeclRefHandler final : public MatchFinder::MatchCallback
 {
 public:
 	std::vector<std::string> declRefNames;

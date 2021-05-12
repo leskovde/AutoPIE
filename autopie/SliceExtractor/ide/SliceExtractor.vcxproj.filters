@@ -15,21 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\Actions.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\Consumers.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\Context.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\Helper.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\Visitors.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Common\include\Consumers.h">
       <Filter>include\common</Filter>
     </ClInclude>
@@ -53,12 +38,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\Context.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\Helper.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\SliceExtractor.cpp">
       <Filter>src</Filter>
     </ClCompile>
