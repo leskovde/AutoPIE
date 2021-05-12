@@ -99,12 +99,6 @@ int main(int argc, const char** argv)
 
 	assert(inputLanguage != clang::Language::Unknown);
 
-	if (!CheckLocationValidity(SourceFile, LineNumber))
-	{
-		errs() << "The specified error location is invalid!\nSource path: " << SourceFile
-			<< ", line: " << LineNumber << " could not be found.\n";
-	}
-
 	FuncDeclHandler handlerForMain;
 	MatchFinder finder;
 	finder.addMatcher(functionDecl(hasName("main")).bind("mainFunction"), &handlerForMain);
@@ -117,11 +111,19 @@ int main(int argc, const char** argv)
 	}
 
 	// Get all lines of the slice.
+	std::vector<int> sliceLines;
 	std::ifstream ifs(SliceFile);
 
+	int lineNumber;
+	while (ifs >> lineNumber)
+	{
+		sliceLines.push_back(lineNumber);
+	}
+
+	sliceLines.push_back(std::get<0>(handlerForMain.lineRange));
+	sliceLines.push_back(std::get<1>(handlerForMain.lineRange));
 	
-	
-	// Keep only the relevant lines.
+	// Keep the relevant lines only.
 	ifs.close();
 	ifs.open(SourceFile);
 	std::ofstream ofs(OutputFile);
@@ -134,9 +136,12 @@ int main(int argc, const char** argv)
 		
 		for (auto i = 1; std::getline(ifs, line); i++)
 		{
-			out::Verb() << line;
+			if (std::find(sliceLines.begin(), sliceLines.end(), i) != sliceLines.end())
+			{
+				out::Verb() << line << "\n";
 
-			ofs << line;
+				ofs << line << "\n";
+			}
 		}
 	}
 	else
