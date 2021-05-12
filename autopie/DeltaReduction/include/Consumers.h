@@ -26,7 +26,7 @@ namespace Delta
 		GlobalContext& globalContext_;
 		DeltaIterationResults& result_;
 
-		bool IsFailureInducingSubset(clang::ASTContext& context, const BitMask& bitmask)
+		bool IsFailureInducingSubset(clang::ASTContext& context, const BitMask& bitmask) const
 		{
 			try
 			{
@@ -34,7 +34,11 @@ namespace Delta
 				printingConsumer_.HandleTranslationUnit(context, fileName, bitmask);
 
 				globalContext_.variantAdjustedErrorLocation[iteration_] = printingConsumer_.GetAdjustedErrorLine();
-				ValidateResults(globalContext_);
+
+				if (ValidateVariant(globalContext_, std::filesystem::directory_entry(fileName)))
+				{
+					return true;
+				}
 			}
 			catch (...)
 			{

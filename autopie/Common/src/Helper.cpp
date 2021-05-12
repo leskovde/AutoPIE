@@ -459,7 +459,7 @@ bool CheckLocationValidity(const std::string& filePath, const long lineNumber, c
 	return true;
 }
 
-bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::directory_entry& entry, std::optional<std::string>& resultFound)
+bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::directory_entry& entry)
 {
 	const auto compilationExitCode = Compile(entry, globalContext.language);
 
@@ -613,8 +613,7 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 									lineNumber == presumedErrorLine ||
 									lineNumber == presumedErrorLine + 1)
 								{
-									resultFound.emplace(entry.path().string());
-									break;
+									return true;
 								}
 							}
 						}
@@ -683,11 +682,6 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 	debugger.DeleteTarget(target);
 	lldb::SBDebugger::Destroy(debugger);
 
-	if (resultFound.has_value())
-	{
-		return true;
-	}
-
 	return false;
 }
 
@@ -723,14 +717,20 @@ bool ValidateResults(GlobalContext& globalContext)
 	// Attempt to compile each file. If successful, run it in LLDB and validate the error message and location.
 	for (const auto& entry : files)
 	{
-		if (ValidateVariant(globalContext, entry, resultFound))
+		if (ValidateVariant(globalContext, entry))
 		{
+			resultFound = entry.path().string();
 			break;
 		}
 	}
 
 	// TODO: Conclude the result, print statistics (reduction rate, time consumed, variants created, variants compiled, etc.).
 
+	if (!resultFound.has_value())
+	{
+		return false;
+	}
+	
 	out::All() << "Found the smallest error-inducing source file: " << resultFound.value() << "\n";
 
 	const auto newFileName = TempFolder + std::string("autoPieOut") + LanguageToExtension(globalContext.language);

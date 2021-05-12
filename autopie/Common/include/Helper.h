@@ -165,7 +165,7 @@ std::pair<bool, double> IsValid(BitMask& bitMask, DependencyGraph& dependencies)
 
 int Compile(const std::filesystem::directory_entry& entry, clang::Language language);
 
-bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::directory_entry& entry, std::optional<std::string>& resultFound);
+bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::directory_entry& entry);
 
 bool ValidateResults(GlobalContext& context);
 

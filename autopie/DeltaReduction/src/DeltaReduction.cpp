@@ -111,7 +111,7 @@ int main(int argc, const char** argv)
 		newTool.appendArgumentsAdjuster(includes);
 
 		// Run all Clang AST related actions.
-		auto result = newTool.run(Delta::DeltaDebuggingFrontendActionFactory(context, iteration, partitionCount, &iterationResult).get());
+		auto result = newTool.run(Delta::DeltaDebuggingFrontendActionFactory(context, iteration, partitionCount, iterationResult).get());
 
 		if (result)
 		{
