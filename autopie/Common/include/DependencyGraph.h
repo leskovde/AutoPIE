@@ -252,12 +252,11 @@ public:
 		}
 		
 		// TODO(Denis): Trim file names (they include full path instead of just the name).
-		const auto dotFileName = VisualsFolder + std::string("dotDump_") + GetFileName(fileName) + ".dot";
-		auto ofs = std::ofstream(dotFileName);
+		auto ofs = std::ofstream(fileName);
 
 		if (!ofs)
 		{
-			llvm::errs() << "The GraphViz output file stream could not be opened. Path: " << dotFileName << "\n";
+			llvm::errs() << "The GraphViz output file stream could not be opened. Path: " << fileName << "\n";
 			return;
 		}
 		

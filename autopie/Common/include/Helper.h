@@ -11,6 +11,7 @@
 #include <lldb/API/SBEvent.h>
 
 #include <filesystem>
+#include <optional>
 #include <utility>
 
 /**
@@ -29,6 +30,14 @@ inline const char* VisualsFolder = "./visuals/";
  * Path to the logger's output file.
  */
 inline const char* LogFile = "./autopie.log";
+
+enum class DeltaIterationResults
+{
+	FailingPartition,
+	FailingComplement,
+	Unsplitable,
+	Passing
+};
 
 class GlobalContext;
 class DependencyGraph;
@@ -146,7 +155,7 @@ bool IsFull(BitMask& bitMask);
 
 void Increment(BitMask& bitMask);
 
-std::pair<bool, double> IsValid(BitMask& bitMask, DependencyGraph& dependencies);
+std::pair<bool, double> IsValid(const BitMask& bitMask, DependencyGraph& dependencies);
 
 //===----------------------------------------------------------------------===//
 //
@@ -155,6 +164,8 @@ std::pair<bool, double> IsValid(BitMask& bitMask, DependencyGraph& dependencies)
 //===----------------------------------------------------------------------===//
 
 int Compile(const std::filesystem::directory_entry& entry, clang::Language language);
+
+bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::directory_entry& entry);
 
 bool ValidateResults(GlobalContext& context);
 

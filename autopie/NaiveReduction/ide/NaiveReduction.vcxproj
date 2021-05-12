@@ -33,7 +33,6 @@
     <ClInclude Include="..\..\Common\include\Visitors.h" />
     <ClInclude Include="..\include\Actions.h" />
     <ClInclude Include="..\include\Consumers.h" />
-    <ClInclude Include="..\include\Visitors.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

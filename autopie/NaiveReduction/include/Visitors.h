@@ -34,7 +34,7 @@ namespace Naive
 		int errorLineBackup_;
 		RewriterRef rewriter_;
 		DependencyGraph graph_;
-		Common::SkippedMapRef skippedNodes_;
+		SkippedMapRef skippedNodes_;
 
 		/**
 		 * Removes source code in a given range in the current rewriter.\n
@@ -189,7 +189,7 @@ namespace Naive
 		 * @param skippedNodes A container of AST nodes that should not be processed.
 		 * @param graph The node dependency graph based on which nodes are removed.
 		 */
-		void SetData(Common::SkippedMapRef skippedNodes, DependencyGraph& graph)
+		void SetData(SkippedMapRef skippedNodes, DependencyGraph& graph)
 		{
 			skippedNodes_ = std::move(skippedNodes);
 			graph_ = graph;

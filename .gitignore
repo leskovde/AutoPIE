@@ -338,8 +338,6 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
-/TheToolSolution/ClangDemo/tempFile.cpp
-/TheToolSolution/ClangDemo/temp
 /thesis/source/abstract.out
 *.aux
 /thesis/source/thesis.bbl
@@ -349,13 +347,12 @@ healthchecksdb
 /thesis/source/thesis.out
 /thesis/source/thesis.toc
 /autopie/AutoPIE/temp
-/autopie/AutoPIE/visuals/concreteTestCase.png
-/autopie/AutoPIE/visuals/concreteTestCase.png
 /autopie/NaiveReduction/temp
-/autopie/NaiveReduction/visuals/concreteTestCase.png
 /autopie/NaiveReduction/ide/temp
 /autopie/temp
 /autopie/NaiveReduction/test_suite/autoPieOut.c
 /autopie/NaiveReduction/ide/bak_temp
 /autopie/NaiveReduction/ide/visuals
-/autopie/NaiveReduction/visuals/dotDump_example0.dot
+/autopie/DeltaReduction/temp
+/autopie/DeltaReduction/ide/temp
+/autopie/DeltaReduction/visuals
