@@ -6,6 +6,8 @@
 
 #include "Helper.h"
 
+inline llvm::cl::OptionCategory GeneralArgs("General Options");
+inline llvm::cl::OptionCategory DeltaReductionArgs("DeltaReduction Options");
 inline llvm::cl::OptionCategory NaiveReductionArgs("NaiveReduction Options");
 
 /**
@@ -28,7 +30,9 @@ inline llvm::cl::opt<std::string> SourceFile("loc-file",
                                              llvm::cl::desc("The name of the file in which the error occured."),
                                              llvm::cl::value_desc("filename"),
                                              llvm::cl::Required,
-                                             llvm::cl::cat(NaiveReductionArgs));
+                                             llvm::cl::cat(GeneralArgs),
+                                             llvm::cl::cat(NaiveReductionArgs),
+                                             llvm::cl::cat(DeltaReductionArgs));
 
 /**
  * Specifies the line number in the previously specified source file on which an error was found.\n
@@ -38,7 +42,9 @@ inline llvm::cl::opt<int> LineNumber("loc-line",
                                      llvm::cl::desc("The line number on which the error occured."),
                                      llvm::cl::value_desc("int"),
                                      llvm::cl::Required,
-                                     llvm::cl::cat(NaiveReductionArgs));
+                                     llvm::cl::cat(GeneralArgs),
+                                     llvm::cl::cat(NaiveReductionArgs),
+                                     llvm::cl::cat(DeltaReductionArgs));
 
 /**
  * A description of a runtime error. The description should be reproducible, e.g., 'segmentation fault'.\n
@@ -49,10 +55,9 @@ inline llvm::cl::opt<std::string> ErrorMessage("error-message",
                                                llvm::cl::desc(
 	                                               "A part of the error message specifying the nature of the error."),
                                                llvm::cl::value_desc("string"),
-                                               llvm::cl::Required,
-                                               llvm::cl::cat(NaiveReductionArgs));
+                                               llvm::cl::cat(NaiveReductionArgs),
+                                               llvm::cl::cat(DeltaReductionArgs));
 
-// TODO: Implement reduction ratio to cut the variant search.
 /**
  * Specifies the desired best-possible size of the output. Values are between 0 and 1, with 0 being an empty
  * file and 1 being all available variants (including the original) of the source file.\n
@@ -76,7 +81,8 @@ inline llvm::cl::opt<bool> DumpDot("dump-dot",
 	                                   "Specifies whether a GraphViz file containing relationships of code units should be created."),
                                    llvm::cl::init(false),
                                    llvm::cl::value_desc("bool"),
-                                   llvm::cl::cat(NaiveReductionArgs));
+                                   llvm::cl::cat(NaiveReductionArgs),
+                                   llvm::cl::cat(DeltaReductionArgs));
 
 inline llvm::cl::alias DumpDotAlias("d",
                                     llvm::cl::desc(
@@ -93,7 +99,7 @@ inline llvm::cl::opt<bool> Verbose("verbose",
 	                                   "Specifies whether the tool should flood the standard output with its optional messages."),
                                    llvm::cl::init(false),
                                    llvm::cl::value_desc("bool"),
-                                   llvm::cl::cat(NaiveReductionArgs));
+                                   llvm::cl::cat(GeneralArgs));
 
 inline llvm::cl::alias VerboseAlias("v",
                                     llvm::cl::desc(
@@ -110,7 +116,7 @@ inline llvm::cl::opt<bool> LogToFile("log",
 	                                     + std::string(LogFile) + "'."),
                                      llvm::cl::init(false),
                                      llvm::cl::value_desc("bool"),
-                                     llvm::cl::cat(NaiveReductionArgs));
+                                     llvm::cl::cat(GeneralArgs));
 
 inline llvm::cl::alias LogToFileAlias("l",
                                       llvm::cl::desc(

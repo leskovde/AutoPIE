@@ -16,8 +16,6 @@
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 
-#include "../include/Context.h"
-#include "../include/Actions.h"
 #include "../../Common/include/Helper.h"
 #include "../../Common/include/Streams.h"
 
@@ -27,63 +25,10 @@ using namespace clang;
 using namespace ast_matchers;
 using namespace llvm;
 
-namespace VarExtractor
-{
-	cl::OptionCategory Args("VariableExtractor Options");
-
-	/**
-	 * Specifies the source file in which an error was found.\n
-	 * The value is later used for location confirmation.
-	 */
-	cl::opt<std::string> SourceFile("loc-file",
-		cl::desc("The name of the file in which the error occured."),
-		cl::init(""),
-		cl::cat(Args));
-
-	/**
-	 * Specifies the line number in the previously specified source file on which an error was found.\n
-	 * The value is later used for location confirmation.
-	 */
-	cl::opt<int> LineNumber("loc-line",
-		cl::desc("The line number on which the error occured."),
-		cl::init(0),
-		cl::cat(Args));
-
-	/**
-	 * If set to true, the tool provides the user with more detailed information about the process of the reduction.\n
-	 * Such information contains debug information concerning the parsed AST, the steps taken while processing each
-	 * variant, the result of the compilation of each variant and its debugging session.
-	 */
-	inline cl::opt<bool> Verbose("verbose",
-		cl::desc("Specifies whether the tool should flood the standard output with its optional messages."),
-		cl::init(false),
-		cl::cat(Args));
-
-	cl::alias VerboseAlias("v",
-		cl::desc(
-			"Specifies whether the tool should flood the standard output with its optional messages."),
-		cl::aliasopt(Verbose));
-	
-	/**
-	 * If set to true, the tool directs all of its current output messages into a set path.\n
-	 * The default path is specified as the variable `LogFile` in the Helper.h file.
-	 */
-	cl::opt<bool> LogToFile("log",
-		cl::desc("Specifies whether the tool should output its optional message (with timestamps) to an external file. Default path: '" + std::string(LogFile) + "'."),
-		cl::init(false),
-		cl::cat(Args));
-
-	cl::alias LogToFileAlias("l",
-		cl::desc(
-			"Specifies whether the tool should output its optional message (with timestamps) to an external file. Default path: '"
-			+ std::string(LogFile) + "'."),
-		cl::aliasopt(LogToFile));
-}
-	
 class DeclRefHandler : public MatchFinder::MatchCallback
 {
 public:
-	std::vector<const DeclRefExpr*> declRefs;
+	std::vector<std::string> declRefNames;
 
 	DeclRefHandler()
 	{
@@ -93,7 +38,7 @@ public:
 	{
 		if (auto expr = result.Nodes.getNodeAs<DeclRefExpr>("declRefs"))
 		{
-			expr->dump();
+			//expr->dump();
 
 			const auto range = GetPrintableRange(GetPrintableRange(expr->getSourceRange(), *result.SourceManager),
 				*result.SourceManager);
@@ -101,13 +46,9 @@ public:
 			for (int i = result.SourceManager->getSpellingLineNumber(range.getBegin()); 
 				i <= result.SourceManager->getSpellingLineNumber(range.getEnd()); i++)
 			{
-				if (i == VarExtractor::LineNumber)
+				if (i == LineNumber)
 				{
-					declRefs.push_back(expr);
-					auto name1 = expr->getNameInfo().getAsString();
-					auto name2 = expr->getNameInfo().getName();
-
-					1 + 1;
+					declRefNames.push_back(expr->getNameInfo().getAsString());
 				}
 			}
 		}
@@ -124,7 +65,7 @@ public:
 int main(int argc, const char** argv)
 {
 	// Parse the command-line args passed to the tool.
-	tooling::CommonOptionsParser op(argc, argv, VarExtractor::Args);
+	tooling::CommonOptionsParser op(argc, argv, GeneralArgs);
 
 	if (op.getSourcePathList().size() > 1)
 	{
@@ -132,7 +73,7 @@ int main(int argc, const char** argv)
 		return EXIT_FAILURE;
 	}
 
-	tooling::ClangTool tool(op.getCompilations(), VarExtractor::SourceFile);
+	tooling::ClangTool tool(op.getCompilations(), SourceFile);
 
 	auto includes = tooling::getInsertArgumentAdjuster("-I/usr/local/lib/clang/11.0.0/include/");
 	tool.appendArgumentsAdjuster(includes);
@@ -158,10 +99,10 @@ int main(int argc, const char** argv)
 
 	assert(inputLanguage != clang::Language::Unknown);
 
-	if (!CheckLocationValidity(VarExtractor::SourceFile, VarExtractor::LineNumber))
+	if (!CheckLocationValidity(SourceFile, LineNumber))
 	{
-		errs() << "The specified error location is invalid!\nSource path: " << VarExtractor::SourceFile
-			<< ", line: " << VarExtractor::LineNumber << " could not be found.\n";
+		errs() << "The specified error location is invalid!\nSource path: " << SourceFile
+			<< ", line: " << LineNumber << " could not be found.\n";
 	}
 
 	DeclRefHandler varHandler;
