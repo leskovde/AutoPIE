@@ -26,6 +26,24 @@ namespace Delta
 		GlobalContext& globalContext_;
 		DeltaIterationResults& result_;
 
+		bool IsFailureInducingSubset(clang::ASTContext& context, const BitMask& bitmask)
+		{
+			try
+			{
+				const auto fileName = TempFolder + std::to_string(iteration_) + "_" + GetFileName(globalContext_.parsedInput.errorLocation.filePath) + LanguageToExtension(globalContext_.language);
+				printingConsumer_.HandleTranslationUnit(context, fileName, bitmask);
+
+				globalContext_.variantAdjustedErrorLocation[iteration_] = printingConsumer_.GetAdjustedErrorLine();
+				ValidateResults(globalContext_);
+			}
+			catch (...)
+			{
+				out::All() << "Could not process iteration no. " << iteration_ << " due to an internal exception.\n";
+			}
+			
+			return false;
+		}
+		
 	public:
 		DeltaDebuggingConsumer(clang::CompilerInstance* ci, GlobalContext& context, const int iteration,
 		                       const int partitionCount, DeltaIterationResults& result) : mappingConsumer_(ci, context),
@@ -68,6 +86,7 @@ namespace Delta
 
 			if (partitionCount_ > numberOfCodeUnits)
 			{
+				// Cannot be split further.
 				result_ = DeltaIterationResults::Unsplitable;
 				return;
 			}
@@ -75,13 +94,14 @@ namespace Delta
 			std::vector<BitMask> partitions;
 			std::vector<BitMask> complements;
 			const auto partitionSize = numberOfCodeUnits / partitionCount_;
-			
+
+			// Split into `n` partition and their complements.
 			for (auto i = 0; i < partitionCount_; i++)
 			{
 				auto partition = BitMask(numberOfCodeUnits);
 				auto complement = BitMask(numberOfCodeUnits);
 
-				// Assign code units into partitions.
+				// Determine whether each code unit belongs to the current partition.
 				for (auto j = 0; j < numberOfCodeUnits; j++)
 				{
 					if (i * partitionSize <= j && (j < (i + 1) * partitionSize || i == partitionCount_ - 1))
@@ -102,31 +122,23 @@ namespace Delta
 
 			for (auto& partition : partitions)
 			{
-				result_ = DeltaIterationResults::FailingPartition;
-				return;
+				if (IsFailureInducingSubset(context, partition))
+				{
+					result_ = DeltaIterationResults::FailingPartition;
+					return;
+				}
 			}
 
 			for (auto& complement : complements)
 			{
-				result_ = DeltaIterationResults::FailingComplement;
-				return;
+				if (IsFailureInducingSubset(context, complement))
+				{
+					result_ = DeltaIterationResults::FailingComplement;
+					return;
+				}
 			}
 
 			result_ = DeltaIterationResults::Passing;
-			
-			try
-			{
-				auto fileName = TempFolder + std::to_string(iteration) + "_" + GetFileName(globalContext_.parsedInput.errorLocation.filePath) + LanguageToExtension(globalContext_.language);
-				printingConsumer_.HandleTranslationUnit(context, fileName);
-
-				globalContext_.variantAdjustedErrorLocation[iteration] = printingConsumer_.GetAdjustedErrorLine();
-			}
-			catch (...)
-			{
-				out::All() << "Could not process iteration no. " << iteration << " due to an internal exception.\n";
-			}
-
-			out::All() << "Finished. Done " << iteration << " DD iterations.\n";
 		}
 	};
 }
