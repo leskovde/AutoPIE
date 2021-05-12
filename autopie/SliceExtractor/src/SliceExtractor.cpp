@@ -60,26 +60,26 @@ public:
 
 	explicit FuncDeclHandler() {}
 
-	virtual void run(const MatchFinder::MatchResult &Result)
+	virtual void run(const MatchFinder::MatchResult& result)
 	{
-		if (const FunctionDecl *FD = Result.Nodes.getNodeAs<clang::FunctionDecl>("mainFunction"))
+		if (const FunctionDecl *FD = result.Nodes.getNodeAs<clang::FunctionDecl>("mainFunction"))
 		{
 			//FD->dump();
 
 			auto bodyRange = FD->getBody()->getSourceRange();
 			
-			const auto startLineNumber = Result.Context->getSourceManager().getSpellingLineNumber(bodyRange.getBegin());
-			const auto endLineNumber = Result.Context->getSourceManager().getSpellingLineNumber(bodyRange.getEnd());
+			const auto startLineNumber = result.Context->getSourceManager().getSpellingLineNumber(bodyRange.getBegin());
+			const auto endLineNumber = result.Context->getSourceManager().getSpellingLineNumber(bodyRange.getEnd());
 
-			const auto endTokenLoc = Result.Context->getSourceManager().getSpellingLoc(bodyRange.getEnd());
+			const auto endTokenLoc = result.Context->getSourceManager().getSpellingLoc(bodyRange.getEnd());
 
-			const auto startLoc = Result.Context->getSourceManager().getSpellingLoc(bodyRange.getBegin());
-			const auto endLoc = clang::Lexer::getLocForEndOfToken(endTokenLoc, 0, Result.Context->getSourceManager(), clang::LangOptions());
+			const auto startLoc = result.Context->getSourceManager().getSpellingLoc(bodyRange.getBegin());
+			const auto endLoc = clang::Lexer::getLocForEndOfToken(endTokenLoc, 0, result.Context->getSourceManager(), clang::LangOptions());
 
 			bodyRange = clang::SourceRange(startLoc, endLoc);
 			lineRange = std::make_tuple(startLineNumber, endLineNumber);
 			
-			outs() << "Range: " << bodyRange.printToString(Result.Context->getSourceManager()) << " (lines " << startLineNumber << " - " << endLineNumber << ")\n";
+			outs() << "Range: " << bodyRange.printToString(result.Context->getSourceManager()) << " (lines " << startLineNumber << " - " << endLineNumber << ")\n";
 		}
 	}
 };

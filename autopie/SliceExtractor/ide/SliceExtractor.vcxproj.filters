@@ -7,6 +7,12 @@
     <Filter Include="src">
       <UniqueIdentifier>{c6790180-292b-4f77-85a0-9669b5d02a22}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include\common">
+      <UniqueIdentifier>{c8709f6f-5d26-4029-a8a9-0da0bd3e8d6a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\common">
+      <UniqueIdentifier>{b5442fec-db95-40f2-b2f3-4c01da046ca8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Actions.h">
@@ -24,6 +30,27 @@
     <ClInclude Include="..\include\Visitors.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Common\include\Consumers.h">
+      <Filter>include\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\include\Context.h">
+      <Filter>include\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\include\DependencyGraph.h">
+      <Filter>include\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\include\Helper.h">
+      <Filter>include\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\include\Options.h">
+      <Filter>include\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\include\Streams.h">
+      <Filter>include\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Common\include\Visitors.h">
+      <Filter>include\common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\Context.cpp">
@@ -34,6 +61,9 @@
     </ClCompile>
     <ClCompile Include="..\src\SliceExtractor.cpp">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Common\src\Helper.cpp">
+      <Filter>src\common</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
