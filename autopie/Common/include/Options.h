@@ -9,6 +9,8 @@
 inline llvm::cl::OptionCategory GeneralArgs("General Options");
 inline llvm::cl::OptionCategory DeltaReductionArgs("DeltaReduction Options");
 inline llvm::cl::OptionCategory NaiveReductionArgs("NaiveReduction Options");
+inline llvm::cl::OptionCategory VarExtractorArgs("VariableExtractor Options");
+
 
 /**
  * Defines a --help option for the tool. Shows all available options and their descriptions.\n
@@ -32,7 +34,8 @@ inline llvm::cl::opt<std::string> SourceFile("loc-file",
                                              llvm::cl::Required,
                                              llvm::cl::cat(GeneralArgs),
                                              llvm::cl::cat(NaiveReductionArgs),
-                                             llvm::cl::cat(DeltaReductionArgs));
+                                             llvm::cl::cat(DeltaReductionArgs),
+                                             llvm::cl::cat(VarExtractorArgs));
 
 /**
  * Specifies the line number in the previously specified source file on which an error was found.\n
@@ -44,7 +47,8 @@ inline llvm::cl::opt<int> LineNumber("loc-line",
                                      llvm::cl::Required,
                                      llvm::cl::cat(GeneralArgs),
                                      llvm::cl::cat(NaiveReductionArgs),
-                                     llvm::cl::cat(DeltaReductionArgs));
+                                     llvm::cl::cat(DeltaReductionArgs),
+                                     llvm::cl::cat(VarExtractorArgs));
 
 /**
  * A description of a runtime error. The description should be reproducible, e.g., 'segmentation fault'.\n
@@ -99,7 +103,10 @@ inline llvm::cl::opt<bool> Verbose("verbose",
 	                                   "Specifies whether the tool should flood the standard output with its optional messages."),
                                    llvm::cl::init(false),
                                    llvm::cl::value_desc("bool"),
-                                   llvm::cl::cat(GeneralArgs));
+                                   llvm::cl::cat(GeneralArgs),
+                                   llvm::cl::cat(NaiveReductionArgs),
+                                   llvm::cl::cat(DeltaReductionArgs),
+                                   llvm::cl::cat(VarExtractorArgs));
 
 inline llvm::cl::alias VerboseAlias("v",
                                     llvm::cl::desc(
@@ -116,12 +123,28 @@ inline llvm::cl::opt<bool> LogToFile("log",
 	                                     + std::string(LogFile) + "'."),
                                      llvm::cl::init(false),
                                      llvm::cl::value_desc("bool"),
-                                     llvm::cl::cat(GeneralArgs));
+                                     llvm::cl::cat(GeneralArgs),
+                                     llvm::cl::cat(NaiveReductionArgs),
+                                     llvm::cl::cat(DeltaReductionArgs),
+                                     llvm::cl::cat(VarExtractorArgs));
 
 inline llvm::cl::alias LogToFileAlias("l",
                                       llvm::cl::desc(
 	                                      "Specifies whether the tool should output its optional message (with timestamps) to an external file. Default path: '"
 	                                      + std::string(LogFile) + "'."),
                                       llvm::cl::aliasopt(LogToFile));
+
+/**
+ * Specifies the output text file to which the result should be dumped.
+ */
+inline llvm::cl::opt<std::string> OutputFile("out-file",
+    llvm::cl::desc("The name of the file to which the result should be dumped."),
+    llvm::cl::value_desc("filename"),
+    llvm::cl::init("output.txt"),
+    llvm::cl::cat(VarExtractorArgs));
+
+inline llvm::cl::alias OutputFileAlias("o",
+    llvm::cl::desc("The name of the file to which the result should be dumped."),
+    llvm::cl::aliasopt(OutputFile));
 
 #endif

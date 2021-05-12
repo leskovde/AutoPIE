@@ -36,10 +36,15 @@ public:
 
 	void run(const MatchFinder::MatchResult& result) override
 	{
-		if (auto expr = result.Nodes.getNodeAs<DeclRefExpr>("declRefs"))
-		{
+		if (const auto expr = result.Nodes.getNodeAs<DeclRefExpr>("declRefs"))
+		{	
 			//expr->dump();
 
+			if (expr->getDecl()->isFunctionOrFunctionTemplate())
+			{
+				return;
+			}
+			
 			const auto range = GetPrintableRange(GetPrintableRange(expr->getSourceRange(), *result.SourceManager),
 				*result.SourceManager);
 
@@ -109,6 +114,8 @@ int main(int argc, const char** argv)
 	MatchFinder finder;
 	finder.addMatcher(declRefExpr(isExpansionInMainFile()).bind("declRefs"), &varHandler);
 
+	out::Verb() << "Matching variables...\n";
+	
 	auto result = tool.run(tooling::newFrontendActionFactory(&finder).get());
 
 	if (result)
@@ -116,7 +123,28 @@ int main(int argc, const char** argv)
 		errs() << "The tool returned a non-standard value: " << result << "\n";
 	}
 
+	out::Verb() << "Matching done.\n";
 	
+	std::ofstream ofs(OutputFile);
+	
+	if (ofs)
+	{
+		out::Verb() << "List of found variables:\n";
 
-	return 0;
+		for (auto& var : varHandler.declRefNames)
+		{
+			out::Verb() << LineNumber << ":" << var << "\n";
+			
+			ofs << LineNumber << ":" << var << "\n";
+		}
+	}
+	else
+	{
+		errs() << "The output file could not be opened.\n";
+		return EXIT_FAILURE;
+	}
+
+	out::All() << "Variable extraction done.\n";
+
+	return EXIT_SUCCESS;
 }
