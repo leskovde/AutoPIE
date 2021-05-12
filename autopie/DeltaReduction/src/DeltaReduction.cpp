@@ -100,14 +100,14 @@ int main(int argc, const char** argv)
 	{
 		iteration++;
 
-		if (iteration % 50 == 0)
+		if (iteration % 10 == 0)
 		{
 			out::All() << "Done " << iteration << " DD iterations.\n";
 		}
 
 		DeltaIterationResults iterationResult;
 
-		clang::tooling::ClangTool newTool(op.getCompilations(), context.parsedInput.errorLocation.filePath);
+		clang::tooling::ClangTool newTool(op.getCompilations(), currentTestCase);
 		newTool.appendArgumentsAdjuster(includes);
 
 		// Run all Clang AST related actions.
@@ -139,6 +139,20 @@ int main(int argc, const char** argv)
 	}
 
 	out::All() << "Finished. Done " << iteration << " DD iterations.\n";
-		
+
+	if (currentTestCase != context.parsedInput.errorLocation.filePath)
+	{
+		const auto newFileName = TempFolder + std::string("autoPieOut") + LanguageToExtension(context.language);
+
+		out::All() << "Found the locally minimal error-inducing source file: " << currentTestCase << "\n";
+		out::All() << "Changing the file path to '" << newFileName << "'.\n";
+
+		std::filesystem::rename(currentTestCase, newFileName);
+
+		return EXIT_SUCCESS;
+	}
+
+	out::All() << "A smaller error-inducing source file could not be found.\n";
+	
 	return EXIT_FAILURE;
 }

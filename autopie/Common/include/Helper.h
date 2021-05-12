@@ -31,7 +31,7 @@ inline const char* VisualsFolder = "./visuals/";
  */
 inline const char* LogFile = "./autopie.log";
 
-enum DeltaIterationResults
+enum class DeltaIterationResults
 {
 	FailingPartition,
 	FailingComplement,

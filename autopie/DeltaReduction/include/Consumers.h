@@ -23,6 +23,7 @@ namespace Delta
 		VariantPrintingASTConsumer printingConsumer_;
 		int iteration_;
 		int partitionCount_;
+		const std::string fileName_;
 		GlobalContext& globalContext_;
 		DeltaIterationResults& result_;
 
@@ -30,19 +31,18 @@ namespace Delta
 		{
 			try
 			{
-				const auto fileName = TempFolder + std::to_string(iteration_) + "_" + GetFileName(globalContext_.parsedInput.errorLocation.filePath) + LanguageToExtension(globalContext_.language);
-				printingConsumer_.HandleTranslationUnit(context, fileName, bitmask);
-
+				printingConsumer_.HandleTranslationUnit(context, fileName_, bitmask);
 				globalContext_.variantAdjustedErrorLocation[iteration_] = printingConsumer_.GetAdjustedErrorLine();
 
-				if (ValidateVariant(globalContext_, std::filesystem::directory_entry(fileName)))
+				if (ValidateVariant(globalContext_, std::filesystem::directory_entry(fileName_)))
 				{
+					out::All() << "Iteration " << iteration_ << ": smaller subset found.\n";
 					return true;
 				}
 			}
 			catch (...)
 			{
-				out::All() << "Could not process iteration no. " << iteration_ << " due to an internal exception.\n";
+				out::All() << "Could not process a subset due to an internal exception.\n";
 			}
 			
 			return false;
@@ -53,7 +53,10 @@ namespace Delta
 		                       const int partitionCount, DeltaIterationResults& result) : mappingConsumer_(ci, context),
 			printingConsumer_(ci, context.parsedInput.errorLocation.lineNumber),
 			iteration_(iteration), partitionCount_(partitionCount),
-			globalContext_(context), result_(result)
+			fileName_(
+				TempFolder + std::to_string(iteration_) + "_" + GetFileName(
+					globalContext_.parsedInput.errorLocation.filePath) + LanguageToExtension(globalContext_.language)), globalContext_(context),
+			result_(result)
 		
 		{
 		}
@@ -91,6 +94,8 @@ namespace Delta
 			if (partitionCount_ > numberOfCodeUnits)
 			{
 				// Cannot be split further.
+				out::Verb() << "The current test case cannot be split further.\n";
+
 				result_ = DeltaIterationResults::Unsplitable;
 				return;
 			}
@@ -100,6 +105,9 @@ namespace Delta
 			const auto partitionSize = numberOfCodeUnits / partitionCount_;
 
 			// Split into `n` partition and their complements.
+			out::Verb() << "Splitting " << numberOfCodeUnits << " code units into " << partitionCount_
+				<< " partitions of size " << partitionSize << " units.\n";
+			
 			for (auto i = 0; i < partitionCount_; i++)
 			{
 				auto partition = BitMask(numberOfCodeUnits);
@@ -124,6 +132,9 @@ namespace Delta
 				complements.emplace_back(complement);
 			}
 
+			out::Verb() << "Splitting done.\n";
+			out::Verb() << "Validating " << partitions.size() << " partitions...\n";
+			
 			for (auto& partition : partitions)
 			{
 				if (IsFailureInducingSubset(context, partition))
@@ -133,6 +144,8 @@ namespace Delta
 				}
 			}
 
+			out::Verb() << "Validating " << complements.size() << " complements...\n";
+			
 			for (auto& complement : complements)
 			{
 				if (IsFailureInducingSubset(context, complement))
@@ -142,6 +155,7 @@ namespace Delta
 				}
 			}
 
+			out::Verb() << "Iteration " << iteration_ << ": smaller subset not found.\n";
 			result_ = DeltaIterationResults::Passing;
 		}
 	};

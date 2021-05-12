@@ -87,9 +87,17 @@ namespace Common
 		NodeMappingRef nodeMapping_;
 		MappingASTVisitorRef mappingVisitor_;
 		GlobalContext& globalContext_;
+		const int iteration_{0};
 
 	public:
 		DependencyMappingASTConsumer(clang::CompilerInstance* ci, GlobalContext& context) : globalContext_(context)
+		{
+			nodeMapping_ = std::make_shared<NodeMapping>();
+			mappingVisitor_ = std::make_unique<MappingASTVisitor>(ci, nodeMapping_,
+				globalContext_.parsedInput.errorLocation.lineNumber);
+		}
+
+		DependencyMappingASTConsumer(clang::CompilerInstance* ci, GlobalContext& context, const int iteration) : globalContext_(context), iteration_(iteration)
 		{
 			nodeMapping_ = std::make_shared<NodeMapping>();
 			mappingVisitor_ = std::make_unique<MappingASTVisitor>(ci, nodeMapping_,
@@ -116,7 +124,8 @@ namespace Common
 
 			if (globalContext_.parsedInput.dumpDot && globalContext_.currentEpoch == 0)
 			{
-				mappingVisitor_->graph.DumpDot(globalContext_.parsedInput.errorLocation.filePath);
+				const auto dotFileOutput = VisualsFolder + std::string("dotDump_") + std::to_string(iteration_) + "_" + GetFileName(globalContext_.parsedInput.errorLocation.filePath) + ".dot";
+				mappingVisitor_->graph.DumpDot(dotFileOutput);
 			}
 		}
 
