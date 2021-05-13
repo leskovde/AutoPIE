@@ -63,6 +63,17 @@ inline llvm::cl::opt<std::string> ErrorMessage("error-message",
                                                llvm::cl::cat(DeltaReductionArgs));
 
 /**
+ * The set of arguments applied to the failing program upon execution.\n
+ * It is expected that the provided string has the same value as unparsed `argv` of the failing program.\n
+ * The value is later used for execution during validation.
+ */
+inline llvm::cl::opt<std::string> Arguments("arguments",
+    llvm::cl::desc("The arguments with which the program was run when the error occurred."),
+    llvm::cl::value_desc("string"),
+    llvm::cl::cat(NaiveReductionArgs),
+    llvm::cl::cat(DeltaReductionArgs));
+
+/**
  * Specifies the desired best-possible size of the output. Values are between 0 and 1, with 0 being an empty
  * file and 1 being all available variants (including the original) of the source file.\n
  * The value is used to stop the variant search upon hitting a certain threshold.\n
