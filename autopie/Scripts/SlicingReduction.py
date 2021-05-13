@@ -35,7 +35,7 @@ parser.add_argument("--dynamic_slice", type=bool, default=True, help="Runs a pas
 parser.add_argument("--delta", type=bool, default=True, help="Uses the minimizing Delta debugging algorithm before "
                                                              "launching naive reduction. Enabled by default.")
 
-# TODO: Validate that the tools exist.
+
 delta_path = "../DeltaReduction/build/bin/DeltaReduction"
 naive_path = "../NaiveReduction/build/bin/NaiveReduction"
 var_extractor_path = "../VariableExtractor/build/bin/VariableExtractor"
@@ -52,6 +52,25 @@ slice_extractor_output = {
     "cpp": "slice.cpp"
 }
 adjusted_line_path = ""
+
+
+def validate_paths():
+    valid = True
+
+    if not os.path.exists(delta_path):
+        print("The DeltaReduction binary is missing!")
+        valid = False
+    if not os.path.exists(naive_path):
+        print("The NaiveReduction binary is missing!")
+        valid = False
+    if not os.path.exists(var_extractor_path):
+        print("The VariableExtractor binary is missing!")
+        valid = False
+    if not os.path.exists(slice_extractor_path):
+        print("The SliceExtractor binary is missing!")
+        valid = False
+
+    return valid
 
 
 def run_unification(slices):
@@ -204,9 +223,33 @@ def update_source_from_slices(args, dynamic_slices):
     if run_unification(dynamic_slices):
         print("Extracting source code for the unified slice...")
 
-        if run_slice_extraction(unification_output):
+        if run_slice_extraction(args, unification_output):
             args.source_file = get_extracted_slice(args, slice_extractor_output)
             args.line_number = get_adjusted_line(args, adjusted_line_path)
+
+
+def get_generated_variant(c_file, cpp_file):
+    if c_file.exists() and not cpp_file.exists():
+        result = variant_path["c"]
+    elif not c_file.exists() and cpp_file.exists():
+        result = variant_path["cpp"]
+    else:
+        result = variant_path["c"] if c_file.stat().st_mtime > cpp_file.stat().st_mtime else variant_path["cpp"]
+
+    return result
+
+
+def update_source_from_reduction(args):
+    c_file = pathlib.Path(variant_path["c"])
+    cpp_file = pathlib.Path(variant_path["cpp"])
+
+    if not c_file.exists() and not cpp_file.exists():
+        return
+
+    variant = get_generated_variant(c_file, cpp_file)
+
+    # Copy the result to the current directory.
+    args.source_file = shutil.copy2(variant, ".")
 
 
 def save_result(file_path):
@@ -216,12 +259,7 @@ def save_result(file_path):
     if not c_file.exists() and not cpp_file.exists():
         return False
 
-    if c_file.exists() and not cpp_file.exists():
-        result = variant_path["c"]
-    elif not c_file.exists() and cpp_file.exists():
-        result = variant_path["cpp"]
-    else:
-        result = variant_path["c"] if c_file.stat().st_mtime > cpp_file.stat().st_mtime else variant_path["cpp"]
+    result = get_generated_variant(c_file, cpp_file)
 
     # Copy the result to the current directory.
     shutil.copy2(result, ".")
@@ -230,6 +268,8 @@ def save_result(file_path):
 
 
 def main(args):
+    validate_paths()
+
     print(f"Extracting variables...")
     variables = get_variables_on_line(args, var_extractor_output)
 
@@ -263,16 +303,16 @@ def main(args):
         if exit_code != 0:
             print("DeltaReduction returned a non-standard exit code. The reduction failed.")
         else:
-            source_code = None
+            update_source_from_reduction(args)
 
     exit_code = run_naive(args)
 
     if exit_code != 0:
         print("DeltaReduction returned a non-standard exit code. The reduction failed.")
     else:
-        source_code = None
+        update_source_from_reduction(args)
 
-    if not save_result(source_code):
+    if not save_result(args.source_file):
         print("The result variant could not be saved.")
         sys.exit(1)
 
