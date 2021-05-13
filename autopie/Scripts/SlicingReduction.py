@@ -41,8 +41,8 @@ naive_path = "../NaiveReduction/build/bin/NaiveReduction"
 var_extractor_path = "../VariableExtractor/build/bin/VariableExtractor"
 slice_extractor_path = "../SliceExtractor/build/bin/SliceExtractor"
 variant_path = {
-    "c" : "temp/autoPie.c",
-    "cpp" : "temp/autoPie.cpp"
+    "c": "temp/autoPie.c",
+    "cpp": "temp/autoPie.cpp"
 }
 
 unification_output = "unification.txt"
@@ -50,7 +50,7 @@ var_extractor_output = "criteria.txt"
 slice_extractor_output = {
     "c": "slice.c",
     "cpp": "slice.cpp"
-}  # TODO: Make SliceExtractor return valid extension.
+}
 adjusted_line_path = ""
 
 
@@ -186,7 +186,8 @@ def get_extracted_slice(args, file_path):
     elif not c_file.exists() and cpp_file.exists():
         return slice_extractor_output["cpp"]
 
-    return slice_extractor_output["c"] if c_file.stat().st_mtime > cpp_file.stat().st_mtime else slice_extractor_output["cpp"]
+    return slice_extractor_output["c"] if c_file.stat().st_mtime > cpp_file.stat().st_mtime else slice_extractor_output[
+        "cpp"]
 
 
 def get_adjusted_line(args, file_path):

@@ -89,7 +89,9 @@ int main(int argc, const char** argv)
 	// Keep the relevant lines only.
 	ifs.close();
 	ifs.open(SourceFile);
-	std::ofstream ofs(OutputFile);
+
+	auto const outputFileWithCorrectExtension = RemoveFileExtensions(OutputFile) + LanguageToExtension(inputLanguage);
+	std::ofstream ofs(outputFileWithCorrectExtension);
 
 	if (ifs && ofs)
 	{

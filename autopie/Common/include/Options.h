@@ -48,7 +48,8 @@ inline llvm::cl::opt<int> LineNumber("loc-line",
                                      llvm::cl::cat(GeneralArgs),
                                      llvm::cl::cat(NaiveReductionArgs),
                                      llvm::cl::cat(DeltaReductionArgs),
-                                     llvm::cl::cat(VarExtractorArgs));
+                                     llvm::cl::cat(VarExtractorArgs),
+                                     llvm::cl::cat(SliceExtractorArgs));
 
 /**
  * A description of a runtime error. The description should be reproducible, e.g., 'segmentation fault'.\n
@@ -148,7 +149,7 @@ inline llvm::cl::alias LogToFileAlias("l",
                                       llvm::cl::aliasopt(LogToFile));
 
 /**
- * Specifies the output text file to which the result should be dumped.
+ * Specifies the output file to which the extracted result should be dumped.
  */
 inline llvm::cl::opt<std::string> OutputFile("out-file",
     llvm::cl::desc("The name of the file to which the result should be dumped."),
@@ -162,7 +163,7 @@ inline llvm::cl::alias OutputFileAlias("o",
     llvm::cl::aliasopt(OutputFile));
 
 /**
- * Specifies the output text file to which the result should be dumped.
+ * Specifies the path to the text file containing line numbers of the slice.
  */
 inline llvm::cl::opt<std::string> SliceFile("slice-file",
     llvm::cl::desc("The name of the file containing line numbers of the slice."),
