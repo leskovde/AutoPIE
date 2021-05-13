@@ -10,31 +10,32 @@ The size reduction of the program should be fully automated and reasonably
 fast on simple inputs.
 Furthermore, it should correctly handle any source code from the program 
 domain specified below.
-Great attention is given to the accuracy with which the minimizing algorithm 
-works and its running performance.
+Great attention is given to the accuracy with which the minimizing algorithms 
+work and their time efficiency.
 
-\change[inline]{TODO: Change the domain based on the implementation 
-(e.g., UI applications might work, so extend to UI, same with threads).}
-
-The domain in which the algorithm operates can be described as small and 
-simple projects.
-The approach takes into consideration code written in C and C++.
+The domain in which the algorithms that are shown below operate can be 
+described as small and simple projects.
+The presented approaches take into consideration code written in C and C++.
 Support for more complicated concepts of those languages, such as templates,
-are omitted.
+is omitted.
 Additionally, programs that involve multiple threads and other advanced
 features that might trigger non-deterministic behaviour are also not taken 
-into consideration.\change[]{TODO: Name those features.}
+into consideration.
+Programs that rely on randomly generated numbers during their runtime do not 
+fit into the domain as well. 
+This is because executions of multithreaded and random programs cannot be 
+easily reproduced.
 Instead, the program minimization described in this project focuses 
-on simple single-threaded console applications.
+on simple single-threaded console applications with consistent executions.
 
 The problem of program minimization while preserving runtime errors can be 
 described as follows.
 Assume that a developer has encountered a runtime error in his application.
 Using logging or debugging tools, he can extract the stack trace at that 
 given point.
-The stack trace provides valuable information for the minimizing algorithm.
-The algorithm notably requires a description of the error and the source code 
-location at which the error was produced.
+The stack trace provides valuable information for a minimizing algorithm.
+The presented algorithms notably require a description of the error and 
+the source code location at which the error was produced.
 Based on the described scenario, we can draw the following definitions.
 
 \begin{defn}[Location]\label{def04:1}
@@ -53,19 +54,18 @@ into consideration.
 
 \begin{defn}[Failure-inducing statement]\label{def04:2}
   Let $E = (location, desc)$ be a runtime error specified by its location 
-  and description thrown by the program $\mathcal{P} =
-  (S_1, S_2, \ldots, S_n)$.
+  and description. Let the program $\mathcal{P} = (S_1, S_2, \ldots, S_n)$
+  result in $E$ upon execution.
   We call $S_i$ the \emph{failure-inducing statement} of 
   $E$ if $loc(S_i) = E(location)$.
 \end{defn}
 
-Failure-inducing statements are constructs in the code that directly 
-contributed to the thrown error.
+Failure-inducing statements are the sites from which an error was thrown.
 That means the statements were present at the error's location when the error 
 occurred.
 
-Having found the source code location, the developer can now investigate 
-the source code for a potential bug.
+Having found the site's source code location, the developer can now 
+investigate the source code for a potential bug.
 In the process, he might consider the values of application arguments 
 present at launch-time and change his debugging process accordingly.
 Nonetheless, the developer has to look through the source code to find 
@@ -96,11 +96,11 @@ The rule specifies that a program must end in the same runtime error
 as the original program to be considered a correctly reduced variant.
 Though, with the change to the program's size, the location 
 of failure-inducing statements also changes.
-In $\mathcal{P}$, the error's location should be further down compared to 
-$\mathcal{P'}$ since $\mathcal{P'}$ has less code in general.
+In $\mathcal{P}$, the error's location in the file should be lower compared 
+to $\mathcal{P'}$ since $\mathcal{P'}$ has less code in general.
 Stress is placed on the location's context in which the error arises.
 As long as locations in $\mathcal{P'}$ are adjusted based on those in 
-$\mathcal{P}$, the location of the error does not matter.
+$\mathcal{P}$, the absolute location of the error does not matter.
 
 Figure~\ref{lst:reductionexample} contains an example of $\mathcal{P}$ and its 
 minimal variant $\mathcal{P'}$. 
@@ -214,10 +214,25 @@ is minimal.}
 \change[inline]{TODO: Come up with an approximation to guess whether
 the program will terminate.}
 
-As far as minimality goes, there is no actual conclusion on recognizing 
-whether a solution is minimal.
-Similarly, it has not been determined how to recognize programs that can 
-run indefinitely.
+So far, this chapter has talked about both minimization and reduction 
+simultaneously. 
+It is crucial to make a distinction between those two terms. 
+In this context, the reduction is simply the process of making the program 
+smaller in size. 
+The reduced program must also result in the same source code. 
+Minimization is built on the same rules as reduction; however, it must 
+fulfill one additional property. 
+No statement of the minimized program can be removed while preserving 
+the error. 
+The task of reduction is more straightforward than that of minimization. 
+Finding the program's minimal variant is computationally infeasible for 
+large inputs. 
+Whereas reducing the program to a rough approximation of the optimal 
+solution can be done in polynomial time. 
+Although this project focuses on minimal program variants, we recognize that 
+it is expensive to compute them. 
+Instead, we use reduction and minimization interchangeably throughout 
+the text.
 
 Minimization of programs requires two steps—first, the removal of chunks 
 of the given source code. 
@@ -228,13 +243,13 @@ Subsequent approaches employ techniques discussed in
 chapter~\ref{chap:automated}. 
 The method based on Delta debugging offers a modified version of 
 the debugging algorithm. 
-Another approach combines different types of slices to achieve the best 
+Another approach combines different types of slicing to achieve the best 
 results.
 
 Second, the minimization needs to perform a validation to determine whether 
-the result meets the required criteria, i.e., minimality and correctness. 
-Descriptions of naive and systematic validations are explained in the 
-sections below.
+the result meets the required criteria, i.e., minimality (or an approximation) 
+and correctness.
+The description of naive validation is shown in the sections below.
 
 \section{Naive reduction}\label{chap:naive}
 
