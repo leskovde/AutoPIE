@@ -6,21 +6,23 @@ import argparse
 from subprocess import call, run
 from docker.types import Mount
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--file", default=None, type=str, help="The source file to be sliced")
 parser.add_argument("--criterion", default=None, type=str, help="The slicing criterion")
-parser.add_argument("--output", default="output.txt", type=str, help="A series of line numbers contained in the slice")
-parser.add_argument("--input", default="", type=str, help="Arguments for the program trace")
-parser.add_argument("--dynamic", dest="dynamic_slicer", action="store_true", help="Use the dynamic slicer instead of the static slicer")
-parser.add_argument("--static", dest="dynamic_slicer", action="store_false", help="Use the static slicer instead of the dynamic slicer")
+parser.add_argument("-o", "--output", default="output.txt", type=str, help="A series of line numbers contained in the "
+                                                                           "slice")
+parser.add_argument("--args", default="", type=str, help="Arguments for the program trace")
+parser.add_argument("--dynamic", dest="dynamic_slicer", action="store_true",
+                    help="Use the dynamic slicer instead of the static slicer")
+parser.add_argument("--static", dest="dynamic_slicer", action="store_false",
+                    help="Use the static slicer instead of the dynamic slicer")
 parser.set_defaults(dynamic_slicer=False)
 
 
 def slice_dg(args):
     if args.file is None:
         print("Invalid usage: the --file argument is empty.")
-        
+
         return
 
     if args.criterion is None:
@@ -35,7 +37,7 @@ def slice_dg(args):
     client = docker.from_env()
 
     print("Running the docker...")
-    #call("docker run -it -P -v ~/dg-data:/data mchalupa/dg")
+    # call("docker run -it -P -v ~/dg-data:/data mchalupa/dg")
 
     compiler_cmd = "clang -emit-llvm -c -g /data-mapped/" + args.file + " -o _code.bc"
 
@@ -45,22 +47,22 @@ def slice_dg(args):
     source_converter_cmd = "/opt/dg/tools/llvm-to-source _code.sliced > /data-mapped/" + args.output
 
     cmd = [
-            "-c",
-            compiler_cmd + " && " + slicer_cmd + " && " + source_converter_cmd
+        "-c",
+        compiler_cmd + " && " + slicer_cmd + " && " + source_converter_cmd
     ]
 
     volumes = {
-            os.getcwd() + "/dg-data" : {
-                    "bind": "/data-mapped",
-                    "mode": "rw",
-                    },
+        os.getcwd() + "/dg-data": {
+            "bind": "/data-mapped",
+            "mode": "rw",
+        },
     }
-    
+
     container = client.containers.run(
-            image="mchalupa/dg",
-            command=cmd,
-            volumes=volumes,
-            detach=True
+        image="mchalupa/dg",
+        command=cmd,
+        volumes=volumes,
+        detach=True
     )
 
     print("Docker exited...")
@@ -85,57 +87,61 @@ def slice_giri(args):
     client = docker.from_env()
 
     print("Running the docker...")
-    
+
     directory = "/giri/test/UnitTests/temp/"
 
     slicer_cmd = "make -C " + directory
 
     makefile_content = "'NAME = " + args.file.split(".")[0] + "\nLDFLAGS = -lm\nINPUT ?= " + \
-            args.input + "\nCRITERION ?= -criterion-loc=criterion-loc.txt\nMAPPING ?= " +\
-            "-mapping-function=main\ninclude ../../Makefile.common'"
+                       args.args + "\nCRITERION ?= -criterion-loc=criterion-loc.txt\nMAPPING ?= " + \
+                       "-mapping-function=main\ninclude ../../Makefile.common'"
 
     slicer_create_makefile_cmd = "mkdir " + directory + \
-            " && echo " + args.file + " " + args.criterion.split(":")[0] + " > " + directory + \
-            "criterion-loc.txt" + " && cp /data-mapped/" + args.file + " " + directory + \
-            " && echo " + makefile_content + " > " + directory + "Makefile"
+                                 " && echo " + args.file + " " + args.criterion.split(":")[0] + " > " + directory + \
+                                 "criterion-loc.txt" + " && cp /data-mapped/" + args.file + " " + directory + \
+                                 " && echo " + makefile_content + " > " + directory + "Makefile"
 
     source_converter_cmd = "cat " + directory + args.file.split(".")[0] + ".slice.loc > " + \
-            "/data-mapped/" + args.output
+                           "/data-mapped/" + args.output
 
     cmd = [
-            "/bin/bash",
-            "-c",
-            slicer_create_makefile_cmd + " && " + slicer_cmd + " && " + source_converter_cmd
-            #"mkdir /giri/temp && ls /giri > /data-mapped/test.txt"
+        "/bin/bash",
+        "-c",
+        slicer_create_makefile_cmd + " && " + slicer_cmd + " && " + source_converter_cmd
+        # "mkdir /giri/temp && ls /giri > /data-mapped/test.txt"
     ]
 
-    volumes = { 
-            os.getcwd() + "/giri-data" : {               
-                "bind": "/data-mapped",
-                "mode": "rw", 
-                },
+    volumes = {
+        os.getcwd() + "/giri-data": {
+            "bind": "/data-mapped",
+            "mode": "rw",
+        },
     }
 
     container = client.containers.run(
-            image="liuml07/giri",
-            command=cmd,
-            volumes=volumes, 
-            detach=True
-    )      
+        image="liuml07/giri",
+        command=cmd,
+        volumes=volumes,
+        detach=True
+    )
+
+    print("Docker exited...")
+    print(container.logs())
 
 
 def main(args):
-    if args.dynamic_slicer == True:
+    if args.dynamic_slicer:
         print("RUNNING GIRI SLICER...")
         slice_giri(args)
         message = "Done! Check 'giri-data/" + args.output + "'to see the result."
 
-    else: 
+    else:
         print("RUNNING DG SLICER...")
         slice_dg(args)
         message = "Done! Check 'dg-data/" + args.output + "' to see the result."
 
     print(message)
+
 
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)

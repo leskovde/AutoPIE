@@ -356,3 +356,7 @@ healthchecksdb
 /autopie/DeltaReduction/temp
 /autopie/DeltaReduction/ide/temp
 /autopie/DeltaReduction/visuals
+/autopie/Scripts/slice1.txt
+/autopie/Scripts/slice2.txt
+/autopie/Scripts/slice3.txt
+/autopie/Scripts/out.txt
