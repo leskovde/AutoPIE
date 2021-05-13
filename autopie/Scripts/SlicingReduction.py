@@ -3,6 +3,8 @@
 import os
 import subprocess
 import sys
+import pathlib
+import shutil
 import argparse
 from types import SimpleNamespace
 
@@ -38,10 +40,17 @@ delta_path = "../DeltaReduction/build/bin/DeltaReduction"
 naive_path = "../NaiveReduction/build/bin/NaiveReduction"
 var_extractor_path = "../VariableExtractor/build/bin/VariableExtractor"
 slice_extractor_path = "../SliceExtractor/build/bin/SliceExtractor"
+variant_path = {
+    "c" : "temp/autoPie.c",
+    "cpp" : "temp/autoPie.cpp"
+}
 
 unification_output = "unification.txt"
 var_extractor_output = "criteria.txt"
-slice_extractor_output = ["slice.c", "slice.cpp"]   # TODO: Make SliceExtractor return valid extension.
+slice_extractor_output = {
+    "c": "slice.c",
+    "cpp": "slice.cpp"
+}  # TODO: Make SliceExtractor return valid extension.
 adjusted_line_path = ""
 
 
@@ -166,12 +175,21 @@ def get_variables_on_line(args, file_path):
     return variables
 
 
-def get_extracted_slice(file_path):
+def get_extracted_slice(args, file_path):
+    c_file = pathlib.Path(slice_extractor_output["c"])
+    cpp_file = pathlib.Path(slice_extractor_output["cpp"])
 
-    return ""
+    if not c_file.exists() and not cpp_file.exists():
+        return args.source_file
+    if c_file.exists() and not cpp_file.exists():
+        return slice_extractor_output["c"]
+    elif not c_file.exists() and cpp_file.exists():
+        return slice_extractor_output["cpp"]
+
+    return slice_extractor_output["c"] if c_file.stat().st_mtime > cpp_file.stat().st_mtime else slice_extractor_output["cpp"]
 
 
-def get_adjusted_line(file_path):
+def get_adjusted_line(args, file_path):
     with open(file_path, "r") as file:
         line = file.read().strip()
 
@@ -186,17 +204,31 @@ def update_source_from_slices(args, dynamic_slices):
         print("Extracting source code for the unified slice...")
 
         if run_slice_extraction(unification_output):
-            args.source_file = get_extracted_slice(slice_extractor_output)
-            args.line_number = get_adjusted_line(adjusted_line_path)
+            args.source_file = get_extracted_slice(args, slice_extractor_output)
+            args.line_number = get_adjusted_line(args, adjusted_line_path)
 
 
 def save_result(file_path):
-    
+    c_file = pathlib.Path(variant_path["c"])
+    cpp_file = pathlib.Path(variant_path["cpp"])
+
+    if not c_file.exists() and not cpp_file.exists():
+        return False
+
+    if c_file.exists() and not cpp_file.exists():
+        result = variant_path["c"]
+    elif not c_file.exists() and cpp_file.exists():
+        result = variant_path["cpp"]
+    else:
+        result = variant_path["c"] if c_file.stat().st_mtime > cpp_file.stat().st_mtime else variant_path["cpp"]
+
+    # Copy the result to the current directory.
+    shutil.copy2(result, ".")
+
     return True
 
 
 def main(args):
-
     print(f"Extracting variables...")
     variables = get_variables_on_line(args, var_extractor_output)
 
