@@ -31,7 +31,7 @@ namespace SliceExtractor
 		std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, llvm::StringRef /*file*/)
 			override
 		{
-			return std::unique_ptr<clang::ASTConsumer>(std::make_unique<SliceExtractorConsumer>(&ci, lines_));
+			return std::unique_ptr<clang::ASTConsumer>(std::make_unique<SliceExtractorASTConsumer>(&ci, lines_));
 		}
 	};
 }

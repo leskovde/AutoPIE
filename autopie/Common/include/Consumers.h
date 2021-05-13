@@ -8,6 +8,8 @@
 #include "Visitors.h"
 #include "Streams.h"
 
+#include "Context.h"
+
 namespace Common
 {
 	/**

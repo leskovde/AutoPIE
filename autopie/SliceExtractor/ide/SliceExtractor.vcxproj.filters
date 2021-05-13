@@ -15,15 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Common\include\Consumers.h">
-      <Filter>include\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Common\include\Context.h">
-      <Filter>include\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Common\include\DependencyGraph.h">
-      <Filter>include\common</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Common\include\Helper.h">
       <Filter>include\common</Filter>
     </ClInclude>
@@ -31,9 +22,6 @@
       <Filter>include\common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Common\include\Streams.h">
-      <Filter>include\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Common\include\Visitors.h">
       <Filter>include\common</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Actions.h">

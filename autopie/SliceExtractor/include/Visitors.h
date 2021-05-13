@@ -10,7 +10,7 @@ namespace SliceExtractor
 	class SliceExtractorASTVisitor;
 	using SliceExtractorASTVisitorRef = std::unique_ptr<SliceExtractorASTVisitor>;
 
-	class SliceExtractorASTVisitor final : public clang::RecursiveASTVisitor<VariantPrintingASTVisitor>
+	class SliceExtractorASTVisitor final : public clang::RecursiveASTVisitor<SliceExtractorASTVisitor>
 	{
 		clang::ASTContext& astContext_;
 
