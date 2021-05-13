@@ -41,7 +41,8 @@ slice_extractor_path = "../SliceExtractor/build/bin/SliceExtractor"
 
 unification_output = "unification.txt"
 var_extractor_output = "criteria.txt"
-slice_extractor_output = ["slice.c", "slice.cpp"]
+slice_extractor_output = ["slice.c", "slice.cpp"]   # TODO: Make SliceExtractor return valid extension.
+adjusted_line_path = ""
 
 
 def run_unification(slices):
@@ -105,7 +106,7 @@ def run_tool(binary_path, arguments):
     return proc.returncode
 
 
-def run_variable_extraction():
+def run_variable_extraction(args):
     var_extractor_args = ["--loc-file=", args.source_file,
                           "--loc-line=", args.line_number,
                           "--verbose=", args.verbose,
@@ -116,7 +117,7 @@ def run_variable_extraction():
     return run_tool(var_extractor_path, var_extractor_args)
 
 
-def run_slice_extraction(slice_file):
+def run_slice_extraction(args, slice_file):
     slice_extractor_args = ["--loc-file=", args.source_file,
                             "--slice-file", slice_file,
                             "--verbose=", args.verbose,
@@ -154,12 +155,50 @@ def run_naive(args):
     return run_tool(naive_path, naive_args)
 
 
+def get_variables_on_line(args, file_path):
+    variables = []
+
+    if run_variable_extraction(args):
+        with open(file_path, "r") as file:
+            for line in file:
+                variables.append(line.strip())
+
+    return variables
+
+
+def get_extracted_slice(file_path):
+
+    return ""
+
+
+def get_adjusted_line(file_path):
+    with open(file_path, "r") as file:
+        line = file.read().strip()
+
+        if line.isdigit():
+            return int(line)
+
+    return args.line_number
+
+
+def update_source_from_slices(args, dynamic_slices):
+    if run_unification(dynamic_slices):
+        print("Extracting source code for the unified slice...")
+
+        if run_slice_extraction(unification_output):
+            args.source_file = get_extracted_slice(slice_extractor_output)
+            args.line_number = get_adjusted_line(adjusted_line_path)
+
+
+def save_result(file_path):
+    
+    return True
+
+
 def main(args):
-    source_code = args.source_file
-    adjusted_line = args.line_number
 
     print(f"Extracting variables...")
-    variables = run_variable_extraction()
+    variables = get_variables_on_line(args, var_extractor_output)
 
     if args.static_slice:
         static_slices = []
@@ -167,14 +206,11 @@ def main(args):
 
         for var in variables:
             print(f"Running static slicing with the criterion '{var}'...")
+
             static_slices.append(run_static_slicer(args, var, i))
             i += 1
 
-        if run_unification(static_slices):
-            print("Extracting source code for the unified slice...")
-
-            source_code = run_slice_extraction(unification_output)
-            adjusted_line = None
+        update_source_from_slices(args, static_slices)
 
     if args.dynamic_slice:
         dynamic_slices = []
@@ -182,25 +218,21 @@ def main(args):
 
         for var in variables:
             print(f"Running dynamic slicing with the criterion '{var}'...")
+
             dynamic_slices.append(run_dynamic_slicer(args, var, i))
             i += 1
 
-        unified_slice = None
-
-        print("Extracting source code for the unified slice...")
-
-        source_code = None
-        adjusted_line = None
+        update_source_from_slices(args, dynamic_slices)
 
     if args.delta:
-        exit_code = run_delta()
+        exit_code = run_delta(args)
 
         if exit_code != 0:
             print("DeltaReduction returned a non-standard exit code. The reduction failed.")
         else:
             source_code = None
 
-    exit_code = run_naive()
+    exit_code = run_naive(args)
 
     if exit_code != 0:
         print("DeltaReduction returned a non-standard exit code. The reduction failed.")
