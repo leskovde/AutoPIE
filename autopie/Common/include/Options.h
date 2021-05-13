@@ -29,7 +29,7 @@ inline llvm::cl::extrahelp MoreHelp("\nMore help text...");
  * The value is later used for location confirmation.
  */
 inline llvm::cl::opt<std::string> SourceFile("loc-file",
-                                             llvm::cl::desc("The name of the file in which the error occured."),
+                                             llvm::cl::desc("The name of the file in which the error occurred."),
                                              llvm::cl::value_desc("filename"),
                                              llvm::cl::Required,
                                              llvm::cl::cat(GeneralArgs),
@@ -43,7 +43,7 @@ inline llvm::cl::opt<std::string> SourceFile("loc-file",
  * The value is later used for location confirmation.
  */
 inline llvm::cl::opt<int> LineNumber("loc-line",
-                                     llvm::cl::desc("The line number on which the error occured."),
+                                     llvm::cl::desc("The line number on which the error occurred."),
                                      llvm::cl::value_desc("int"),
                                      llvm::cl::cat(GeneralArgs),
                                      llvm::cl::cat(NaiveReductionArgs),
