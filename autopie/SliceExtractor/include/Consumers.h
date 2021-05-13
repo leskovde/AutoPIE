@@ -21,6 +21,12 @@ namespace SliceExtractor
 		void HandleTranslationUnit(clang::ASTContext& context) override
 		{
 			sliceVisitor_->TraverseDecl(context.getTranslationUnitDecl());
+
+			// Concatenate found lines.
+			auto& originalLines = sliceVisitor_->originalLines;
+			auto& collectedLines = sliceVisitor_->collectedLines;
+			
+			originalLines.insert(originalLines.end(), collectedLines.begin(), collectedLines.end());
 		}
 	};
 }
