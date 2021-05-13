@@ -58,7 +58,7 @@ namespace Common
 				const auto printableRange = GetPrintableRange(GetPrintableRange(range, astContext_.getSourceManager()),
 					astContext_.getSourceManager());
 
-				const auto begin = astContext_.getSourceManager().getPresumedLineNumber(printableRange.getBegin());
+				const auto begin = astContext_.getSourceManager().getSpellingLineNumber(printableRange.getBegin());
 				const auto snippet = GetSourceTextRaw(printableRange, astContext_.getSourceManager()).str();
 
 				const auto lineBreaks = std::count_if(snippet.begin(), snippet.end(), [](const char c)

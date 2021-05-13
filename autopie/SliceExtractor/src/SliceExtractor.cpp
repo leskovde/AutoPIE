@@ -80,7 +80,7 @@ int main(int argc, const char** argv)
 		sliceLines.push_back(lineNumber);
 	}
 
-	tool.run(Delta::DeltaDebuggingFrontendActionFactory(context, iteration, partitionCount, iterationResult).get());
+	tool.run(SliceExtractor::SliceExtractorFrontendActionFactory(sliceLines).get());
 	
 	// Keep the relevant lines only.
 	ifs.close();

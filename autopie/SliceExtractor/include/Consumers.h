@@ -10,7 +10,7 @@ namespace SliceExtractor
 {
 	class SliceExtractorASTConsumer final : public clang::ASTConsumer
 	{
-		SliceExtractorASTVisitorRef sliceVisitor_;
+		SliceExtractorASTVisitorRef sliceVisitor_{};
 
 	public:
 		SliceExtractorASTConsumer(clang::CompilerInstance* ci, std::vector<int>& lines)
