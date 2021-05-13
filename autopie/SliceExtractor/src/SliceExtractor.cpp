@@ -69,6 +69,12 @@ int main(int argc, const char** argv)
 
 	assert(inputLanguage != clang::Language::Unknown);
 
+	if (!CheckLocationValidity(SourceFile, LineNumber))
+	{
+		errs() << "The specified error location is invalid!\nSource path: " << SourceFile
+			<< ", line: " << LineNumber << " could not be found.\n";
+	}
+	
 	// Get all lines of the slice.
 	std::vector<int> sliceLines;
 	std::ifstream ifs(SliceFile);
