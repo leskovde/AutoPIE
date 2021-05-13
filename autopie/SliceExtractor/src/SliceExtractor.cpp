@@ -16,7 +16,6 @@
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 
-#include "../include/Context.h"
 #include "../include/Actions.h"
 #include "../../Common/include/Helper.h"
 #include "../../Common/include/Streams.h"
@@ -80,7 +79,12 @@ int main(int argc, const char** argv)
 		sliceLines.push_back(lineNumber);
 	}
 
-	tool.run(SliceExtractor::SliceExtractorFrontendActionFactory(sliceLines).get());
+	auto result = tool.run(SliceExtractor::SliceExtractorFrontendActionFactory(sliceLines).get());
+
+	if (result)
+	{
+		errs() << "The tool returned a non-standard value: " << result << "\n";
+	}
 	
 	// Keep the relevant lines only.
 	ifs.close();
