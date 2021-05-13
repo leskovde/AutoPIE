@@ -36,6 +36,15 @@
     <ClInclude Include="..\..\Common\include\Visitors.h">
       <Filter>include\common</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Actions.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Consumers.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Visitors.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\SliceExtractor.cpp">
@@ -43,6 +52,9 @@
     </ClCompile>
     <ClCompile Include="..\..\Common\src\Helper.cpp">
       <Filter>src\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Actions.cpp">
+      <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

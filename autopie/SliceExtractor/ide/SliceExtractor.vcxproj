@@ -26,9 +26,13 @@
     <ClInclude Include="..\..\Common\include\Options.h" />
     <ClInclude Include="..\..\Common\include\Streams.h" />
     <ClInclude Include="..\..\Common\include\Visitors.h" />
+    <ClInclude Include="..\include\Actions.h" />
+    <ClInclude Include="..\include\Consumers.h" />
+    <ClInclude Include="..\include\Visitors.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Common\src\Helper.cpp" />
+    <ClCompile Include="..\src\Actions.cpp" />
     <ClCompile Include="..\src\SliceExtractor.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -24,36 +24,7 @@
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 
 using namespace clang;
-using namespace ast_matchers;
 using namespace llvm;
-
-class FuncDeclHandler final : public MatchFinder::MatchCallback
-{
-public:
-	std::tuple<int, int> lineRange;
-
-	explicit FuncDeclHandler()
-	{
-	}
-
-	void run(const MatchFinder::MatchResult& result) override
-	{
-		if (const auto decl = result.Nodes.getNodeAs<FunctionDecl>("mainFunction"))
-		{
-			//decl->dump();
-
-			const auto bodyRange = GetPrintableRange(GetPrintableRange(decl->getSourceRange(), *result.SourceManager),
-				*result.SourceManager);
-			
-			const auto startLineNumber = result.Context->getSourceManager().getSpellingLineNumber(bodyRange.getBegin());
-			const auto endLineNumber = result.Context->getSourceManager().getSpellingLineNumber(bodyRange.getEnd());
-			
-			lineRange = std::make_tuple(startLineNumber, endLineNumber);
-			
-			outs() << "Range of the main function: [" << startLineNumber << " - " << endLineNumber << "]\n";
-		}
-	}
-};
 
 /**
  * Extract variables on a given line in a given file.
@@ -99,17 +70,6 @@ int main(int argc, const char** argv)
 
 	assert(inputLanguage != clang::Language::Unknown);
 
-	FuncDeclHandler handlerForMain;
-	MatchFinder finder;
-	finder.addMatcher(functionDecl(hasName("main")).bind("mainFunction"), &handlerForMain);
-
-	auto result = tool.run(tooling::newFrontendActionFactory(&finder).get());
-
-	if (result)
-	{
-		errs() << "The tool returned a non-standard value: " << result << "\n";
-	}
-
 	// Get all lines of the slice.
 	std::vector<int> sliceLines;
 	std::ifstream ifs(SliceFile);
@@ -120,8 +80,7 @@ int main(int argc, const char** argv)
 		sliceLines.push_back(lineNumber);
 	}
 
-	sliceLines.push_back(std::get<0>(handlerForMain.lineRange));
-	sliceLines.push_back(std::get<1>(handlerForMain.lineRange));
+	tool.run(Delta::DeltaDebuggingFrontendActionFactory(context, iteration, partitionCount, iterationResult).get());
 	
 	// Keep the relevant lines only.
 	ifs.close();

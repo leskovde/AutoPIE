@@ -1,64 +1,39 @@
+#ifndef ACTIONS_SLICE_H
+#define ACTIONS_SLICE_H
 #pragma once
-#include <filesystem>
+
 #include <clang/Frontend/FrontendAction.h>
+#include <clang/Tooling/Tooling.h>
 
+#include "../../Common/include/Consumers.h"
 #include "Consumers.h"
-#include "Context.h"
 
-#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
+using namespace Common;
 
-std::string TempName = "tempFile.cpp";
-
-class StatementReduceAction final : public clang::ASTFrontendAction
+namespace SliceExtractor
 {
-	GlobalContext* globalContext = GlobalContext::GetInstance();
+	std::unique_ptr<clang::tooling::FrontendActionFactory> SliceExtractorFrontendActionFactory(std::vector<int>& lines);
 
-public:
-
-	// Prints the updated source file to a new file specific to the current iteration.
-	void EndSourceFileAction() override
+	/**
+	 * Specifies the frontend action for generating source file variants.\n
+	 * Currently creates a unifying consumer.
+	 */
+	class SliceExtractorAction final : public clang::ASTFrontendAction
 	{
-		auto& sm = globalContext->globalRewriter.getSourceMgr();
+		std::vector<int>& lines_;
 
-		llvm::outs() << "STMT REDUCTION ACTION: END OF FILE ACTION:\n";
-		globalContext->globalRewriter.getEditBuffer(sm.getMainFileID()).write(llvm::errs());
-		llvm::outs() << "\n\n";
+	public:
 
-		const auto fileName = "temp/" + TempName;
+		explicit SliceExtractorAction(std::vector<int>& lines) : lines_(lines)
+		{
+		}
 
-		std::error_code errorCode;
-		llvm::raw_fd_ostream outFile(fileName, errorCode, llvm::sys::fs::F_None);
+		std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, llvm::StringRef /*file*/)
+			override
+		{
+			return std::unique_ptr<clang::ASTConsumer>(std::make_unique<SliceExtractorConsumer>(&ci, lines_));
+		}
+	};
+}
 
-		globalContext->lastGeneratedFileName = fileName;
-		
-		globalContext->globalRewriter.getEditBuffer(sm.getMainFileID()).write(outFile); // --> this will write the result to outFile
-		outFile.close();
-	}
-
-	std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, llvm::StringRef file) override
-	{
-		return std::unique_ptr<clang::ASTConsumer>(std::make_unique<StatementReductionASTConsumer>(&ci, globalContext));
-		// pass CI pointer to ASTConsumer
-	}
-};
-
-class CountAction final : public clang::ASTFrontendAction
-{
-	GlobalContext* globalContext = GlobalContext::GetInstance();
-
-public:
-
-	// Prints the number of statements in the source code to the console
-	void EndSourceFileAction() override
-	{
-		llvm::outs() << "COUNT ACTION: END OF FILE ACTION:\n";
-		llvm::outs() << "\tStatement count: " << globalContext->countVisitorContext.GetTotalStatementCount();
-		llvm::outs() << "\n\n";
-	}
-
-	std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance& ci, llvm::StringRef file) override
-	{
-		return std::unique_ptr<clang::ASTConsumer>(std::make_unique<CountASTConsumer>(&ci, globalContext));
-		// pass CI pointer to ASTConsumer
-	}
-};
+#endif
