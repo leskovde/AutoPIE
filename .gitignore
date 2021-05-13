@@ -360,3 +360,5 @@ healthchecksdb
 /autopie/Scripts/slice2.txt
 /autopie/Scripts/slice3.txt
 /autopie/Scripts/out.txt
+/autopie/SliceExtractor/ide/adjustedLineNumber.txt
+/autopie/SliceExtractor/ide/output.c

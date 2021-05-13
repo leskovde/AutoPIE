@@ -93,6 +93,8 @@ int main(int argc, const char** argv)
 	auto const outputFileWithCorrectExtension = RemoveFileExtensions(OutputFile) + LanguageToExtension(inputLanguage);
 	std::ofstream ofs(outputFileWithCorrectExtension);
 
+	int adjustedErrorLine = LineNumber;
+	
 	if (ifs && ofs)
 	{
 		out::Verb() << "Source code after slice extraction:\n";
@@ -107,7 +109,27 @@ int main(int argc, const char** argv)
 
 				ofs << line << "\n";
 			}
+			else
+			{
+				if (i <= LineNumber)
+				{
+					adjustedErrorLine--;
+				}
+			}
 		}
+	}
+	else
+	{
+		errs() << "The input or output file could not be opened.\n";
+		return EXIT_FAILURE;
+	}
+
+	ofs.close();
+	ofs.open("adjustedLineNumber.txt");
+
+	if (ofs)
+	{
+		ofs << adjustedErrorLine;
 	}
 	else
 	{

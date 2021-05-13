@@ -51,7 +51,7 @@ slice_extractor_output = {
     "c": "slice.c",
     "cpp": "slice.cpp"
 }
-adjusted_line_path = ""
+adjusted_line_path = "adjustedLineNumber.txt"
 
 
 def validate_paths():
