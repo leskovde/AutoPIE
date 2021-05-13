@@ -7,11 +7,11 @@ from subprocess import call, run
 from docker.types import Mount
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--file", default=None, type=str, help="The source file to be sliced")
-parser.add_argument("--criterion", default=None, type=str, help="The slicing criterion")
+parser.add_argument("--file", required=True, type=str, help="The source file to be sliced")
+parser.add_argument("--criterion", required=True, type=str, help="The slicing criterion")
 parser.add_argument("-o", "--output", default="output.txt", type=str, help="A series of line numbers contained in the "
                                                                            "slice")
-parser.add_argument("--args", default="", type=str, help="Arguments for the program trace")
+parser.add_argument("--arguments", default="", type=str, help="Arguments for the program trace")
 parser.add_argument("--dynamic", dest="dynamic_slicer", action="store_true",
                     help="Use the dynamic slicer instead of the static slicer")
 parser.add_argument("--static", dest="dynamic_slicer", action="store_false",
@@ -70,16 +70,6 @@ def slice_dg(args):
 
 
 def slice_giri(args):
-    if args.file is None:
-        print("Invalid usage: the --file argument is empty.")
-
-        return
-
-    if args.criterion is None:
-        print("Invalid usage: the --criterion argument is empty.")
-
-        return
-
     print("Copying the input file to the shared medium...")
     call("cp " + args.file + " ~/giri-data/", shell=True)
 
@@ -93,7 +83,7 @@ def slice_giri(args):
     slicer_cmd = "make -C " + directory
 
     makefile_content = "'NAME = " + args.file.split(".")[0] + "\nLDFLAGS = -lm\nINPUT ?= " + \
-                       args.args + "\nCRITERION ?= -criterion-loc=criterion-loc.txt\nMAPPING ?= " + \
+                       args.arguments + "\nCRITERION ?= -criterion-loc=criterion-loc.txt\nMAPPING ?= " + \
                        "-mapping-function=main\ninclude ../../Makefile.common'"
 
     slicer_create_makefile_cmd = "mkdir " + directory + \
@@ -129,7 +119,7 @@ def slice_giri(args):
     print(container.logs())
 
 
-def slice(args):
+def run_slicer(args):
     if args.dynamic_slicer:
         print("RUNNING GIRI SLICER...")
         slice_giri(args)
@@ -145,4 +135,4 @@ def slice(args):
 
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
-    slice(args)
+    run_slicer(args)
