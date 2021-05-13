@@ -129,7 +129,7 @@ def slice_giri(args):
     print(container.logs())
 
 
-def main(args):
+def slice(args):
     if args.dynamic_slicer:
         print("RUNNING GIRI SLICER...")
         slice_giri(args)
@@ -145,4 +145,4 @@ def main(args):
 
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
-    main(args)
+    slice(args)
