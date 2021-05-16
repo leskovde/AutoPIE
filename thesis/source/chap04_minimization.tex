@@ -54,7 +54,7 @@ into consideration.
 
 \begin{defn}[Failure-inducing statement]\label{def04:2}
   Let $E = (location, desc)$ be a runtime error specified by its location 
-  and description. Let the program $\mathcal{P} = (S_1, S_2, \ldots, S_n)$
+  and description. Let the program $\mathcal{P} = (S_1, S_2, \ldots,\-S_n)$
   result in $E$ upon execution.
   We call $S_i$ the \emph{failure-inducing statement} of 
   $E$ if $loc(S_i) = E(location)$.
@@ -107,7 +107,7 @@ minimal variant $\mathcal{P'}$.
 All statements that do not directly contribute to the specified 
 runtime error are removed.
 A non-minimal variant might contain additional non-impactful lines, 
-such as line 32.
+such as line 37.
 
 \begin{figure}[p]
 \begin{minipage}{0.46\textwidth}
@@ -219,7 +219,7 @@ simultaneously.
 It is crucial to make a distinction between those two terms. 
 In this context, the reduction is simply the process of making the program 
 smaller in size. 
-The reduced program must also result in the same source code. 
+The reduced program must also result in the same runtime error. 
 Minimization is built on the same rules as reduction; however, it must 
 fulfill one additional property. 
 No statement of the minimized program can be removed while preserving 
@@ -273,6 +273,19 @@ declarations, and expressions and removing one code unit at a time.
 Algorithm in figure~\ref{alg:naive} describes the naive process. 
 Once the input source code is provided, it is split into $n$ code units.
 Every unit has two possible states: it is either kept or removed.
+Let us represent each statement with a single bit. 
+For a program $\mathcal{P} = \{S_1, \ldots, S_n\}$, we would suffice with 
+a bitfield of size $n$. 
+This bitfield would keep track of whether each bit is kept or removed. 
+Statement $S_i$ is kept if the $i^{th}$ bit in the bitfield is set to $1$. 
+On the other hand, $S_i$ is removed when the $i^{th}$ bit is set to $0$.
+
+The bitfield representation is used for generating every subset of $n$ given
+elements. 
+It works by considering the bitfield as an unsigned binary number and 
+gradually incrementing that number. 
+With each increment, a new variant of the bitfield is generated. 
+The very same approach can be used in naive minimization.
 Analogically to generating every subset of a set of elements, this
 variant generating algoritm results in $2^n$ possible variants.
 
@@ -290,6 +303,7 @@ variant generating algoritm results in $2^n$ possible variants.
 		\State $bitField \leftarrow [{bit}_{n-1}, {bit}_{n-2}, \ldots, {bit}_0]$,  
 			$\forall i \in 0 \ldots n-1 : bit_i = 0$
 		\While{$\exists i \in 0 \ldots n-1 : bit_i = 0$}
+			\State $bitField \leftarrow Increment(bitField)$
 			\State $currentVariant \leftarrow (C_1, C_2, \ldots, C_n)$
 			\For{$i \in 0 \ldots n-1$}
 				\If{bitField[i] = 0}
@@ -314,15 +328,11 @@ variant generating algoritm results in $2^n$ possible variants.
 The naive time complexity is, therefore, the abysmal $\mathcal{O}(2^n)$.
 Moreover, the $2^n$ variants require some verification and classification 
 to determine whether they are minimal or not.
-The correctness of many of the invalid variants can be ruled out at 
-compile-time.
-The rest, however, must be executed and tested for runtime errors.
-
-An efficient way of finding the smallest correct program variant is to rule 
-out programs with compile-time errors, sort the remaining variants by size 
-and verify them from the smallest to the largest.
-Depending on the input program's execution time, the verification might take 
-more time than the already long variant generating step.
+Nevertheless, we can be sure that a set of those $2^n$ variants contains 
+the desired minimal variant.
+The correctness of many of the invalid variants can be ruled out immediately
+since they indeed are not syntactically correct.
+The rest, however, must be adequately tested for the desired runtime error.
 
 The algorithm can be sped up by using the following techniques.
 It is important to keep the input's size as low as possible due to the 
@@ -588,7 +598,7 @@ a rule of thumb for this project.
 	\label{alg:slicing}
 \end{figure}
 
-The proposed systematical solution is described in figure~\ref{alg:slicing}.
+The proposed slicing-based solution is described in figure~\ref{alg:slicing}.
 The input program is sliced statically w.r.t.
 every variable available at the failure-inducing line.
 The slices are then unified and given as the input to a dynamic slicer.
@@ -623,12 +633,13 @@ chunks of code.
 
 \change[inline]{TODO: Add https://youtu.be/UcxF6CVueDM?t=177 as a reference.}
 
+\change[inline]{TODO: Add pseudocode explaining the steps of verification.}
 
-\change[inline]{TODO: Meditate at the thought of using slicing 
-for systematic validation.
-For example, a slice of the original program and the reduced program's 
-slice must not differ in some parts.}
+A simple way of finding the minimal failure-inducing subset of the program is by performing the following steps:
+We sort the generated variants by size, from the smallest to the largest.
+We attempt to compile each variant. If a variant fails, we can rule it out definitely.
+We execute a static analyzer and check its warnings. If a fatal warning or an error are generated, we rule the variant as well.
+We launch an execution environment that provides us with symbol information of the running program. We run the variant inside that environment and observe its output. If the program crashes and generates the same error, it is considered a valid variant. Otherwise, it is ruled out.
 
-One way of achieving systematic validation is by inserting 
-instrumentation code at compile-time.\change{TODO: Verify this statement and explain further.}
-
+Depending on the input program's execution time, the verification might take 
+more time than the already long variant generating step.
