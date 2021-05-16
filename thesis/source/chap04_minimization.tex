@@ -288,7 +288,6 @@ a bitfield of size $n$.
 This bitfield would keep track of whether each bit is kept or removed. 
 Statement $S_i$ is kept if the $i^{th}$ bit in the bitfield is set to $1$. 
 On the other hand, $S_i$ is removed when the $i^{th}$ bit is set to $0$.
-
 The bitfield representation is used for generating every subset of $n$ given
 elements. 
 It works by considering the bitfield as an unsigned binary number and 
@@ -357,7 +356,7 @@ the subset of code unit $u$. I
 t is natural to wonder what exactly do these edges achieve. 
 \change[inline]{TODO: Create an example of \icode{if (...)\{\} else(...)\{\}} and their bodies.} 
 Figure [ref] attempts to illustrate the usefulness of those edges. 
-The example shows an *if-else* statement. 
+The example shows an \icode{if - else} statement. 
 Let us assume that the naive algorithm attempts to remove two code units. 
 First, the code unit \icode{if(...)} is removed while keeping the statements 
 inside the body. 
@@ -370,6 +369,7 @@ The statements from those two branches will be run together.
 Such variant results in an obvious semantical error. 
 While the described process might lead to a smaller failure-inducing program, 
 we believe that such a program is incorrect. 
+
 This semantical error can be avoided by validating the dependency graph 
 mentioned earlier.
 For this example, we start by creating a node $u$ for the \icode{if(...)\{\}} 
@@ -387,6 +387,7 @@ Those parts include the statements body, the else branch, and the body of
 the else branch. 
 By completing the edges between the four nodes, we get the dependency graph 
 that solves our issue. 
+
 The graph, visualized on Figure [ref], states that the body of 
 the \icode{if(...)} statement depends on the \icode{if(...)} statement. 
 Analogically, the \icode{else(...)\{\}} statement and its body depend on 
@@ -514,6 +515,7 @@ the naive reduction described in Section~\ref{chap:naive}.
 The algorithm described below combines static and dynamic slicing, 
 minimization using Delta debugging, and the naive algorithm. 
 The primary point is its preprocessing steps described below. 
+
 It is crucial to keep the input size as low as possible due to the naive 
 algorithm's exponential complexity.  
 The input's size can be significantly reduced by slicing the input program 
@@ -523,6 +525,7 @@ in Section~\ref{chap:staticslicing} and Section~\ref{chap:dynamicslicing} and
 apply them to our problem. 
 The main focus of the comparison should be on two aspects - the size of 
 the slice and the running time of the slicing algorithm. 
+
 It is known that dynamic slices are the smallest they can be. 
 However, they require information available at execution time. 
 The question is whether running the program is necessary. 
@@ -540,6 +543,7 @@ at runtime.
 Static slicing does not suffer from the mentioned issue.  
 It is inexpensive in terms of execution time regardless of the purpose of 
 the sliced program. 
+
 We see that static slicing is a significantly less expensive operation in 
 terms of running time. 
 Out of the two main issues concerning the previously discussed 
@@ -551,6 +555,7 @@ The usage of dynamic slices, as opposed to static, has the mentioned benefit
 of generating smaller slices.
 On the other hand, it has definitive limitations. 
 One such constraint is the requirement to run the said program. 
+
 However, one can perform preprocessing steps to help dynamic slicing run more 
 efficiently.  
 Let us consider a program that performs multiple demanding tasks such as 
@@ -580,6 +585,7 @@ Rice expanded the thought further by stating that all interesting semantic
 properties of a program are undecidable. 
 Without proper and accurate means to determine many wanted properties, we 
 are required to approximate them. 
+
 Amongst such properties is the factor of how effective static slicing is.  
 The approximation will be required in the following sections as well.  
 In particular, the Section concerning program validation will look at this 
@@ -593,9 +599,10 @@ control-flow-altering statements, are less likely to reduce their size
 during static slicing.
 Nonetheless, slicing statically before doing so dynamically has been a rule 
 of thumb for this project.  
+
 We can, however, reap the benefits of both static and dynamic slicing while 
 avoiding running the program. 
-We need to follow the following thought process. 
+We need to follow the ensuing thought process. 
 Since static slicing does not handle branching and other control statements 
 nearly as efficiently as dynamic slicing, we can employ a trick to help.  
 Using the same additional input information as dynamic slicing, i.e., 
@@ -603,6 +610,7 @@ program's arguments, we can provide more specific information to the static
 slicing algorithm.  
 All that is required is to define the arguments with their respective values 
 inside the code. 
+
 This process will be referred to as \emph{argument injection}. 
 Slices generated from this modified source code will be more precise since 
 they will not contain unnecessary branching.  
@@ -658,16 +666,31 @@ The slices are then unified and given as the input to a dynamic slicer.
 Similarly, the dynamic slicer generates slices w.r.t.
 those potentially failure-inducing variables.
 Those dynamic slices are then unified.
+
 The intermediate result extracted after performing the two slicing types 
 should be significantly smaller than the original program.
-It is then fed to a more precise and less efficient algorithm for further 
-reduction.
 Since the result so far contains slices for multiple variables, it might not 
 be minimal yet.
 However, it can be assumed that it is valid, i.e., ends with the desired 
 runtime error.
-We could implement the naive approach or Delta debugging as the more 
-precise algorithm.
+Using the observations made in Section~\ref{chap:naive} and 
+Section~\ref{chap:deltaimplementation}, we can create an efficient and 
+precise minimizing algorithm that takes care of the penultimate step 
+in Figure~\ref{alg:slicing}. 
+We utilize a pipeline of the minimizing Delta debugging algorithm and 
+the naive reduction:
+\begin{enumerate}
+  \item The sliced intermediate result is fed to the Delta debugging 
+  algorithm. 
+  Due to its smaller size, the intermediate result contributes to a lower 
+  amount of Delta iterations. 
+  Therefore, Delta produces a local minimum more efficiently.
+  \item The local minimum can be optimized to the minimal variant by running 
+  the naive reduction.
+\end{enumerate}
+Each step of the preprocessing and the pipeline leads to a smaller result. 
+Additionally, each step benefits from the size reduction caused by 
+the previous steps.
 
 Another thought-about approach is hybrid slicing.\change{TODO: Get more information on hybrid slicing.}
 The comparison of hybrid slicing and the combination of static and dynamic 
@@ -677,7 +700,6 @@ programs with a short execution time.
 The static-dynamic combination could work better on larger-scale 
 applications, where static slicing can remove unnecessarily long-running 
 chunks of code.
-
 
 \section{Program verification}\label{chap:verification}
 
