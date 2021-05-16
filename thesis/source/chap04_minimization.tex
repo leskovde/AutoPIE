@@ -342,6 +342,8 @@ The correctness of many of the invalid variants can be ruled out immediately
 since they indeed are not syntactically correct.
 The rest, however, must be adequately tested for the desired runtime error.
 
+\subsection{Heuristics}
+
 The algorithm can be sped up by using various heuristics. 
 The search space normally contains variants that are syntactically or 
 semantically incorrect. 
@@ -352,10 +354,51 @@ An example of such a mechanism is keeping track of code unit dependencies.
 Let us create a directed graph of dependencies. 
 Each node of the graph represents a code unit in the input source code. 
 There is an edge from node $u$ to node $v$ if the code unit $v$ is 
-the subset of code unit $u$. I
-t is natural to wonder what exactly do these edges achieve. 
-\change[inline]{TODO: Create an example of \icode{if (...)\{\} else(...)\{\}} and their bodies.} 
-Figure [ref] attempts to illustrate the usefulness of those edges. 
+the subset of code unit $u$. 
+It is natural to wonder what exactly do these edges achieve. 
+
+\begin{figure}[H]
+\begin{minipage}{0.46\textwidth}
+\begin{lstlisting}[basicstyle=\small, caption=An if - else statement.,
+  language=C++, label={lst:dependencycodeoriginal}]
+if (x % 2 == 0)
+{
+	CreateEvenSpacedTable();
+}
+else
+{
+	CreateOddSpacedTable();
+	trim = true;
+}
+\end{lstlisting}
+\end{minipage}
+\hfill
+\begin{minipage}{.45\textwidth}
+\begin{lstlisting}[basicstyle=\small, caption=An invalid variant 
+of~\ref{lst:dependencycodeoriginal}., language=C++, numbers=right,
+  escapechar=\%, label={lst:dependencycoderemoved}]
+	
+	
+CreateEvenSpacedTable();
+	
+	
+	
+CreateOddSpacedTable();
+trim = true;
+%%
+
+\end{lstlisting}
+\end{minipage}
+\caption{An example of a semantically incorrect variant. The original source
+code snippet in Listing~\ref{lst:dependencycodeoriginal} performs different 
+actions in each branch. A variant with removed control statements shown in
+Listing~\ref{lst:dependencycoderemoved} performs both of those inconsistent 
+actions during the same run.}
+\label{lst:dependencycode}
+\end{figure}
+
+Figure~\ref{lst:dependencycode} attempts to illustrate the usefulness 
+of those edges. 
 The example shows an \icode{if - else} statement. 
 Let us assume that the naive algorithm attempts to remove two code units. 
 First, the code unit \icode{if(...)} is removed while keeping the statements 
@@ -383,13 +426,21 @@ its body, respectively.
 The nodes $v$, $x$, and $y$ are subsets of $u$.  
 This holds since the code unit $u$ contains both the \icode{if(...)} 
 statement and other parts. 
-Those parts include the statements body, the else branch, and the body of 
+Those parts include the statement's body, the else branch, and the body of 
 the else branch. 
 By completing the edges between the four nodes, we get the dependency graph 
 that solves our issue. 
 
-The graph, visualized on Figure [ref], states that the body of 
-the \icode{if(...)} statement depends on the \icode{if(...)} statement. 
+\begin{figure}[h]\centering
+\includegraphics[scale=1.5]{dependency_graph}
+\caption{A dependency graph of the source code shown in 
+Listing~\ref{lst:dependencycodeoriginal}}
+\label{img:dependencygraph}
+\end{figure}
+
+The graph, visualized on Figure~\ref{img:dependencygraph}, states that 
+the body of the \icode{if(...)} statement depends on the \icode{if(...)} 
+statement. 
 Analogically, the \icode{else(...)\{\}} statement and its body depend on 
 the \icode{if(...)} statement. 
 We can use this information and only remove parent nodes if all their 
@@ -404,13 +455,46 @@ It can also be extended further to include syntax errors.
 One such error that immediately comes to mind is referencing a removed 
 declaration. 
 Assume that the algorithm has generated a variant in which a variable 
-declaration is removed. 
+declaration is removed, such as the one shown in Figure~\ref{lst:declref}.
 The algorithm has not, however, removed usages of the declared variable. 
 Such variant will fail at compile time. 
 However, we can avoid generating this variant by creating edges from 
 the variable declaration $u$ to variable references
 $\{v_1, v_2, \ldots, v_k\}$. 
-\change[inline]{TODO: Add an example of the removed decl reference.}
+
+\begin{figure}[H]
+\begin{minipage}{0.46\textwidth}
+\begin{lstlisting}[basicstyle=\small, caption=A variable declaration and its 
+usage.,
+  language=C++, label={lst:declreforiginal}]
+int factor = 3;
+int x = 0xffff;
+
+while (x > 0)
+{
+	std::cout << factor * x << "\n";
+}
+\end{lstlisting}
+\end{minipage}
+\hfill
+\begin{minipage}{.45\textwidth}
+\begin{lstlisting}[basicstyle=\small, caption=Reference to an invalid 
+declaration., language=C++, numbers=right, label={lst:declrefremoved}]
+int factor = 3;
+
+
+while (x > 0)
+{
+	std::cout << factor * x << "\n";
+}
+\end{lstlisting}
+\end{minipage}
+\caption{An example of a syntactically incorrect variant. The declaration
+of \icode{x} in Listing~\ref{lst:declreforiginal} was removed
+in Listing~\ref{lst:declrefremoved}, while the usage of \icode{x}
+was kept.}
+\label{lst:declref}
+\end{figure}
 
 \section{Delta debugging}\label{chap:deltaimplementation}
 
