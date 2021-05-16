@@ -209,11 +209,6 @@ to occur. }
 \label{lst:reductionexample}
 \end{figure}
 
-\change[inline]{TODO: Come up with an actual way to make sure a program 
-is minimal.}
-\change[inline]{TODO: Come up with an approximation to guess whether
-the program will terminate.}
-
 So far, this chapter has talked about both minimization and reduction 
 simultaneously. 
 It is crucial to make a distinction between those two terms. 
@@ -496,6 +491,23 @@ was kept.}
 \label{lst:declref}
 \end{figure}
 
+Another helpful heuristic involves predicting a variant's size before 
+the variant is generated. 
+We can significantly improve the best case and the average time complexities 
+by introducing a size metric. 
+Let us keep track of every code unit's size. 
+Upon creating a bitfield, we can determine the variant's size by analyzing 
+the bitfield. 
+By summing up the size of each present code unit, i.e., each bit set to 1, 
+we get the variant's total size. 
+Such metrics can be used to enumerate bitfields and sort them based on their 
+size. 
+Once we have a sorted list of bitfields, we can start generating variants 
+and validating them. 
+We can then terminate the algorithm upon finding the first valid variant. 
+This heuristic saves time and memory that would otherwise be spent on 
+generating all possible variants.
+
 \section{Delta debugging}\label{chap:deltaimplementation}
 
 Zeller's Delta debugging \cite{Zeller99, Zeller02, Zeller01} has been 
@@ -656,13 +668,11 @@ programs.
 However, static slicing could be used before just any attempt at dynamic 
 slicing due to its low running time. 
 
-\change[inline]{TODO: Add references to the halting problem and 
-Rice's theorem.}
-
 The improvement in the form of a static slice is genuinely convenient.  
 However, checking whether the improvement has any effect before running 
 dynamic slicing is not an easy task.  
-The issue stems from the Halting problem and Rice's theorem.  
+The issue stems from the halting problem~\citep{Turing36} and 
+Rice's theorem~\citep{Rice53}.  
 The halting problem states that it is undecidable whether a program 
 terminates on its particular input.  
 Rice expanded the thought further by stating that all interesting semantic 
@@ -776,7 +786,12 @@ Each step of the preprocessing and the pipeline leads to a smaller result.
 Additionally, each step benefits from the size reduction caused by 
 the previous steps.
 
-Another thought-about approach is hybrid slicing.\change{TODO: Get more information on hybrid slicing.}
+Another thought-about approach is hybrid slicing~\citep{Misherghi06}.
+This slicing technique is a compromise between static and dynamic slicing. 
+The main benefit is that it produces smaller slices than static slicing. 
+It also uses fewer resources than dynamic slicing. 
+Hybrid slicing works by stopping at a set of breakpoints and using 
+the information available at those points.
 The comparison of hybrid slicing and the combination of static and dynamic 
 could yield exciting results.
 It can be assumed that hybrid slicing would be more effective on smaller 
@@ -787,15 +802,71 @@ chunks of code.
 
 \section{Program verification}\label{chap:verification}
 
-\change[inline]{TODO: Add https://youtu.be/UcxF6CVueDM?t=177 as a reference.}
+Once we generate a variant, we must ensure that the variant is correct. 
+A correct variant results in the same runtime error as the original program. 
+Moreover, the error must arise in the exact location. 
+Section~\ref{chap:systematic} introduced the reader to Rice's theorem. 
+This theorem is relevant in this chapter as well. 
+By validating a variant, we are searching for a non-trivial property that 
+cannot be obtained statically. 
+This fact leaves two possible options. 
+We can either determine the validness naively or approximate it. 
+The latter is undoubtedly more exciting than the former. 
+There is room for improvement when it comes to approximations. 
+We could have come up with new methods altogether. 
+While there might be several sophisticated validation techniques involving 
+flow analysis, instrumentation, and even pattern recognition, we settled for 
+a naive approach. 
+This decision significantly lowers the amount of time required for this 
+project. 
+Furthermore, it allows us to focus on the minimization itself.
 
-\change[inline]{TODO: Add pseudocode explaining the steps of verification.}
+A simple way of finding the minimal failure-inducing subset of the program is 
+by performing the following steps:
+\begin{itemize}
+  \item We attempt to compile each variant. 
+  If a variant fails, we can rule it out definitely.
+  \item We execute a static analyzer and check its warnings. 
+  If a fatal warning or an error are generated, we rule the variant out as 
+  well.
+  \item We launch an execution environment that provides us with symbol 
+  information of the running program. 
+  We run the variant inside that environment and observe its output. 
+  If the program crashes and generates the same error, it is considered 
+  a valid variant. 
+  Otherwise, it is ruled out.
+\end{itemize}
+These three steps define three barriers a program must overcome. 
+Each barrier has a great chance of invaliding a typical variant. 
+This chance increases the further into the verification the variant gets. 
+Let us discuss these three steps in more detail.
 
-A simple way of finding the minimal failure-inducing subset of the program is by performing the following steps:
-We sort the generated variants by size, from the smallest to the largest.
-We attempt to compile each variant. If a variant fails, we can rule it out definitely.
-We execute a static analyzer and check its warnings. If a fatal warning or an error are generated, we rule the variant as well.
-We launch an execution environment that provides us with symbol information of the running program. We run the variant inside that environment and observe its output. If the program crashes and generates the same error, it is considered a valid variant. Otherwise, it is ruled out.
+\paragraph{Compilation.} The original program was compiled and executed by 
+the user. 
+We can expect a smaller variant to be compiled using the same compiler 
+invocation as the original program. 
+A successful compilation is the first step towards a valid reduced program. 
+The compilation will rule out most syntactical errors. 
+It does not, however, catch semantically invalid variants. 
+Programs containing infinite loops and wrong control flow might pass 
+the compilation just fine.
+
+\paragraph{Static analysis.} The compilation above has its pitfalls. 
+Invalid programs might be compiled without any issues. 
+These programs would then cause issues when executing them: memory leaks, 
+infinite loops, and pointless execution flow. 
+By utilizing static analyzers, we increase our chances of catching these 
+errors before executing the variant. This step feeds the variant's source 
+code into a static analyzer. 
+The analyzer might then return warnings or errors concerning the source code. Fatal errors are ruled out immediately. Other severe issues should be handled using hand-written rules.
+
+\paragraph{Execution.} Once a variant is compiled and free of obvious bugs, 
+it is launched in a debugging environment. 
+During its execution, we are checking the program for any runtime errors. 
+Once an error occurs, we observe its location. 
+This check can be done using the messages shown by the debugger or by 
+analyzing the top stack frame.
 
 Depending on the input program's execution time, the verification might take 
-more time than the already long variant generating step.
+more time than the already long variant generating step. 
+Future work might tackle this issue and improve the validation's performance.
