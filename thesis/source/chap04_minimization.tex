@@ -270,6 +270,15 @@ declarations, and expressions and removing one code unit at a time.
   correct.
 \end{defn}
 
+A code unit represents any syntactically correct subset of the original 
+program. 
+Working with all code units is not practical in our case. 
+Instead, we will focus on atomic code units. 
+Atomic code units are the minor code units in the given program. 
+For example, the atomic code unit might be a \icode{for} loop with its body 
+or an assignment expression, such as \icode{x = 3;}.
+The rest of the text will refer to atomic code units simply as code units. 
+
 Algorithm in figure~\ref{alg:naive} describes the naive process. 
 Once the input source code is provided, it is split into $n$ code units.
 Every unit has two possible states: it is either kept or removed.
@@ -334,62 +343,73 @@ The correctness of many of the invalid variants can be ruled out immediately
 since they indeed are not syntactically correct.
 The rest, however, must be adequately tested for the desired runtime error.
 
-The algorithm can be sped up by using the following techniques.
-It is important to keep the input's size as low as possible due to the 
-algoritm's exponential complexity.
-The input's size can be significantly reduced by performing static 
-slicing of the input program as a preprocessing step.
-Compared to additional iterations of the naive approach, static slicing is 
-a significantly less expensive operation in terms of running time.
-Furthermore, it does not execute the input program, saving additional time.
-Out of the two main issues concerning the current discussed approach - 
-the size of the input and its execution time - static slicing helps 
-to eliminate one.
-
-Both the input size and subsequent execution time could both be brought 
-down by using dynamic slicing.
-The usage of dynamic slices, as opposed to static, has its potential benefits.
-On the other hand, it has definitive limitations.
-One such constraint is the requirement to run the said program.
-This point will be discussed in more detail later; however, let us consider 
-static slicing for this approach to minimize the number of program executions.
-Since static slicing does not handle branching and other control statements 
-nearly as efficiently as dynamic slicing, we can employ a simple trick 
-to help.
-Using the same additional input information as dynamic slicing, i.e., 
-program arguments, we can provide more specific information 
-to the static slicing algorithm.
-All that is required is to define the arguments with their respective 
-values inside the code.
-Slices generated from this modified source code will be more precise 
-since they will not contain unnecessary branching.
-It is important to restate that this modification only affects control 
-statements dependent on the program's arguments.
-If the arguments do not appear in the original, unmodified static slice, 
-their values will not affect the slice's size.
-Input modified using the mentioned trick is guaranteed to be smaller or 
-equal in size.
-
-Furthermore, removing only a single code unit, i.e., a statement, 
-an expression, or a declaration, and leaving its complement sometimes 
-generates an invalid program variant.
-This problem can arise when removing a variable declaration.
-Therefore, the removal of some code units should also remove their potential 
-dependencies.
-This case does not only concern the mentioned variable declarations but 
-function declaration, function definitions, and struct, enum, 
-and class declarations as well.
-
-These proposed modifications can potentially reduce the number of iterations.
-However, lower runtime complexity is not guaranteed.
-Static slicing may help in programs whose intent is to perform multiple 
-independent tasks, but it might not contribute anything to the complexity 
-decrease otherwise.
-The removal of dependent constructs described in the second point should be 
-used regardless of the input's nature, though it still does not ensure 
-the algorithms' quicker running time for every input.
-The running time will especially be left unchanged in programs that do not 
-employ structured or object-oriented programming.
+The algorithm can be sped up by using various heuristics. 
+The search space normally contains variants that are syntactically or 
+semantically incorrect. 
+Generating such variants and validating them needlessly wastes time. 
+We can overcome this issue by introducing a mechanism that validates some 
+aspects of the variant beforehand. 
+An example of such a mechanism is keeping track of code unit dependencies. 
+Let us create a directed graph of dependencies. 
+Each node of the graph represents a code unit in the input source code. 
+There is an edge from node $u$ to node $v$ if the code unit $v$ is 
+the subset of code unit $u$. I
+t is natural to wonder what exactly do these edges achieve. 
+\change[inline]{TODO: Create an example of \icode{if (...)\{\} else(...)\{\}} and their bodies.} 
+Figure [ref] attempts to illustrate the usefulness of those edges. 
+The example shows an *if-else* statement. 
+Let us assume that the naive algorithm attempts to remove two code units. 
+First, the code unit \icode{if(...)} is removed while keeping the statements 
+inside the body. 
+Second, the code unit \icode{else(...)} is removed while, again, keeping 
+the statements inside the body. 
+Originally, the input program would never run statements in those two 
+branches in the same execution path. 
+However, the generated variant invalidates the original behavior. 
+The statements from those two branches will be run together. 
+Such variant results in an obvious semantical error. 
+While the described process might lead to a smaller failure-inducing program, 
+we believe that such a program is incorrect. 
+This semantical error can be avoided by validating the dependency graph 
+mentioned earlier.
+For this example, we start by creating a node $u$ for the \icode{if(...)\{\}} 
+statement. 
+Once we encounter the body of the \icode{if(...)} statement, we add it to 
+the dependency graph as node $v$. 
+The \icode{if(...)} statement's children also syntactically contain 
+the \icode{else(...)\{\}} statement. 
+Therefore, we add nodes $x$ and $y$ for the \icode{else(...)} statement and 
+its body, respectively. 
+The nodes $v$, $x$, and $y$ are subsets of $u$.  
+This holds since the code unit $u$ contains both the \icode{if(...)} 
+statement and other parts. 
+Those parts include the statements body, the else branch, and the body of 
+the else branch. 
+By completing the edges between the four nodes, we get the dependency graph 
+that solves our issue. 
+The graph, visualized on Figure [ref], states that the body of 
+the \icode{if(...)} statement depends on the \icode{if(...)} statement. 
+Analogically, the \icode{else(...)\{\}} statement and its body depend on 
+the \icode{if(...)} statement. 
+We can use this information and only remove parent nodes if all their 
+children are removed as well. 
+This simple rule prevents invalid execution flow in the shown example. 
+A variant generated by following this rule has the bodies of \icode{if(...)} 
+and \icode{else(...)} only if \icode{if(...)} and \icode{else(...)} are 
+present as well. 
+Creating and following a graph of dependencies is a heuristic worth 
+deploying in this project. 
+It can also be extended further to include syntax errors. 
+One such error that immediately comes to mind is referencing a removed 
+declaration. 
+Assume that the algorithm has generated a variant in which a variable 
+declaration is removed. 
+The algorithm has not, however, removed usages of the declared variable. 
+Such variant will fail at compile time. 
+However, we can avoid generating this variant by creating edges from 
+the variable declaration $u$ to variable references
+$\{v_1, v_2, \ldots, v_k\}$. 
+\change[inline]{TODO: Add an example of the removed decl reference.}
 
 \section{Delta debugging}\label{chap:deltaimplementation}
 
@@ -489,76 +509,109 @@ searching for optimal results.
 
 \section{Slicing-based solution}\label{chap:systematic}
 
-As mentioned in section~\ref{chap:naive}, both static and dynamic slicing 
-need to be analyzed further.
-The main focus of the discussion should be the running time.
-It is known that dynamic slices are the smallest they can be.
-However, they require information available at execution time.
-The question is whether running the program is necessary.
-
-We know that the program that is being minimized has been run before.
+The slicing-based approach attempts to help with the shortcomings of 
+the naive reduction described in Section~\ref{chap:naive}.
+The algorithm described below combines static and dynamic slicing, 
+minimization using Delta debugging, and the naive algorithm. 
+The primary point is its preprocessing steps described below. 
+It is crucial to keep the input size as low as possible due to the naive 
+algorithm's exponential complexity.  
+The input's size can be significantly reduced by slicing the input program 
+as a preprocessing step.  
+Let us compare the two slicing techniques described 
+in Section~\ref{chap:staticslicing} and Section~\ref{chap:dynamicslicing} and 
+apply them to our problem. 
+The main focus of the comparison should be on two aspects - the size of 
+the slice and the running time of the slicing algorithm. 
+It is known that dynamic slices are the smallest they can be. 
+However, they require information available at execution time. 
+The question is whether running the program is necessary. 
+We know that the program that is being minimized has been run before. 
 Hence the availability of the information about the encountered runtime 
-error.
+error. 
 If the program ran deterministically, it would have to terminate in future 
-executions as well.
-That is considering it would run with the same arguments as previously.
-We can therefore conclude that the program terminates.
+executions as well.  
+That is considering it would run with the same arguments as previously.  
+We can therefore conclude that the program terminates.  
 The time of the termination might vary depending on the purpose of 
-the program.
+the program.  
 For server-like applications, it might take months to encounter an error 
-at runtime.
-Static slicing does not suffer from the mentioned issue.
-It is inexpensive in terms of execution time regardless of the purpose 
-of the sliced program.
-With the arguments trick mentioned in chapter~\ref{chap:naive}, 
-static slices can be as small as dynamic ones.
-Minimality of the slice is, however, not guaranteed.
-
-It is safer to employ dynamic slicing to get the smallest slices possible.
+at runtime. 
+Static slicing does not suffer from the mentioned issue.  
+It is inexpensive in terms of execution time regardless of the purpose of 
+the sliced program. 
+We see that static slicing is a significantly less expensive operation in 
+terms of running time. 
+Out of the two main issues concerning the previously discussed 
+approaches - the input size and its execution time - static slicing helps to 
+eliminate both. 
+Both the input size and subsequent execution time could both be brought down 
+further by using dynamic slicing.  
+The usage of dynamic slices, as opposed to static, has the mentioned benefit 
+of generating smaller slices.
+On the other hand, it has definitive limitations. 
+One such constraint is the requirement to run the said program. 
 However, one can perform preprocessing steps to help dynamic slicing run more 
-efficiently.
-Let us consider a program that performs multiple demanding tasks 
-such as computations.
-These tasks are primarily independent, and their running time is long.
-Using dynamic slicing alone would be inconvenient.
+efficiently.  
+Let us consider a program that performs multiple demanding tasks such as 
+computations.  
+These tasks are primarily independent, and their running time is longspun.  
+Using dynamic slicing alone would be inconvenient.  
 However, by first employing static slicing to remove these long-running 
-unnecessary tasks, the program's execution time can be significantly reduced.
-The reduced program could then be sliced dynamically.
+unnecessary tasks, the program's execution time can be significantly reduced.  
+The reduced program could then be sliced dynamically.  
 The result would be a minimal slice at a fraction of the original time 
-compared to dynamic slicing alone.
-
+compared to dynamic slicing alone. 
 This crafted ideal use case only concerns a very narrow range of existing 
-programs.
-However, due to its low running time, static slicing could be used before 
-just about any attempt at dynamic slicing.
+programs.  
+However, static slicing could be used before just any attempt at dynamic 
+slicing due to its low running time. 
 
 \change[inline]{TODO: Add references to the halting problem and 
 Rice's theorem.}
 
-The improvement in the form of a static slice is genuinely convenient.
+The improvement in the form of a static slice is genuinely convenient.  
 However, checking whether the improvement has any effect before running 
-dynamic slicing is not an easy task.
-The issue stems from the Halting problem and Rice's theorem.
+dynamic slicing is not an easy task.  
+The issue stems from the Halting problem and Rice's theorem.  
 The halting problem states that it is undecidable whether a program 
-terminates on its particular input.
+terminates on its particular input.  
 Rice expanded the thought further by stating that all interesting semantic 
-properties of a program are undecidable.
-Without proper and accurate means to determine many wanted properties, 
-we are required to approximate them.
-
-Amongst such properties is the factor of how effective static slicing is.
-The approximation will be required in the following sections as well.
-In particular, the section concerning program validation will look at this 
-issue in more detail.
+properties of a program are undecidable. 
+Without proper and accurate means to determine many wanted properties, we 
+are required to approximate them. 
+Amongst such properties is the factor of how effective static slicing is.  
+The approximation will be required in the following sections as well.  
+In particular, the Section concerning program validation will look at this 
+issue in more detail.  
 One way of guessing the effectiveness of static slicing in terms of size 
-reduction is by analyzing the program's branching factor.
-By employing a metric for the number and density of control-flow altering 
-statements, we can approximate static slicing's relative performance.
+reduction is by analyzing the program's branching factor. 
+We can approximate static slicing's relative performance by employing 
+a metric for the number and density of control-flow altering statements.  
 It is assumed that programs with a high branching factor, i.e., with more 
 control-flow-altering statements, are less likely to reduce their size 
 during static slicing.
-Nonetheless, slicing statically before doing so dynamically has been 
-a rule of thumb for this project.
+Nonetheless, slicing statically before doing so dynamically has been a rule 
+of thumb for this project.  
+We can, however, reap the benefits of both static and dynamic slicing while 
+avoiding running the program. 
+We need to follow the following thought process. 
+Since static slicing does not handle branching and other control statements 
+nearly as efficiently as dynamic slicing, we can employ a trick to help.  
+Using the same additional input information as dynamic slicing, i.e., 
+program's arguments, we can provide more specific information to the static 
+slicing algorithm.  
+All that is required is to define the arguments with their respective values 
+inside the code. 
+This process will be referred to as \emph{argument injection}. 
+Slices generated from this modified source code will be more precise since 
+they will not contain unnecessary branching.  
+It is important to restate that this modification only affects control 
+statements dependent on the program's arguments.  
+If the arguments do not appear in the original, unmodified static slice, 
+their values will not affect the slice's size.  
+Input modified using argument injection is guaranteed to be smaller or equal 
+in size.
 
 \begin{figure}[h]
 	\hrule height.8pt depth0pt \kern2pt
@@ -615,9 +668,6 @@ However, it can be assumed that it is valid, i.e., ends with the desired
 runtime error.
 We could implement the naive approach or Delta debugging as the more 
 precise algorithm.
-
-\change[inline]{TODO: If a more sophisticated final algorithm is 
-created, mention it.}
 
 Another thought-about approach is hybrid slicing.\change{TODO: Get more information on hybrid slicing.}
 The comparison of hybrid slicing and the combination of static and dynamic 
