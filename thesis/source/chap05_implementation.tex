@@ -128,54 +128,231 @@ The following subsections will describe each idea proposed in previous
 chapters. 
 Each subsection will then outline components used by its particular idea.
 
+\subsection*{Recursive visitor}
+
+Some of the ideas in the following sections require us to traverse and alter 
+the AST.
+As explained in Section~\ref{chap:ast}, LibTooling allows us to traverse 
+the AST using two methods. 
+Splitting the code into code units could be done with either 
+the \icode{RecursiveASTVisitor} or \icode{ASTMatchers}. 
+We chose to implement the visitor interface to preserve more consistency 
+across the project. 
+Using a LibTooling visitor requires implementing three classes. 
+Types of their implementation are described in detail in the following 
+paragraphs.
+
 \paragraph{Actions.} Each derivation of \icode{ASTFrontendAction} can have 
 its own preprocessing and postprocessing steps.
 Other than performing an action before and after a file is handled, it also 
 creates a specific visitor.
-The \icode{Actions.h} and \icode{Actions.cpp} files show concrete derivations 
-of \icode{ASTFrontendAction}.
-Moreover, some of the derivations use their custom factories.
+In this project, we only utilize \icode{ASTFrontendAction} to create 
+a consumer.
+Moreover, the usage of actions tends to be module-specific. 
+Usually, each component has its \emph{Actions.cpp} and \emph{Actions.h} files.
+Further, some of the derivations use their custom factories.
 By default, any \icode{ASTFrontendAction} can be created by calling 
 the \icode{FrontendActionFactory::create()} method.
-However, this function cannot provide any arguments for concrete 
-\icode{ASTFrontendAction} implementations.
-A workaround can be seen in the \icode{Actions.cpp} file, which contains 
+The method uses the default constructor and thus cannot provide any 
+arguments for concrete \icode{ASTFrontendAction} implementations.
+A workaround can be seen in \emph{Actions.cpp} files, most of which contain 
 a custom factory.
-The factory takes the necessary parameters and passes them to 
-a \icode{Consumer} instance in its \icode{create()} method.
+The factory takes the necessary parameters, calls the desired constructor,
+and passes them to a \icode{Consumer} instance in its \icode{create()} method.
 
-\paragraph{Consumers.} High-level actions have been coded into 
-\icode{Consumer} implementations.
-Current \icode{Consumer} classes serve specific purposes.
-For example, the \icode{Vari\-ant\-Generation\-Consumer} \change[]{TODO: Change to VariantGeneratingConsumer} 
-does not invoke any visitor instances.
-Instead, it keeps two different \icode{Consumer} objects.
-The pair of consumers has its required input and output.
-The \icode{Variant\-Generation\-Consumer} unifies the interface between the two 
-consumers and allows them to communicate.
-Thus, these concrete \icode{Consumer} classes also serve as a middleman for 
-data transfers between visitors and the caller.
-An example of a consumer action would be generating every possible program 
-variant.
-The \icode{Consumer} contains the generating loop.
-It then dispatches a visitor inside the loop.
-The visitor might return results, which the consumer stores and uses for 
-future operations.
-An example of data transfer might be specifying how a variant should look.
-This might be done by passing an object to the visitor.
-The visitor could then return a string representing that variant to 
-the consumer.
+\paragraph{Consumers.} This project distinguishes two types of 
+\icode{Consumer} implementations. 
+The first is a module-specific type. 
+These \icode{Consumer} implementations contain high-level actions of 
+a specific algorithm and are used for data transfer. 
+For example, the \icode{VariantGeneratingConsumer} does not invoke any 
+visitor instances. 
+Instead, it keeps references to two more granular \icode{Consumer} objects. 
+The \icode{VariantGeneratingConsumer} contains the main loop of the naive 
+algorithm shown in Figure~\ref{chap:naive}. 
+The pair of more granular consumers then carries out specific actions. 
+The module-specific consumer also handles data exchanges between its more 
+specific workers. 
+One way of doing these exchanges is by keeping data structure instances 
+inside the parent consumer. 
+Another is by accessing the worker's internal states, either through their 
+fields or getter methods. 
+In summary, the module-specific consumer's job is to organize the granular 
+parts of an algorithm, execute their actions, and collect their results.
 
-\paragraph{Visitors.} In this project, visitors perform relatively short 
-actions.
-They might collect information during their traversal lifetime and return 
-that information once the AST has been traversed.
-They might perform more complicated \icode{Rewri\-ter} actions based on the 
-current node type.
-An example of an essential visitor for this project is 
-the \icode{MappingASTVisitor}.
-The purpose of this class is to split the code into units.
-Furthermore, it also specifies the dependencies between these units.
+The second \icode{Consumer} type is the shared consumer. 
+These consumers are used for dispatching shared visitors, reporting their 
+state, and collecting their data. 
+The shared consumer responsible for code unit separation is 
+the \icode{DependencyMappingASTConsumer}. 
+It dispatches a concrete visitor to the top-most node and offers getter 
+methods to retrieve the visitor's data. 
+This consumer also contains some logic in its 
+\icode{HandleTranslationUnit} method. 
+Other than dispatching the visitor, it also saves a visualization of 
+the current AST. 
+Other shared consumers might contain different logic in that method.
+
+
+\paragraph{Visitors.} Visitors are once again separated into two types. 
+A specific algorithm might use its unique visitor implementation to do 
+an action such as slice extraction. 
+This type of visitor is tied to a corresponding module-specific consumer. 
+Similarly, shared visitors are also bound to their corresponding shared 
+consumers. 
+However, shared visitors are used for tasks that are used in both the naive 
+and Delta algorithms. 
+Those tasks are the node mapping and the variant generation. 
+In our case, visitors contain the logic of a single iteration. 
+Be it an iteration of the naive minimization or the Delta debugging; 
+visitors are dispatched polynomially or even exponentially many times. 
+The logic generally contains rules for handling each type of language 
+construct. 
+Two examples of such rules are:
+\begin{itemize}
+  \item Skipping the traversal of an implicit cast node of type 
+  \icode{ImplicitCastExpr}, since removing it will not alter the source code.
+  \item Creating a code unit for each statement that is not an expression.
+\end{itemize}
+The logic of a shared visitor is reused in multiple projects. 
+This logic might include splitting the source code into code units. 
+A module-specific visitor's logic is oriented to a particular problem, 
+such as scanning the locations of statements in the code.
+
+\subsection*{Code units}
+
+Initially, a code unit was defined as any syntactically correct subset of 
+the source code. 
+It was then narrowed down to an atomic code unit - the smallest sensible 
+syntactically correct source code element. 
+Both the naive and the Delta algorithms use code units to perform their 
+reductions. 
+The goal is to split a given source code into partitions that can be later 
+kept or removed. 
+Those partitions would ideally not overlap and could be therefore 
+independently removed.
+
+We can split the input source code into code units by traversing its AST 
+with a specified granularity. 
+The idea is to analyze nodes based on hand-written rules. 
+These rules specify which nodes are worth visiting and how to process them. 
+While we are partitioning the source code, we might as well map the code's 
+dependencies. 
+This mapping can be done by extending our rules to perform specific lookup 
+operations during the traversal. 
+For example, the algorithm looks up all variable usages for a given variable 
+declaration node. 
+The results of those lookups are then kept in the dependency graph described 
+in Section~\ref{chap:heuristics}.
+
+\paragraph{Consumers.} The single consumer dedicated to code unit separation 
+is implemented in the \icode{DependencyMappingASTConsumer} class. 
+The consumer serves as a middle man for data transfers. 
+Notably, it can retrieve data for the following structures:
+\begin{itemize}
+  \item Node mapping - this mapping is a lookup table that transitions 
+  between a node's internal ID given by Clang and the current traversal 
+  order number. 
+  The traversal order number specifies the order in which the current node 
+  is visited once the visitor is dispatched using 
+  \icode{HandleTranslationUnit}. 
+  The mapping is later transferred to other visitors to achieve the same 
+  traversal order.
+  \item Code units count - this property returns the total amount of code 
+  units once their partitioning is complete.
+  \item Dependency graph - is represented by a directional graph of nodes, 
+  where each node is represented using its traversal order number. 
+  Nodes in the graph might also contain additional information used for 
+  debugging, such as their type and the code snippet they represent.
+  \item Skipped nodes - this container serves as a list of nodes not worth 
+  visiting. 
+  These nodes might be too granular or solely implicit.
+\end{itemize}
+The consumer dispatches its concrete visitor, which carries most of 
+the logic. 
+The only standalone logic in the consumer is to dump a visualization of 
+the source code based on the dependency graph.
+
+\paragraph{Visitors.} What becomes a code unit is decided inside 
+the \icode{MappingASTVisitor} class. 
+The visitor traverses the AST in a postorder manner and stops at specified 
+declarations, statements, and expressions. 
+Each of these nodes must fulfill a predicate - their specific rule - to 
+become a code unit. 
+The node must not be a duplicate of an already visited node. 
+It must also be a part of the main source file, i.e., not a part of a system 
+header file. 
+If the node satisfies all three requirements, it is considered a code unit. 
+The node's ID mapping is then created, and the node is added to 
+the dependency graph. 
+On the other hand, if the node is not a valid code unit, it is added to 
+the skipped nodes list. 
+In that case, the next visitor will not consider visiting and manipulating 
+the node when traversing the AST.
+
+\subsection*{Bitfield to variant transformation}
+
+Once the number of code units is known, we can create a bitfield of that 
+size and generate representations of possible variants. 
+The mechanism of generating bitfields was explained in 
+Section~\ref{chap:naive}. 
+This section describes the necessary parts of a technique that converts 
+bitfields into source code variants. 
+The idea is to flag AST nodes as code units and then traverse the AST again, 
+removing the code unit nodes specified by a given bitfield. 
+A single iteration of the variant-generating techniques produces one source 
+code variant. 
+The variant is created by starting with the original source code and 
+gradually removing nodes. 
+Each node has its index in the given bitfield. 
+The index corresponds to the node's traversal order number. 
+A node is removed if its corresponding bit is set to zero. 
+To be more precise: the node is not removed from the AST. 
+Instead, only its underlying source code is removed. 
+The following paragraphs describe the code behind the removal.
+
+\paragraph{Consumers.} All the necessary data for bitfield to source code 
+conversion is acquired using the \icode{VariantPrintingASTConsumer}. 
+This consumer dispatches its specific visitor and provides it with 
+a bitfield. 
+The visitor then removes snippets of the code based on that bitfield.
+The consumer's job is to reset the visitor's state, launch it with 
+the provided bitfield, and save its output into a specified file. 
+The consumer can also access the visitor's internal state, namely its 
+adjusted error line location. 
+More details about this location can be found in the \emph{Visitors} section.
+
+\paragraph{Visitors.} Similar to the code unit mapping issue, 
+the \icode{VariantPrintingASTVisitor} carries most of the conversion's logic.
+It is provided with a bitfield, which it saves, and a \icode{Rewriter} 
+instance, which it uses to generate the variant.
+Section~\ref{chap:sts} describes the \icode{Rewriter} class in more detail.
+Traversal of the source code is done in a postorder fashion to stay 
+consistent with the previous visitor. 
+The previous visitor shares its dependency graph and its list of skipped 
+nodes.
+This way, the \icode{VariantPrintingASTVisitor} can traverse the AST the way 
+it was intended to. 
+
+Each code unit, i.e., visited node, is removed if it fulfills specific 
+requirements. 
+First, the node's bit must be set to zero. 
+Second, all its parent's bits must be set to one. 
+The latter is a \icode{Rewriter} requirement. 
+A parent node might represent a compound statement, and its children might 
+be the individual statements inside the parent. 
+If we were to remove the parent and one of its children, we would remove 
+the same snippet twice. 
+This catch would eventually lead to an error. 
+The error can be avoided by only removing children while keeping their 
+parents.
+Once the AST traversal is done, all unwanted code units are removed. 
+We are left with a \icode{Rewriter} instance whose buffer reflects 
+the current variant. 
+The visitor's iteration is done, and it is the consumer's job to save 
+the contents of the buffer.
+
+\subsection*{Variant validation}
 
 Testing results on whether they are valid variants requires a standard 
 interface, too.
