@@ -4,31 +4,33 @@
 not use columns, since the presumed location in LibTooling is not
 precise.}
 
-In order to compare results, the different approaches described in 
-chapter~\ref{chap:minimization} need their concrete implementations.
-There are reliable implementations of some mentioned techniques, such as 
-Delta debugging.\change[]{TODO: link DD implementations.}
-However, only some of these implementations were used.
-Most notably, the static and dynamic slicers are reused from other works.
-The majority of the project was built using LibTooling and LLDB API.
-
-The following sections describe the process of this project's development.
-Used technologies and implementations are discussed first.
-The rest is a description of the development of different approaches and 
-their components.
+The problem analysis in Section~\ref{chap:minimization} established several 
+approaches to program reduction and minimization. 
+The next step is to compare the described algorithms and techniques. 
+Nevertheless, first, we must settle on their concrete implementations. 
+More straightforward approaches such as the naive reduction and 
+the minimizing Delta debugging algorithm deserve their implementation. 
+However, implementing more complicated techniques - static and dynamic 
+slicing - is simply out of scope for this project.
+This chapter will explain the structure of the project and the implementation 
+process of the naive reduction and the minimizing Delta debugging algorithm. 
+Moreover, it will introduce the reader to all used technologies and existing 
+implementations. 
+Each implementation will be described in a high-level overview while 
+highlighting the necessary steps for its inclusion in this project. 
+The chapter concludes with a discussion on some of the design choices and 
+the project's limitations.
 
 \section{Technologies}
 
-This project requires an effective way of recognizing and removing a language 
-construct of C or C++ source code.
-In previous chapters, it has been concluded that an AST would be a good 
-candidate for representing source code.
-In particular, the Clang AST offers the ability to remove source code mapped 
-to nodes in the AST.
-By deleting either single nodes or entire subtrees, we can carefully reduce 
-a program's source code.
-All AST-oriented operations and transformations are available in 
-the LibTooling library.
+This project heavily depends on existing compiler and debugger frameworks. 
+Section~\ref{chap:tools} has compared these frameworks and chose the ideal 
+candidate for the project. 
+That ideal candidate is Clang's LibTooling. 
+Section~\ref{chap:libtooling} described in detail the choice of AST as 
+the de facto representation of this project's input. 
+LibTooling offers multiple ways of traversing and modifying the AST. 
+Additionally, it does so for both C and C++.
 
 LibTooling can be built from the LLVM repository together with Clang.
 The required versions of Clang (11.0.0) and LibTooling are built from LLVM 
@@ -45,7 +47,12 @@ The debug build utilizes tens of gigabytes of disk space.
 Thankfully, debugging symbols are not required for this project.
 
 Clang is not the only LLVM project required as a prerequisite.
-The user also needs to build LLDB with its scripting bridge API.
+Section~\ref{chap:verification} described the steps of naive validation. 
+The final step requires a sort of execution environment. 
+One proposed environment is a debugger. 
+In order to keep the setup process as simple as possible, we settled on LLDB. 
+LLDB is an open-source debugger that ships as a part of the LLVM project.
+The user needs to build LLDB with its scripting bridge API.
 This can be achieved by adding LLDB to the LLVM project list when invoking 
 CMake.
 The Python API and its C++ scripting bridge can also be included by 
@@ -55,7 +62,7 @@ PowerPC.
 However, only a single platform is required/supported for this project.
 The target platform with which LLVM should be built is x86 64 bits.
 
-LibTooling is changing with every release.
+LibTooling changes with every release.
 Projects dependent on an older version of LibTooling might not work with 
 a newer one.
 Moreover, older releases of LLVM cannot always be built on new platforms.
