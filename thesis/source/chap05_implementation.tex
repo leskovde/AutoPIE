@@ -184,7 +184,7 @@ The second \icode{Consumer} type is the shared consumer.
 These consumers are used for dispatching shared visitors, reporting their 
 state, and collecting their data. 
 The shared consumer responsible for code unit separation is 
-the \icode{DependencyMappingASTConsumer}. 
+the \icode{Dependency\-Mapping\-AST\-Consumer}. 
 It dispatches a concrete visitor to the top-most node and offers getter 
 methods to retrieve the visitor's data. 
 This consumer also contains some logic in its 
@@ -323,7 +323,8 @@ adjusted error line location.
 More details about this location can be found in the \emph{Visitors} section.
 
 \paragraph{Visitors.} Similar to the code unit mapping issue, 
-the \icode{VariantPrintingASTVisitor} carries most of the conversion's logic.
+the \icode{Variant\-Printing\-AST\-Visitor} carries most of the conversion's 
+logic.
 It is provided with a bitfield, which it saves, and a \icode{Rewriter} 
 instance, which it uses to generate the variant.
 Section~\ref{chap:sts} describes the \icode{Rewriter} class in more detail.
@@ -358,12 +359,12 @@ Testing results on whether they are valid variants requires a standard
 interface, too.
 Section~\ref{chap:verification} describes the steps in the process 
 of validation.
-The implementation contains three parts that are used in most approaches 
-presented by this project.
+The implementation contains three parts that are used in all approaches 
+presented in this project.
 Below is the description of compilation, analysis, and execution.
 
 \paragraph{Compilation.} By calling the \icode{Compile} function in 
-\icode{Helper.cpp}, one can invoke the Clang compiler driver.
+\emph{Helper.cpp}, one can invoke the Clang compiler driver.
 The compiler has two goals.
 Firstly, it filters out non-compilable and thus invalid variants.
 Secondly, it prepares compilable variants for the execution stage.
@@ -377,7 +378,7 @@ If the compiler terminates with a valid exit code but does not create
 the binary, the function returns as if the compilation failed.
 The binary is stored to a specified path, which by default is the same file 
 path as the input source file.
-The file extension is substituted with \icode{'.exe'}.
+The file extension is substituted with \icode{.exe}.
 
 \paragraph{Static analysis.}
 \change[inline]{TODO: Research and implement calls to the Clang static analyzer.}
@@ -393,6 +394,7 @@ They then produce bindings to the Python API.
 Thanks to the scripting bridge, every validation step is written in C++.
 The \icode{ValidateResults} function creates a debugging environment for every 
 executable.
+
 The programs are then run in separate processes.
 During the execution, events are broadcasted from the forked processes.
 The stack trace is investigated whenever the program broadcasts a stopped 
@@ -403,7 +405,7 @@ Otherwise, the execution continues.
 
 \section{Naive reduction}
 
-The naive algorithm was described in section~ref{chap:naive}.
+The naive algorithm was described in section~\ref{chap:naive}.
 Unlike greedy algorithms, the naive approach can guarantee minimality.
 As such, much time went into improving the implementation.
 
