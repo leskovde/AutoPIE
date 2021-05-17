@@ -405,9 +405,13 @@ Otherwise, the execution continues.
 
 \section{Naive reduction}
 
-The naive algorithm was described in section~\ref{chap:naive}.
-Unlike greedy algorithms, the naive approach can guarantee minimality.
-As such, much time went into improving the implementation.
+The algorithm for naive minimization is the foundation of this project. 
+The approach and its heuristics were described in detail in 
+Section~\ref{chap:naive}. 
+The naive algorithm can guarantee minimality. 
+Unfortunately, the same cannot be said for greedy approaches. 
+Since this project focuses heavily on minimization, we dedicated 
+a significant amount of time to improving the naive approach's implementation.
 
 The approach works by deploying a \icode{DependencyMappingConsumer}, whose 
 primary job is to split the AST into code units.

@@ -306,10 +306,10 @@ variant generating algoritm results in $2^n$ possible variants.
 		\State $bitField \leftarrow [{bit}_{n-1}, {bit}_{n-2}, \ldots, {bit}_0]$,  
 			$\forall i \in 0 \ldots n-1 : bit_i = 0$
 		\While{$\exists i \in 0 \ldots n-1 : bit_i = 0$}
-			\State $bitField \leftarrow Increment(bitField)$
+			\State $bitField \leftarrow Increment(bitField)$ 
 			\State $currentVariant \leftarrow (C_1, C_2, \ldots, C_n)$
 			\For{$i \in 0 \ldots n-1$}
-				\If{bitField[i] = 0}
+				\If{bitField[i] $ = 0 \wedge loc(C_{i+1}) \neq L$}
 					\State $currentVariant \leftarrow currentVariant \setminus \{C_{i+1}\}$
 				\EndIf
 			\EndFor
