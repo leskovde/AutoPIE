@@ -408,76 +408,123 @@ Otherwise, the execution continues.
 The algorithm for naive minimization is the foundation of this project. 
 The approach and its heuristics were described in detail in 
 Section~\ref{chap:naive}. 
-The naive algorithm can guarantee minimality. 
-Unfortunately, the same cannot be said for greedy approaches. 
+The naive algorithm can guarantee minimality. Unfortunately, the same 
+cannot be said for greedy approaches. 
 Since this project focuses heavily on minimization, we dedicated 
-a significant amount of time to improving the naive approach's implementation.
+a significant amount of time to improving the naive approach's 
+implementation.
 
-The approach works by deploying a \icode{DependencyMappingConsumer}, whose 
-primary job is to split the AST into code units.
-The mentioned consumer dispatches a visitor that creates the traversal order.
-The visitor considers declarations and statements.
-It determines whether these nodes should be visited by the other visitors and 
-maps their dependencies.
-In short, one node is dependent on another if it is in the other node's 
-subtree.
-Another rule for node dependencies states that usages of variables depend on 
-their declarations.
-Function definitions and calls follow a similar rule.
+The reader has already seen most of this algorithm's implementation in 
+Section [ref (6.4)]. 
+Nearly all shared components were created during the development of 
+the naive approach. 
+The implementation closely follows the algorithm shown in 
+Figure~\ref{alg:naive}. 
+As such, it required us to implement several vital mechanisms. 
+First of all, the algorithm works with code units. 
+As such, we had to create a way of splitting the code into several 
+partitions. 
+This lead to the implementation of a shared module that handles code units. 
+That module has already been described in Section [ref]. 
+Second, we needed to convert bitfield representations into source code 
+variants. 
+This task required the development of a shared component that removes AST 
+nodes based on a given bitfield. 
+Details of this component can be found in Section [ref]. 
+The algorithm's last major requirement was the means to validate a variant. 
+The implemented variant verification follows the steps described in 
+Section~\ref{chap:verification}. 
+Its implementation details as a shared module can be found in Section [ref].
+The parts described above are not specific to the naive approach. 
+Instead, they are used in the implementation of every suggested approach. 
 
-Once the \icode{MappingASTVisitor} has traversed the AST, 
-the \icode{Dependency\-Map\-ping\-Consumer} collects its output, and the 
-variant generating function is initialized.
-Before any actual variants are created, the algorithm first separates all 
-valid variants into bins of different sizes—the binning works as follows.
-The \icode{Dependency\-Mapping\-Consumer} has determined $n$: the number of 
-code units in the file.
-Moreover, it has set the order in which nodes are traversed.
+However, the naive algorithm also uses its specific classes and functions. 
+Two distinguishing factors are the bitfield manipulation and the validation 
+of the dependency graph.
 
-We can create a bitfield of size $n$, where the $i^{th}$ bit represents 
-the $i^{th}$ node in the traversal order.
-If the bit is set to \icode{true}, the node will be preserved.
-Otherwise, it will be removed from the variant.
-This gives us $2^n$ bitfield variants, the same number required for all 
-program variants.
-With the bitfield representation, we could use bitwise operations to move 
-between different variants.
-The only operation necessary for generating all variants is the increment 
-function.
-While cycling through all possible bitfield configurations, we check that 
-each obeys the dependency rules.
-Valid bitfields also carry the source code size of the program variant they 
-represent.
-Variants are assigned into categories based on their represented size.
+The naive algorithm works by iterating over all possible bitfield variants. 
+Typically, the bitfield would be represented using an unsigned binary 
+number. 
+To make working with the bitfield easier, we opted to represent it as 
+a \icode{std::vector<bool>}. 
+The vector is a good choice since its boolean variant uses 
+a memory-efficient implementation in which each element only takes up 
+a single bit. 
+Working with the vector is also significantly more straightforward than 
+with other representations. 
+Possible bitfield variants are created by continuously incrementing 
+the bitfield. 
+However, the vector representation lacks the increment operation. 
+We implemented it by flipping the first bit of the vector and keeping 
+note of the carry-over bit. 
+The implemented function's name is simply \icode{Increment}. 
+As long as there is a carry-over bit, we keep flipping the consecutive 
+indexes of the vector. I
+ncrementing a bitfield where all bits are set to one leads to an overflow. 
+While generating variants, we can prevent the overflow from happening by 
+checking the \icode{IsFull} function. 
+The function decides whether a given bitfield has all its bits set to one. 
+The last used bitfield function is the \icode{IsValid} check. 
+It determines whether a given bitfield might correspond to a valid source 
+code variant. 
+This function is also the first to utilize the dependency graph for its 
+heuristic purposes. 
+The function iterates over all bits in the bitfield. 
+Each bit has to fulfill the following requirements. 
+First, if the bit is set to zero, so must all of its children. 
+This rule translates to ruling out both syntactically and semantically 
+invalid variants. 
+Second, if the bit represents a node in the criterion, i.e., 
+the error-inducing location, it cannot be removed. 
+This requirement preserves the failure-inducing line, ruling out pointless 
+variants. 
+The dependency graph validation is straightforward. 
+Each node in the graph is represented using its traversal order number.
+The exact number corresponds to the node's index in the bitfield. 
+When validating all children of a particular node, we simply traverse 
+a container of indices, checking whether the bitfield contains the desired 
+bit value on each index.
+The \icode{IsValid} function also calculates the size metric suggested in 
+Section~\ref{chap:heuristics}. 
+Each node has its presumed size in characters. 
+The total size of the variant is calculated during the dependency graph 
+validation. 
+This way, we get an approximation of how large the source code variant is 
+before generating it. 
+The function returns a ratio of the size of the variant compared to 
+the original size. 
+This ratio serves two purposes. 
+Firstly, the user can set their desired maximum ratio. 
+If the user assumes the minimal variant is at most a quarter of 
+the original size, they can set their target ratio to $0.25$. 
+This assumption reduces the search space to only those variants whose 
+presumed size is at most a quarter of the original size. 
+Secondly, the implementation uses a sort of iterative deepening search. 
+For a given number $k$, all valid bitfield variants are separated into $k$ 
+bins. 
+These bins represent parts of the interval from zero to the target ratio 
+set by the user. 
+The interval gets divided into $k$ evenly-sized parts, which then dictate 
+the order in which the algorithm searches. 
+First, the algorithm generates and validates all variants in the bin that 
+contains the presumably smallest variants. 
+If no valid result is found, the search continues with the bin containing 
+the next smallest variants. 
+Ideally, the search finishes faster than usual. 
+This case would save time otherwise spent on generating all variants. 
+In the worst case, the algorithm will generate and validate all possible 
+variants, just like it did originally. 
+Figure [ref] shows the pseudocode of the bin heuristic.
+Ideally, we would know the exact size of a variant ahead of time. 
+Knowing this, we could sort the variants before generating them, resulting 
+in the best possible outcome. 
+However, the presumed variant size is just an approximation. 
+Clang's information on the underlying source code is not perfect. 
+Using bins decreases the chances of classifying a non-minimal variant as 
+the optimal result.
 
-The idea is to search iteratively, generate minor source code variants, and 
-validate them first before moving on to the remaining possible variants.
-The number of bins represents the granularity with which the deepening 
-search is conducted.
-It makes sense to set the granularity high for more extensive programs.
-After the binning process is complete, the variant generating loop is 
-launched.
-
-The loop considers all bitfields in a given bin.
-In each iteration, the bitfield is passed to 
-a \icode{VariantPrintingASTVisitor}.
-The visitor traverses the AST in the order given by 
-the \icode{MappingASTVisitor}.
-The nodes represented by the bitfield are either kept or removed based on 
-the value of each bit.
-It should be stated that the nodes are not removed.
-Instead, it is the underlying source code that is being deleted using 
-a \icode{Rewriter} operation.
-The removal also follows an explicit rule.
-Nodes are removed only if their parents will not be removed.
-This rule eliminates the chance of removing an underlying code snippet twice.
-Each \icode{VariantPrintingASTVisitor} handles a single variant.
-
-After all variants from the given bit are processed, all results are tested 
-for validation.
-In case a valid result is found, the search ends.
-Otherwise, the search continues with the bin representing the following 
-smallest variant sizes.
+All the mentioned functions can be in the \emph{Helper.cpp} file. 
+The dependency graph resides in its file, \emph{DependencyGraph.h}.
 
 \section{Delta debugging}
 
