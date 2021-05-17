@@ -75,6 +75,40 @@ Docker is another dependency of this project.
 It is required to run slicing implementations as well as support the entire 
 minimization process on Windows.
 
+\section{Design}
+
+Since this project compares several techniques, some of which are composed in 
+a pipeline, we decided on using a modular design. 
+Each reduction approach described in Section~\ref{chap:minimization} consists 
+of one or more components. 
+
+These components can be shared and reused across multiple minimizing 
+algorithms. 
+This choice reduces the amount of copy-pasted code and increases its 
+maintainability in the future. 
+Depending on the technologies used in each app\-roach, the components form 
+either a C++ application or a Python script. 
+The latter is required for executing slicer implementations. 
+This fact leads to inconsistent interface across multiple reduction 
+approaches. 
+For example, the user can launch the minimizing Delta debugging algorithm as 
+a C++ console application. 
+However, if he decides to execute the slicing-based approach, he will need 
+to launch it as a Python script.
+
+\begin{figure}[h]\centering
+\includegraphics[scale=0.85]{components}
+\caption{Communication between modules in three different pipelines:
+Naive (orange), Delta (blue), Slicing (red and green).}
+\label{img:components}
+\end{figure}
+
+Figure~\ref{img:components} shows a diagram of all available pipelines and 
+their shared modules. 
+Since some pipelines only add a preprocessing layer, they end up reusing 
+the fundamental components of simpler pipelines.
+Each module shown in the diagram will be described in the following sections.
+
 \section{External code}
 
 Some of the external code cannot be added to the C++ project due to 
@@ -86,21 +120,13 @@ DG\change[]{TODO: Read the notes and the over\-view, summarize the contents.}
 
 \section{Shared components}
 
-This project compares several reduction techniques.
-Each of these techniques is represented by its project or its script.
-Some projects work with code that is shared with other projects.
-This section will discuss the parts of this work that were reused across 
-multiple techniques.
-Thus, these parts serve as a joint base for these techniques.
-
-The following paragraphs explain the code behind validation and AST 
-transformations.
-Generating variants is done by altering the AST or its underlying code.
-Sections~\ref{chap:ast} and~\ref{chap:sts} talk about the AST and how it can 
-be traversed and modified.
-First, a frontend action is created, which then constructs a \icode{Consumer} 
-instance.
-The consumer can dispatch specific visitors and perform various operations.
+As was already mentioned, this project reuses several ideas and components 
+in multiple approaches. 
+One component does not necessarily translate to one idea. 
+It often takes a couple of modules to capture that idea. 
+The following subsections will describe each idea proposed in previous 
+chapters. 
+Each subsection will then outline components used by its particular idea.
 
 \paragraph{Actions.} Each derivation of \icode{ASTFrontendAction} can have 
 its own preprocessing and postprocessing steps.
