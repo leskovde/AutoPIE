@@ -17,22 +17,23 @@ The problem can be summarized as program minimization with respect to a given
 runtime error. 
 The following is the problem's definition.
 
-Let program \mathcal{P} contain a runtime error E that consistently occurs 
-when \mathcal{P} is run with arguments A. 
+Let program $\mathcal{P}$ contain a runtime error $E$ that consistently 
+occurs when $\mathcal{P}$ is run with arguments $A$. 
 To find the cause of an error systematically, one might try removing 
 unnecessary statements in the code, thus reducing the program's size. 
-Let \mathcal{P'} be a minimal variant of \mathcal{P} such that \mathcal{P'} 
-results in the same error E as P when run with the same arguments. 
-The program \mathcal{P'} represents the smallest subset of \mathcal{P} 
+Let $\mathcal{P'}$ be a minimal variant of $\mathcal{P}$ such that 
+$\mathcal{P'}$ results in the same error $E$ as $\mathcal{P}$ when run with 
+the same arguments. 
+The program $\mathcal{P'}$ represents the smallest subset of $\mathcal{P}$ 
 regarding code size while preserving the cause of the error in that subset. 
-The task of program minimization finds \mathcal{P'} for a given source code 
-of \mathcal{P}.
+The task of program minimization finds $\mathcal{P'}$ for a given source code 
+of $\mathcal{P}$.
 
 Solving this problem leads to developers having to make less of an effort 
 during their debugging sessions. 
 Since they would be working with the smallest possible version of their 
 source code, they would presumably spend less time finding the root cause 
-in \mathcal{P'} as opposed to \mathcal{P}.  
+in $\mathcal{P'}$ as opposed to $\mathcal{P}$.  
 With this motivation, we attempt to suggest methods that perform program 
 minimization automatically for code written in C and C++.
 
@@ -41,8 +42,8 @@ minimization automatically for code written in C and C++.
 Having described the problem at hand, we designated our efforts into 
 the following goals.
 \begin{enumerate}
-  \item Research the existing techniques for automated debugging and source code 
-  size reduction.
+  \item Research the existing techniques for automated debugging and source 
+  code size reduction.
   \item Propose multiple approaches to solving the program-minimizing problem based 
   on the previous findings. 
   These proposals should include approaches that are accurate and practical.
@@ -55,27 +56,30 @@ Moreover, all implementations should work on a specific domain of inputs.
 \section{Outline}
 
 The paper starts by describing existing techniques relevant to this project. 
-Chapter~\ref{} explains three debugging techniques used throughout 
-the project. 
+Chapter~\ref{chap:automated} explains three debugging techniques used 
+throughout the project. 
 Having understood the essential ideas of automated debugging methods, we 
 analyze frameworks and libraries to implement these ideas later. 
-In Chapter~\ref{}, we compare several compiler infrastructures and 
+
+In Chapter~\ref{chap:tools}, we compare several compiler infrastructures and 
 language recognition tools. 
 The benefits and limitations of each framework are analyzed, and the best 
 candidate is picked. 
-Chapter~\ref{} describes the candidate - Clang's LibTooling - in much 
-more detail. 
+Chapter~\ref{chap:libtooling} describes the candidate - Clang's LibTooling - 
+in much more detail. 
 The reader is introduced to the capabilities of the library. 
 Constructs relevant to the implementation are highlighted and described as 
 well. 
+
 Theoretical solutions to the program minimization problem are proposed in 
-Chapter~\ref{}.
+Chapter~\ref{chap:minimization}.
 A total of three approaches is presented. 
 The section explains the motivation for each solution and well as its 
 pseudocode. 
-Chapter~\ref{} weights the findings of the previous section and describes 
-the implementation of the suggested algorithms. 
-The approaches are benchmarked in Chapter~\ref{}, and a comparison 
-using several metrics is conducted. 
+Chapter~\ref{chap:implementation} weights the findings of the previous 
+section and describes the implementation of the suggested algorithms. 
+
+The approaches are benchmarked in Chapter~\ref{chap:evaluation}, and 
+a comparison using several metrics is conducted. 
 The paper concludes with a summary of the previous comparison's results.
 
