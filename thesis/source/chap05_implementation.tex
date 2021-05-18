@@ -600,6 +600,86 @@ The \icode{GlobalContext} resides in its own file under
 
 \section{Delta debugging}
 
+Implementing the minimizing Delta debugging algorithm took significantly 
+less time than expected. 
+The implementation of the naive approach laid down a good enough foundation 
+to make implementing Delta easy. 
+The algorithm reuses existing components for code unit partitioning, 
+bitfield to source code conversion, and validation. 
+This section describes how it does so.
+
+The minimizing Delta debugging algorithm is typically implemented using 
+a text-modifying approach. 
+The input test case could be split into $n$ partitions based on many factors.
+One implementation might split the input on an exact number of characters, 
+while another might do so on a specific number of lines. 
+Text-oriented Delta debugging is not the only way of approaching Delta's 
+implementation. 
+Hierarchical Delta debugging (HDD) presented by Misherghi and 
+Su [ref] handles the minimization using an AST. 
+Implementing HDD would be ideal for this project since it we are working 
+with the AST already. 
+However, due to work already done on the naive approach in 
+Section [ref (previous)], we chose to implement a modified version of 
+the minimizing Delta algorithm. 
+
+Our implementation performs the following steps during each iteration:
+\begin{enumerate}
+  \item Input source code is partitioned into code units in the same manner 
+  as in the naive approach, using the shared component described in 
+  Section [ref].
+  \item Bitfields are created in order to represent possible Delta 
+  partitions and their complements. 
+  The Delta algorithm splits the current test case into $n$ partitions and 
+  their complements in each iteration. 
+  This split translates to code units being assigned into specific variants. 
+  Bitfields corresponds to one of 
+  the $\alpha_1,\dots,\alpha_n,\beta_1,\dots,\beta_n$ variants. 
+  The bitfield's elements are set to one if they represent snippets in their 
+  variant.
+  \item The bitfields are iterated over according to the algorithm in 
+  Figure [ref]. 
+  Each bitfield is converted into source code using the component shown in 
+  Section [ref]. 
+  The code is then validated. 
+  If it causes the desired runtime error, it is regarded as the test case 
+  for the next iteration. 
+  The validation uses the module described in Section [ref].
+\end{enumerate}
+The described approach is nearly equivalent to removing lines of the source 
+code. 
+However, it does leave some room for structure-based heuristics for future 
+work.
+
+The algorithm's main loop is inside the programs' \icode{main} function. 
+Each iteration invokes a custom visitor that handles it. 
+Clang parses the current test case, and a \icode{Delta\-Debugging\-Consumer} 
+instance performs its logic on the generated AST. 
+The logic consists of the three steps shown in the previous paragraph: 
+partitioning, generating variants, and validating. 
+The iteration's result is then passed by reference back to the \icode{main} 
+function. 
+
+Similar to implementing the naive approach, the problem-specific consumer is 
+invoked from a custom \icode{ASTFrontendAction}. 
+The \icode{Delta\-Debugging\-Frontend\-Action\-Factory} function supplies 
+data to the consumer. 
+The data contains the following:
+\begin{itemize}
+  \item Iteration number - this number is used for correct file naming.
+  \item Partition count - this number represents the number of even-sized 
+  partitions into which the input should be split.
+  \item Iteration result - the result is passed as a reference to 
+  an \icode{enum}, which the consumer then specifies.
+  \item Global context - analogically to the naive reduction's implementation, 
+  the context serves to lookup information concerning the algorithm's input 
+  and state.
+\end{itemize}
+The mentioned classes can be found in the following files: 
+\emph{DeltaReduction/include/Consumers.h}, 
+\emph{DeltaReduction/include/Actions.h}, 
+\emph{DeltaReduction/src/Actions.cpp}, and \emph{Common/include/Context.h}.
+
 \section{Systematic approach}
 
 \change[inline]{TODO: Might require mentioning the component that unifies slices or extracts all variables from a line.}
