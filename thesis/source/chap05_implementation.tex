@@ -414,7 +414,7 @@ If the symbol's location on top of the stack trace is the same as the one of
 the desired error, the program is tagged as valid.
 Otherwise, the execution continues.
 
-\section{Naive reduction}
+\section{Naive reduction}\label{chap:naiveimplementation}
 
 The algorithm for naive minimization is the foundation of this project. 
 The approach and its heuristics were described in detail in 
@@ -598,7 +598,7 @@ in \emph{NaiveReduction/\-src/\-Actions.cpp} and
 The \icode{GlobalContext} resides in its own file under 
 \emph{Common/\-include/\-Context.h}.
 
-\section{Delta debugging}
+\section{Delta debugging}\label{chap:deltaimplementation}
 
 Implementing the minimizing Delta debugging algorithm took significantly 
 less time than expected. 
@@ -616,18 +616,18 @@ while another might do so on a specific number of lines.
 Text-oriented Delta debugging is not the only way of approaching Delta's 
 implementation. 
 Hierarchical Delta debugging (HDD) presented by Misherghi and 
-Su [ref] handles the minimization using an AST. 
+Su~\citep{Misherghi06} handles the minimization using an AST. 
 Implementing HDD would be ideal for this project since it we are working 
 with the AST already. 
 However, due to work already done on the naive approach in 
-Section [ref (previous)], we chose to implement a modified version of 
-the minimizing Delta algorithm. 
+Section~\ref{chap:naiveimplementation}, we chose to implement a modified 
+version of the minimizing Delta algorithm. 
 
 Our implementation performs the following steps during each iteration:
 \begin{enumerate}
   \item Input source code is partitioned into code units in the same manner 
   as in the naive approach, using the shared component described in 
-  Section [ref].
+  Section~\ref{chap:codeunits}.
   \item Bitfields are created in order to represent possible Delta 
   partitions and their complements. 
   The Delta algorithm splits the current test case into $n$ partitions and 
@@ -638,20 +638,21 @@ Our implementation performs the following steps during each iteration:
   The bitfield's elements are set to one if they represent snippets in their 
   variant.
   \item The bitfields are iterated over according to the algorithm in 
-  Figure [ref]. 
+  Figure~\ref{alg:dd}. 
   Each bitfield is converted into source code using the component shown in 
-  Section [ref]. 
+  Section~\ref{chap:variants}. 
   The code is then validated. 
   If it causes the desired runtime error, it is regarded as the test case 
   for the next iteration. 
-  The validation uses the module described in Section [ref].
+  The validation uses the module described in 
+  Section~\ref{chap:validationimplementation}.
 \end{enumerate}
 The described approach is nearly equivalent to removing lines of the source 
 code. 
 However, it does leave some room for structure-based heuristics for future 
 work.
 
-The algorithm's main loop is inside the programs' \icode{main} function. 
+The algorithm's main loop is inside the program's \icode{main} function. 
 Each iteration invokes a custom visitor that handles it. 
 Clang parses the current test case, and a \icode{Delta\-Debugging\-Consumer} 
 instance performs its logic on the generated AST. 
@@ -676,44 +677,90 @@ The data contains the following:
   and state.
 \end{itemize}
 The mentioned classes can be found in the following files: 
-\emph{DeltaReduction/include/Consumers.h}, 
-\emph{DeltaReduction/include/Actions.h}, 
-\emph{DeltaReduction/src/Actions.cpp}, and \emph{Common/include/Context.h}.
+\begin{itemize}
+  \item \emph{DeltaReduction/include/Consumers.h} 
+  \item \emph{DeltaReduction/include/Actions.h} 
+  \item \emph{DeltaReduction/src/Actions.cpp}
+  \item \emph{Common/include/Context.h}
+\end{itemize}
 
 \section{Systematic approach}
 
-\change[inline]{TODO: Might require mentioning the component that unifies slices or extracts all variables from a line.}
-
-The systematic approach comprises multiple steps.
+The systematic approach is a pipeline comprised of multiple steps. 
+The steps are represented by components, some of which are shared with 
+the previous implementation. 
+The entire pipeline consists of a variable extraction tool, static and 
+dynamic slicers, a slice unification tool, a slice extraction tool, 
+the minimizing Delta debugging algorithm, and the naive approach. 
 The motivation behind these steps and an overview of the algorithm can be 
-found in section~\ref{chap:systematic}.
+found in Section~\ref{chap:systematic}.
 
 This approach uses external code that cannot be trivially added to 
 the project.
 Therefore, it is launched and operated differently.
-The base is a Python script that invokes all necessary components.
-The script uses Docker API to launch a DG container.
+The external code forms two modules - containers. 
+The static slicer is accessed via the DG container and the dynamic slicer 
+via the Giri container. 
+The unifying base is a Python script that invokes all necessary components.
+The script uses Docker API to launch the DG container.
 It also maps input and output directories to that container in order to send 
 and retrieve data.
 The container's launch command invokes the slicer to process the given input 
 and store it in the given output directory.
-Giri is launched analogically.
+The Giri container is launched analogically.
 
-Both slicers return a list of lines that represent the slices.
-This output needs to be processed further.
-The script invokes the \icode{SliceExtractor} program.
+Both slicers produce a list of lines that represent the slices. 
+The slicers are also run repeatedly, once for each variable on a given line. 
+These variables are extracted using a \icode{VariableExtractor} tool. 
+This module uses LibTooling's ASTMatchers to search for variable usages on 
+a given line. 
+The names of the symbols are then dumped into an output file. 
+Slicers are executed with different criteria, and the criteria are taken 
+from that file.
+These runs generate multiple slices, which must be unified into a single one. 
+The unification is simple. 
+The slice is represented by a file containing a list of line numbers. 
+The multiple generated files are merged, removing any duplicates. 
+The result is a single file containing a single enhanced slice. 
+
+This output needs to be processed further. 
+The base script invokes the \icode{SliceExtractor} component. 
+This module uses LibTooling's recursive AST visitor to access statements on 
+given lines and preserve them. 
 The program transforms a source file into the desired slice based on 
-the given list of lines.
-It does so based on ASTMatchers, removing the complement of the given list 
-of lines by using \icode{Rewriter} operations.
+the given list of lines. 
+First, the tool creates a container of preserved lines. 
+Initially, the container consists of the lines given through the input. 
+Later, the container expands by adding other previously poorly-mapped lines. 
+For example, if a \icode{for} loop stretches over several lines and 
+the slicer result only contains its first line, we must include those other 
+lines as well. 
+We do this by traversing the AST and inspecting nodes on given lines. 
+If we encounter a node whose underlying code stretches over several lines, 
+we include those lines in the container. 
+The input source file is then opened and read, and the lines present in 
+the container are preserved. 
+
 Once the \icode{SliceExtractor} produces the desired source file, the file 
 is considered the respective slicer's output.
 This way, each step of the algorithm results in a valid source file.
 
-After passing through the two slicers, the intermediate result is further 
-reduced using the naive approach.
+Once the slicer preprocessing is done, the pipeline executes the implemented 
+Delta debugging algorithm and finds a local minimum. 
+The output is a source file which then serves as the input for the naive 
+approach.
 The Python script executes the naive algorithm, which then produces the 
 desired results.
-Another approach can also substitute the ultimate step.
-One can easily swap between the naive reduction and Delta debugging by 
-simply changing the path to the executable in the Python script.
+The implementation of both the naive reduction and the minimizing Delta 
+debugging algorithm can be found in Section~\ref{chap:naiveimplementation} 
+and Section~\ref{chap:deltaimplementation}, respectively.
+
+The classes and functions used for implementing 
+the \icode{VariableExtractor} and the \icode{SliceExtractor} modules can be 
+found in their respective directories:
+\begin{itemize}
+  \item \emph{VariableExtractor/include}
+  \item \emph{VariableExtractor/src}
+  \item \emph{SliceExtractor/include}
+  \item \emph{SliceExtractor/src}
+\end{itemize}
