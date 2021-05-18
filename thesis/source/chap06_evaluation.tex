@@ -1,2 +1,115 @@
 \chapter{Evaluation}
 
+Having described the implementation of proposed reduction approaches, we can 
+finally compare them. 
+The goal of the comparison is to show that the slicing-based approach is 
+the most practical minimization algorithm.
+
+\subsection{Metrics}
+
+There are several points of interest in this comparison. 
+Each presented algorithm contained a description of this time complexity and 
+its minimization properties. 
+Due to this fact, we believe both the level of reduction and the algorithm's 
+efficiency should be measured. 
+In order to capture the performance of each approach, we employed 
+the following metrics.
+\begin{itemize}
+\item This project focuses on minimality. 
+  We want to test whether an algorithm produces the optimal result. 
+  The \emph{minimality} metric is measured in two values: true and false. 
+  True corresponds to the result being the desired minimal variant, while 
+  false means that the result is suboptimal.
+  \item We have noted that some approaches, such as the minimizing Delta 
+  debugging algorithm, do not achieve optimal reduction. 
+  However, we can measure the ratio of the generated result compared to 
+  the minimal variant. 
+  The \emph{minimization ratio} will be measured in percentage. 
+  The goal is to achieve $0\%$, which translates to the result being minimal.
+  \item{Approaches} can be compared against each other using 
+  a \emph{proportion ratio}. 
+  This metric is also measured in percentage. 
+  The number between $0\%$ and $100\%$ can be interpreted as the result's 
+  proportion of the original program's size. 
+  The lower the proportion ratio is, the better the algorithm is at source 
+  code reduction.
+  \item A straightforward way of measuring a program's performance is by 
+  watching its \emph{execution time}. 
+  The time will be measured in seconds and will serve as the primary 
+  indicator of each algorithm's performance.
+  \item The metric for testing heuristics is the \emph{processed variants} 
+  count. 
+  By counting how many actual results had to be generated and validated 
+  before settling on the final output, we can evaluate the effectiveness of 
+  a heuristic.
+\end{itemize}
+By measuring these properties, we also observe whether the presented 
+approaches struggle with a given input. 
+Poor handling of specific inputs could also boil down to lacking 
+implementation. 
+However, we assume that errors in the implementation can be spotted in three 
+ways. 
+The program either throws an exception, produces an unreduced source code as 
+its result, or outputs a program that does not result in the desired runtime 
+error.
+
+\subsection{Data set}
+
+Each implemented approach works with three major input parts:
+\begin{itemize}
+  \item It receives the source code it should minimize.
+  \item It is given a location of the desired runtime error.
+  \item It requires a set of arguments used when running the input source 
+  code, which leads to the mentioned runtime error.
+\end{itemize}
+Some approaches might benefit from other user inputs. 
+For example, the implementation of the naive algorithm can cut the search 
+short if it exceeds a given amount of variants. 
+These inputs will be referred to as minor arguments.
+
+Our dataset consists of 30 simple programs. 
+Data for each program includes its source code written in C or C++, 
+the target location, its execution arguments, and each approach's minor 
+arguments. 
+The dataset is made up of three equally-sized parts. 
+Those parts differ based on the techniques used in their entries' source code. 
+The first ten data entries represent non-structured programs. 
+These entries contain source code exclusively in their \icode{main} function. 
+Generally, they do not follow any specific programming paradigms and 
+represent the simplest input type. 
+The second part contains ten structured programs. 
+The source code of these programs uses control flow statements, functions, 
+and procedures. 
+This type of input represents the regular program that this project is 
+expected to handle. 
+The last ten programs use aspects of object-oriented programming. 
+Their code contains classes, inheritance, and polymorphism. 
+Furthermore, the code is almost exclusively written in C++. 
+However, advanced features of the language, such as templates, are omitted.
+
+All three parts of the dataset are similar in terms of size. 
+The source code for each program ranges from 30 to 100 lines. 
+Moreover, the source code is contained in a single file. 
+Therefore, the programs do not use any other include headers outside of 
+system headers and standard libraries. 
+Runtime errors in the dataset are caused mainly by invaliding an assertion. 
+However, segmentation faults make up a large number of errors as well. 
+We have also limited each program to cause only a single runtime error 
+initially.
+
+\subsection{Results}
+
+We tested a total of four approaches. 
+These include the naive approach with its heuristics, the minimizing Delta 
+debugging approach, the slicer-based approach, and the slicer-based approach 
+with argument injection. 
+The dataset was executed on a 6C/12T AMD Ryzen 5 5600X processor with 8GB of 
+memory. 
+Specifically, the chip was clocked at 4.85GHz for single-threaded tasks and 
+4.5GHz for multi-threaded workloads. 
+The naive approach ran parallelized on 12 threads, while other approaches 
+ran single-threaded. 
+The project was compiled using Clang 12.0.0 and ran on the 2021.05.01 version 
+of Arch Linux.
+
+Below are the results...
