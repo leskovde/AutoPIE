@@ -118,7 +118,7 @@ Giri\change[]{TODO: Read the notes and the over\-view, summarize the contents.}
 
 DG\change[]{TODO: Read the notes and the over\-view, summarize the contents.}
 
-\section{Shared components}
+\section{Shared components}\label{chap:components}
 
 As was already mentioned, this project reuses several ideas and components 
 in multiple approaches. 
@@ -219,7 +219,7 @@ This logic might include splitting the source code into code units.
 A module-specific visitor's logic is oriented to a particular problem, 
 such as scanning the locations of statements in the code.
 
-\subsection*{Code units}
+\subsection{Code units}\label{chap:codeunits}
 
 Initially, a code unit was defined as any syntactically correct subset of 
 the source code. 
@@ -290,7 +290,7 @@ the skipped nodes list.
 In that case, the next visitor will not consider visiting and manipulating 
 the node when traversing the AST.
 
-\subsection*{Bitfield to variant transformation}
+\subsection{Bitfield to variant transformation}\label{chap:variants}
 
 Once the number of code units is known, we can create a bitfield of that 
 size and generate representations of possible variants. 
@@ -347,13 +347,24 @@ the same snippet twice.
 This catch would eventually lead to an error. 
 The error can be avoided by only removing children while keeping their 
 parents.
-Once the AST traversal is done, all unwanted code units are removed. 
+
+Removing code units tends to shift lines down. 
+This phenomenon might lead to the statements on the original error line 
+changing their location. 
+The number of the error-inducing line must be adjusted. 
+During the removal of each node, we extract its underlying code and analyze 
+its presumed location. 
+If the location comes before the original error-inducing line and 
+the underlying code contains newline characters, we decrease 
+the error-inducing line's number by the amount of found newline characters. 
+At the end of the traversal, we are left with a correct line number for 
+further validation, and all unwanted code units are removed. 
 We are left with a \icode{Rewriter} instance whose buffer reflects 
 the current variant. 
 The visitor's iteration is done, and it is the consumer's job to save 
 the contents of the buffer.
 
-\subsection*{Variant validation}
+\subsection{Variant validation}\label{chap:validationimplementation}
 
 Testing results on whether they are valid variants requires a standard 
 interface, too.
@@ -415,7 +426,7 @@ a significant amount of time to improving the naive approach's
 implementation.
 
 The reader has already seen most of this algorithm's implementation in 
-Section [ref (6.4)]. 
+Section~\ref{chap:components}. 
 Nearly all shared components were created during the development of 
 the naive approach. 
 The implementation closely follows the algorithm shown in 
@@ -425,16 +436,17 @@ First of all, the algorithm works with code units.
 As such, we had to create a way of splitting the code into several 
 partitions. 
 This lead to the implementation of a shared module that handles code units. 
-That module has already been described in Section [ref]. 
+That module has already been described in Section~\ref{chap:codeunits}. 
 Second, we needed to convert bitfield representations into source code 
 variants. 
 This task required the development of a shared component that removes AST 
 nodes based on a given bitfield. 
-Details of this component can be found in Section [ref]. 
+Details of this component can be found in Section~\ref{chap:variants}. 
 The algorithm's last major requirement was the means to validate a variant. 
 The implemented variant verification follows the steps described in 
 Section~\ref{chap:verification}. 
-Its implementation details as a shared module can be found in Section [ref].
+Its implementation details as a shared module can be found in 
+Section~\ref{chap:validationimplementation}.
 The parts described above are not specific to the naive approach. 
 Instead, they are used in the implementation of every suggested approach. 
 
@@ -445,8 +457,8 @@ of the dependency graph.
 The naive algorithm works by iterating over all possible bitfield variants. 
 Typically, the bitfield would be represented using an unsigned binary 
 number. 
-To make working with the bitfield easier, we opted to represent it as 
-a \icode{std::vector<bool>}. 
+To~make working with the bitfield easier, we opted to represent it using 
+a \icode{std::\-vector<\-bool>}. 
 The vector is a good choice since its boolean variant uses 
 a memory-efficient implementation in which each element only takes up 
 a single bit. 
@@ -454,19 +466,21 @@ Working with the vector is also significantly more straightforward than
 with other representations. 
 Possible bitfield variants are created by continuously incrementing 
 the bitfield. 
+
 However, the vector representation lacks the increment operation. 
 We implemented it by flipping the first bit of the vector and keeping 
 note of the carry-over bit. 
 The implemented function's name is simply \icode{Increment}. 
 As long as there is a carry-over bit, we keep flipping the consecutive 
-indexes of the vector. I
-ncrementing a bitfield where all bits are set to one leads to an overflow. 
+indexes of the vector. 
+Incrementing a bitfield where all bits are set to one leads to an overflow. 
 While generating variants, we can prevent the overflow from happening by 
 checking the \icode{IsFull} function. 
 The function decides whether a given bitfield has all its bits set to one. 
 The last used bitfield function is the \icode{IsValid} check. 
 It determines whether a given bitfield might correspond to a valid source 
 code variant. 
+
 This function is also the first to utilize the dependency graph for its 
 heuristic purposes. 
 The function iterates over all bits in the bitfield. 
@@ -478,6 +492,7 @@ Second, if the bit represents a node in the criterion, i.e.,
 the error-inducing location, it cannot be removed. 
 This requirement preserves the failure-inducing line, ruling out pointless 
 variants. 
+
 The dependency graph validation is straightforward. 
 Each node in the graph is represented using its traversal order number.
 The exact number corresponds to the node's index in the bitfield. 
@@ -493,6 +508,7 @@ This way, we get an approximation of how large the source code variant is
 before generating it. 
 The function returns a ratio of the size of the variant compared to 
 the original size. 
+
 This ratio serves two purposes. 
 Firstly, the user can set their desired maximum ratio. 
 If the user assumes the minimal variant is at most a quarter of 
@@ -514,8 +530,31 @@ Ideally, the search finishes faster than usual.
 This case would save time otherwise spent on generating all variants. 
 In the worst case, the algorithm will generate and validate all possible 
 variants, just like it did originally. 
-Figure [ref] shows the pseudocode of the bin heuristic.
-Ideally, we would know the exact size of a variant ahead of time. 
+Figure~\ref{alg:bins} shows the pseudocode of the bin heuristic.
+
+\begin{figure}[h]
+	\hrule height.8pt depth0pt \kern2pt
+	\textbf{Input:} \\
+	\hspace*{\algorithmicindent} $B \ldots$ a set of bins - containers of bitfield. \\
+	\hspace*{\algorithmicindent} $L \ldots$ location of the error. \\
+	\hspace*{\algorithmicindent} $A \ldots$ the input program's arguments. \\
+	\textbf{Output:} The reduced source code. 
+	\hrule height.8pt depth0pt \kern2pt
+	\begin{algorithmic}[1]
+		\ForAll{$Bin \in B$}
+			\ForAll{$Variant \in B$}
+				\If{IsValid($Variant$, $L$, $A$)}
+					\Return $V$.
+				\EndIf
+			\EndFor
+		\EndFor
+	\end{algorithmic} 
+	\hrule height.8pt depth0pt \kern2pt
+	\caption{Binning search.} 
+	\label{alg:bins}
+\end{figure}
+
+In the ideal world, we would know the exact size of a variant ahead of time. 
 Knowing this, we could sort the variants before generating them, resulting 
 in the best possible outcome. 
 However, the presumed variant size is just an approximation. 
@@ -523,8 +562,41 @@ Clang's information on the underlying source code is not perfect.
 Using bins decreases the chances of classifying a non-minimal variant as 
 the optimal result.
 
-All the mentioned functions can be in the \emph{Helper.cpp} file. 
-The dependency graph resides in its file, \emph{DependencyGraph.h}.
+All the mentioned functions can be in the \emph{Common/\-src/\-Helper.cpp} 
+file. 
+The dependency graph resides in its file, 
+\emph{Common/\-include/\-DependencyGraph.h}.
+
+The mentioned functions are called from the algorithm's main loop. 
+In our implementation, the loop is in the \icode{Handle\-Translation\-Unit} 
+function of the \icode{Vari\-ant\-Generating\-Consumer} class. 
+This consumer is specific to the naive reduction problem. 
+It does not dispatch any visitors; it only governs two other consumer 
+objects. 
+Those objects are the instances of 
+the \icode{Dependency\-Mapping\-AST\-Consumer} and 
+the \icode{VariantPrintingASTConsumer} classes. 
+The former partitions the input into code units, while the latter converts 
+bitfields into source code variants. 
+The body of \icode{HandleTranslationUnit} manages all data exchanges 
+between the two consumers. 
+It also contains the bitfield iteration logic. 
+The consumer handles generating the variants, while their validation is 
+invoked from the program's \icode{main} function. 
+
+The consumer can be constructed using a custom factory. 
+The \icode{Variant\-Generating\-Frontend\-Action\-Factory} function takes 
+a reference to a \icode{GlobalCon\-text} object and later passes it to 
+the visitor. 
+The context is used for looking up the original input and the current state of the algorithm.
+
+The problem-specific consumer can be found in 
+the \emph{NaiveReduction/\-src/\-Consumers.cpp} file. 
+The action that invokes the consumer is 
+in \emph{NaiveReduction/\-src/\-Actions.cpp} and 
+\emph{NaiveReduction/\-include/\-Actions.h}. 
+The \icode{GlobalContext} resides in its own file under 
+\emph{Common/\-include/\-Context.h}.
 
 \section{Delta debugging}
 
