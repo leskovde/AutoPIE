@@ -124,6 +124,10 @@ def run_dynamic_slicer(args, var, iteration):
 
 
 def run_tool(binary_path, arguments):
+    if not os.path.exists(binary_path):
+        print(f"The tool '{binary_path}' could not be found!")
+        print("Make sure to build all components using a Makefile before running the script.")
+
     print(f"Executing '{binary_path}'...")
 
     proc = subprocess.Popen([binary_path] + arguments)

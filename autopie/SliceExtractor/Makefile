@@ -5,13 +5,33 @@
 # The link location should be the following: `/usr/local/lib/`,
 # The include location should be the following: `/usr/local/include/`
 
-CXX = g++
-OBJECTS = Context.o Helper.o TheTool.o
-CFLAGS = -std=c++17 -fno-rtti
+# Paths.
+COMMON_PATH = ../Common
+COMMON_SRC_PATH = $(COMMON_PATH)/src
+SRC_PATH = src
+COMMON_BUILD_PATH = $(COMMON_PATH)/build
+BUILD_PATH = build
+BIN_PATH = $(BUILD_PATH)/bin
+COMMON_OBJ_PATH = $(COMMON_BUILD_PATH)/obj
+OBJ_PATH = $(BUILD_PATH)/obj
+DOCS_PATH = docs
 
+# Targets.
+TARGET = SliceExtractor
+COMMON_SOURCES = $(addprefix src/, $(notdir $(wildcard $(COMMON_SRC_PATH)/*.cpp)))
+SOURCES = $(wildcard $(SRC_PATH)/*.cpp)
+COMMON_OBJECTS = $(COMMON_SOURCES:%.cpp=$(COMMON_OBJ_PATH)/%.o)
+OBJECTS = $(SOURCES:%.cpp=$(OBJ_PATH)/%.o)
+OBJECTS += $(COMMON_OBJECTS)
+DEPENDENCIES = $(OBJECTS:.o=.d)
+DEPENDENCIES += $(COMMON_OBJECTS:.o=.d)
+
+# Compiler flags.
+CXX = g++
+CFLAGS = -std=c++17 -fno-rtti
 CLANGLIBS = \
 		-lpthread \
-		-lRemarks -lclang-cpp -lclang \
+		-lRemarks -llldb -lclang-cpp -lclang \
 		-lclangARCMigrate -lclangAST -lclangASTMatchers \
 		-lclangAnalysis -lclangBasic -lclangCodeGen -lclangCrossTU \
 		-lclangDependencyScanning -lclangDirectoryWatcher -lclangDriver \
@@ -24,19 +44,48 @@ CLANGLIBS = \
 		-lclangToolingASTDiff -lclangToolingCore -lclangToolingInclusions \
 		-lclangToolingRefactoring -lclangToolingSyntax -lclangTransformer
 
-all: TheTool
+all: build common $(BIN_PATH)/$(TARGET)
 
-TheTool: $(OBJECTS) 
-	$(CXX) $(CFLAGS) -g -o $@ $(OBJECTS) $(CLANGLIBS) 
+$(OBJ_PATH)/%.o: %.cpp
+	@mkdir -p $(@D)
+	$(CXX) $(CFLAGS) $(CLANGLIBS) -c $< -MMD -o $@
 
-TheTool.o: TheTool.cpp
-	$(CXX) $(CFLAGS) -c -g TheTool.cpp $(CLANGLIBS)
+$(BIN_PATH)/$(TARGET): $(OBJECTS)
+	@mkdir -p $(@D)
+	$(CXX) $(CFLAGS) -o $(BIN_PATH)/$(TARGET) $^ $(CLANGLIBS)
 
-Context.o: Context.cpp Context.h
-	$(CXX) $(CFLAGS) -c -g Context.cpp $(CLANGLIBS)
+-include $(DEPENDENCIES)
 
-Helper.o: Helper.cpp Helper.h
-	$(CXX) $(CFLAGS) -c -g Helper.cpp $(CLANGLIBS)
+.PHONY: all build clean release docs info
+
+build:
+	@mkdir -p $(BIN_PATH)
+	@mkdir -p $(OBJ_PATH)
+
+common:
+	$(MAKE) -C $(COMMON_PATH)
+
+release: CFLAGS += -O2
+release: all
+
+test:
+	@$(BIN_PATH)/$(TARGET) --loc-file="test_suite/tests/example0.c" --loc-line=4 \
+		--verbose=true test_suite/tests/example0.c --
+
+#	cd test_suite; python3 ./runtests.py; cd ..
 
 clean:
-	      rm -rf *.o *.ll TheTool
+	-@rm -rvf $(OBJ_PATH)/*
+	-@rm -rvf $(BIN_PATH)/*
+	$(MAKE) -C $(COMMON_PATH) clean
+
+docs:
+	@doxygen $(DOCS_PATH)/Doxyfile
+
+info:
+	@echo "[*] Binaries in:    ${BIN_PATH}"
+	@echo "[*] Objects in:     ${OBJ_PATH}"
+	@echo "[*] Doxygen in:     ${DOCS_PATH}"
+	@echo "[*] Sources:        ${SOURCES}"
+	@echo "[*] Objects:        ${OBJECTS}"
+	@echo "[*] Dependencies:   ${DEPENDENCIES}"

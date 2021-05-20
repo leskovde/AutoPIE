@@ -19,16 +19,23 @@ using namespace Common;
 // TODO: Change all int instances to something consistent (int32_fast etc.).
 
 /**
- * Generates a minimal program variant by naively removing statements.
+ * Generates a locally minimal program variant by running Delta debugging.
  * 
  * Call:\n
- * > NaiveReduction.exe [file with error] [line with error] [error description message] [reduction ratio] <source path 0> [... <source path N>] --
- * e.g. NaiveReduction.exe --loc-file="example.cpp" --loc-line=17 --error-message="segmentation fault" --ratio=0.5 example.cpp --
+ * > DeltaReduction.exe [file with error] [line with error] [error description message] <source path 0> [... <source path N>] --
+ * e.g. DeltaReduction.exe --loc-file="example.cpp" --loc-line=17 --error-message="segmentation fault" example.cpp --
  */
 int main(int argc, const char** argv)
 {
+	// Pre-parse options to print the appropriate help message.
+	// LLVM does not handle options with multiple categories well when it comes to help messages.
+	// Unfortunately, we need to print options for all tools.
+	std::vector<const cl::OptionCategory*> categories{ &NaiveReductionArgs, &DeltaReductionArgs, &VarExtractorArgs, &SliceExtractorArgs };
+	HideUnrelatedOptions(ArrayRef<const cl::OptionCategory*>(categories));
+	cl::ParseCommandLineOptions(argc, argv);
+	
 	// Parse the command-line args passed to the tool.
-	clang::tooling::CommonOptionsParser op(argc, argv, NaiveReductionArgs);
+	clang::tooling::CommonOptionsParser op(argc, argv, DeltaReductionArgs);
 
 	// TODO(Denis): Create multi-file support.
 	if (op.getSourcePathList().size() > 1)
