@@ -3,8 +3,8 @@
 import os
 import docker
 import argparse
-from subprocess import call, run
-from docker.types import Mount
+from subprocess import call
+from time import sleep
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--file", required=True, type=str, help="The source file to be sliced")
@@ -30,8 +30,13 @@ def slice_dg(args):
 
         return
 
+    vol_path = os.getcwd() + "/dg-data"
+
+    if not os.path.exists(vol_path):
+        os.mkdir(vol_path)
+
     print("Copying the input file to the shared medium...")
-    call("cp " + args.file + " ~/dg-data/", shell=True)
+    call(f"cp {args.file} {vol_path}", shell=True)
 
     print("Initializing docker...")
     client = docker.from_env()
@@ -52,7 +57,7 @@ def slice_dg(args):
     ]
 
     volumes = {
-        os.getcwd() + "/dg-data": {
+        vol_path: {
             "bind": "/data-mapped",
             "mode": "rw",
         },
@@ -65,13 +70,24 @@ def slice_dg(args):
         detach=True
     )
 
+    container.wait()
+
     print("Docker exited...")
     print(container.logs())
 
+    print("Checking and moving the result...")
+    if os.path.exists(os.path.join(vol_path, args.output)):
+        os.rename(os.path.join(vol_path, args.output), args.output)
+
 
 def slice_giri(args):
+    vol_path = os.getcwd() + "/giri-data"
+
+    if not os.path.exists(vol_path):
+        os.mkdir(vol_path)
+
     print("Copying the input file to the shared medium...")
-    call("cp " + args.file + " ~/giri-data/", shell=True)
+    call(f"cp {args.file} {vol_path}", shell=True)
 
     print("Initializing docker...")
     client = docker.from_env()
@@ -102,7 +118,7 @@ def slice_giri(args):
     ]
 
     volumes = {
-        os.getcwd() + "/giri-data": {
+        vol_path: {
             "bind": "/data-mapped",
             "mode": "rw",
         },
@@ -115,8 +131,14 @@ def slice_giri(args):
         detach=True
     )
 
+    container.wait()
+
     print("Docker exited...")
     print(container.logs())
+
+    print("Checking and moving the result...")
+    if os.path.exists(os.path.join(vol_path, args.output)):
+        os.rename(os.path.join(vol_path, args.output), args.output)
 
 
 def run_slicer(args):

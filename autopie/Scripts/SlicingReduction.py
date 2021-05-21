@@ -82,14 +82,13 @@ def run_unification(slices):
     for slice in slices:
         raw_args.append(slice)
 
-    raw_args.append("-o=")
-    raw_args.append(unification_output)
+    raw_args.append(f"-o={unification_output}")
 
     unification_args = unify.parser.parse_args(raw_args)
 
     unify.unify(unification_args)
 
-    return True
+    return 0
 
 
 def run_static_slicer(args, var, iteration):
@@ -139,49 +138,57 @@ def run_tool(binary_path, arguments):
 
 
 def run_variable_extraction(args):
-    var_extractor_args = ["--loc-file=", args.source_file,
-                          "--loc-line=", args.line_number,
-                          "--verbose=", args.verbose,
-                          "--log=", args.log,
-                          "-o=", var_extractor_output
+    var_extractor_args = [f"--loc-file={args.source_file}",
+                          f"--loc-line={args.line_number}",
+                          f"--verbose={args.verbose}",
+                          f"--log={args.log}",
+                          f"-o={var_extractor_output}",
+                          args.source_file,
+                          "--"
                           ]
 
     return run_tool(var_extractor_path, var_extractor_args)
 
 
 def run_slice_extraction(args, slice_file):
-    slice_extractor_args = ["--loc-file=", args.source_file,
-                            "--slice-file", slice_file,
-                            "--verbose=", args.verbose,
-                            "--log=", args.log,
-                            "-o=", slice_extractor_output
+    slice_extractor_args = [f"--loc-file={args.source_file}",
+                            f"--slice-file={slice_file}",
+                            f"--verbose={args.verbose}",
+                            f"--log={args.log}",
+                            f"-o=slice",
+                            args.source_file,
+                            "--"
                             ]
 
     return run_tool(slice_extractor_path, slice_extractor_args)
 
 
 def run_delta(args):
-    delta_args = ["--loc-file=", args.source_file,
-                  "--loc-line=", args.line_number,
-                  "--error-message=", args.error_message,
-                  "--arguments=", args.arguments,
-                  "--dump-dot=", args.dump_dot,
-                  "--verbose=", args.verbose,
-                  "--log=", args.log
+    delta_args = [f"--loc-file={args.source_file}",
+                  f"--loc-line={args.line_number}",
+                  f"--error-message={args.error_message}",
+                  f"--arguments={args.arguments}",
+                  f"--dump-dot={args.dump_dot}",
+                  f"--verbose={args.verbose}",
+                  f"--log={args.log}",
+                  args.source_file,
+                  "--"
                   ]
 
     return run_tool(delta_path, delta_args)
 
 
 def run_naive(args):
-    naive_args = ["--loc-file=", args.source_file,
-                  "--loc-line=", args.line_number,
-                  "--error-message=", args.error_message,
-                  "--arguments=", args.arguments,
-                  "--ratio=", args.reduction_ratio,
-                  "--dump-dot=", args.dump_dot,
-                  "--verbose=", args.verbose,
-                  "--log=", args.log  # TODO: Logging twice in a row will remove the previous log. Add a cool-down.
+    naive_args = [f"--loc-file={args.source_file}",
+                  f"--loc-line={args.line_number}",
+                  f"--error-message={args.error_message}",
+                  f"--arguments={args.arguments}",
+                  f"--ratio={args.reduction_ratio}",
+                  f"--dump-dot={args.dump_dot}",
+                  f"--verbose={args.verbose}",
+                  f"--log={args.log}",  # TODO: Logging twice in a row will remove the previous log. Add a cool-down.
+                  args.source_file,
+                  "--"
                   ]
 
     return run_tool(naive_path, naive_args)
@@ -190,7 +197,7 @@ def run_naive(args):
 def get_variables_on_line(args, file_path):
     variables = []
 
-    if run_variable_extraction(args):
+    if not run_variable_extraction(args):
         with open(file_path, "r") as file:
             for line in file:
                 variables.append(line.strip())
@@ -224,10 +231,10 @@ def get_adjusted_line(args, file_path):
 
 
 def update_source_from_slices(args, dynamic_slices):
-    if run_unification(dynamic_slices):
+    if not run_unification(dynamic_slices):
         print("Extracting source code for the unified slice...")
 
-        if run_slice_extraction(args, unification_output):
+        if not run_slice_extraction(args, unification_output):
             args.source_file = get_extracted_slice(args, slice_extractor_output)
             args.line_number = get_adjusted_line(args, adjusted_line_path)
 
@@ -272,6 +279,12 @@ def save_result(file_path):
 
 
 def main(args):
+    args.line_number = str(args.line_number)
+    args.reduction_ratio = str(args.reduction_ratio)
+    args.dump_dot = "true" if args.dump_dot else "false"
+    args.verbose = "true" if args.verbose else "false"
+    args.log = "true" if args.log else "false"
+
     validate_paths()
 
     print(f"Extracting variables...")

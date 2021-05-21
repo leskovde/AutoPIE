@@ -27,12 +27,14 @@ using namespace Common;
  */
 int main(int argc, const char** argv)
 {
+	/*
 	// Pre-parse options to print the appropriate help message.
 	// LLVM does not handle options with multiple categories well when it comes to help messages.
 	// Unfortunately, we need to print options for all tools.
 	std::vector<const cl::OptionCategory*> categories{ &NaiveReductionArgs, &DeltaReductionArgs, &VarExtractorArgs, &SliceExtractorArgs };
 	HideUnrelatedOptions(ArrayRef<const cl::OptionCategory*>(categories));
 	cl::ParseCommandLineOptions(argc, argv);
+	*/
 	
 	// Parse the command-line args passed to the tool.
 	clang::tooling::CommonOptionsParser op(argc, argv, DeltaReductionArgs);
