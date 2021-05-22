@@ -19,7 +19,7 @@ namespace SliceExtractor
 			return llvm::isa<clang::FunctionDecl>(decl) && llvm::cast<clang::FunctionDecl>(decl)->isMain();
 		}
 
-		bool IsDeclInSlice(const int startingLine, const int endingLine) const
+		bool IsInSlice(const int startingLine, const int endingLine) const
 		{
 			return std::find(originalLines.begin(), originalLines.end(), startingLine) != originalLines.end() ||
 				std::find(originalLines.begin(), originalLines.end(), endingLine) != originalLines.end();
@@ -63,7 +63,7 @@ namespace SliceExtractor
 				const auto bodyStartingLine = astContext_.getSourceManager().getSpellingLineNumber(bodyRange.getBegin());
 				const auto bodyEndingLine = astContext_.getSourceManager().getSpellingLineNumber(bodyRange.getEnd());
 
-				if (IsMain(decl) || IsDeclInSlice(startingLine, endingLine) || HasSlicePartsInsideItsBody(bodyStartingLine, bodyEndingLine))
+				if (IsMain(decl) || IsInSlice(startingLine, endingLine) || HasSlicePartsInsideItsBody(bodyStartingLine, bodyEndingLine))
 				{
 					// The declaration has a body. The whole body does not need to be in the collected line list.
 					// We only include that what is not inside the body (the signature and everything before and after
@@ -82,7 +82,7 @@ namespace SliceExtractor
 			}
 			else
 			{
-				if (IsMain(decl) || IsDeclInSlice(startingLine, endingLine))
+				if (IsMain(decl) || IsInSlice(startingLine, endingLine))
 				{
 					// No body => include the whole declaration.
 
@@ -104,12 +104,32 @@ namespace SliceExtractor
 			const auto startingLine = astContext_.getSourceManager().getSpellingLineNumber(range.getBegin());
 			const auto endingLine = astContext_.getSourceManager().getSpellingLineNumber(range.getEnd());
 			
-			if (std::find(originalLines.begin(), originalLines.end(), startingLine) != originalLines.end() ||
-				std::find(originalLines.begin(), originalLines.end(), endingLine) != originalLines.end())
+			if (IsInSlice(startingLine, endingLine))
 			{
 				for (auto i = startingLine; i <= endingLine; i++)
 				{
 					collectedLines.push_back(i);
+				}
+
+				// Const declarations might be absent in the slice even though they are referenced.
+				// These declarations need to be added manually.
+				if (llvm::isa<clang::DeclRefExpr>(stmt))
+				{
+					const auto decl = llvm::cast<clang::DeclRefExpr>(stmt)->getFoundDecl();
+
+					if (!decl->hasBody())
+					{
+						const auto declRange = GetPrintableRange(GetPrintableRange(decl->getSourceRange(), astContext_.getSourceManager()),
+							astContext_.getSourceManager());
+
+						const auto declStartingLine = astContext_.getSourceManager().getSpellingLineNumber(declRange.getBegin());
+						const auto declEndingLine = astContext_.getSourceManager().getSpellingLineNumber(declRange.getEnd());
+
+						for (auto i = declStartingLine; i <= declEndingLine; i++)
+						{
+							collectedLines.push_back(i);
+						}
+					}
 				}
 			}
 			
