@@ -73,7 +73,9 @@ def slice_dg(args):
     container.wait()
 
     print("Docker exited...")
-    print(container.logs())
+    print(container.logs().decode("utf-8"))
+
+    container.remove()
 
     print("Checking and moving the result...")
     if os.path.exists(os.path.join(vol_path, args.output)):
@@ -134,7 +136,9 @@ def slice_giri(args):
     container.wait()
 
     print("Docker exited...")
-    print(container.logs())
+    print(container.logs().decode("utf-8"))
+
+    container.remove()
 
     print("Checking and moving the result...")
     if os.path.exists(os.path.join(vol_path, args.output)):

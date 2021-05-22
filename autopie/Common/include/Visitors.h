@@ -407,6 +407,8 @@ namespace Common
 
 				if (llvm::isa<clang::CompoundStmt>(stmt))
 				{
+					// Replace compound statements with a null statement instead of removing them.
+					// Removing a compound statement could result in an semantically invalid variant.
 					RemoveFromSource(range, true);
 				}
 				else
@@ -635,11 +637,12 @@ namespace Common
 					if (child != nullptr && nodeMapping_->find(child->getID(astContext_)) != nodeMapping_->end())
 					{
 						graph.InsertStatementDependency(codeUnitsCount, nodeMapping_->at(child->getID(astContext_)));
-
+						/*
 						if (graph.IsInCriterion(nodeMapping_->at(child->getID(astContext_))))
 						{
 							graph.AddCriterionNode(codeUnitsCount);
 						}
+						*/
 					}
 				}
 
@@ -683,11 +686,12 @@ namespace Common
 						if (*it != nullptr && nodeMapping_->find(it->getID(astContext_)) != nodeMapping_->end())
 						{
 							graph.InsertStatementDependency(codeUnitsCount, nodeMapping_->at(it->getID(astContext_)));
-
+							/*
 							if (graph.IsInCriterion(nodeMapping_->at(it->getID(astContext_))))
 							{
 								graph.AddCriterionNode(codeUnitsCount);
 							}
+							*/
 						}
 					}
 				}
@@ -731,11 +735,12 @@ namespace Common
 						if (*it != nullptr && nodeMapping_->find(it->getID(astContext_)) != nodeMapping_->end())
 						{
 							graph.InsertStatementDependency(codeUnitsCount, nodeMapping_->at(it->getID(astContext_)));
-
+							/*
 							if (graph.IsInCriterion(nodeMapping_->at(it->getID(astContext_))))
 							{
 								graph.AddCriterionNode(codeUnitsCount);
 							}
+							*/
 						}
 					}
 				}
