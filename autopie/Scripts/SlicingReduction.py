@@ -35,27 +35,39 @@ parser.add_argument("--dynamic_slice", type=bool, default=True, help="Runs a pas
 parser.add_argument("--delta", type=bool, default=True, help="Uses the minimizing Delta debugging algorithm before "
                                                              "launching naive reduction. Enabled by default.")
 
-
 delta_path = "../DeltaReduction/build/bin/DeltaReduction"
 naive_path = "../NaiveReduction/build/bin/NaiveReduction"
 var_extractor_path = "../VariableExtractor/build/bin/VariableExtractor"
 slice_extractor_path = "../SliceExtractor/build/bin/SliceExtractor"
 variant_path = {
-    "c": "temp/autoPie.c",
-    "cpp": "temp/autoPie.cpp"
+    ".c": "temp/autoPie.c",
+    ".cpp": "temp/autoPie.cpp"
 }
 
 unification_output = "unification.txt"
 var_extractor_output = "criteria.txt"
 slice_extractor_output = {
-    "c": "slice.c",
-    "cpp": "slice.cpp"
+    ".c": "slice.c",
+    ".cpp": "slice.cpp"
 }
 adjusted_line_path = "adjustedLineNumber.txt"
 
+language = ""
 
-def validate_paths():
+
+def validate_paths(args):
     valid = True
+
+    if not os.path.exists(args.source_file):
+        print("The input source file could not be found!")
+        valid = False
+    else:
+        global language
+        _, language = os.path.splitext(args.source_file)
+
+        if not (language == ".c" or language == ".cpp"):
+            print("The input file is written neither in C or C++!")
+            valid = False
 
     if not os.path.exists(delta_path):
         print("The DeltaReduction binary is missing!")
@@ -106,12 +118,19 @@ def run_static_slicer(args, var, iteration):
     return output_file
 
 
-def run_dynamic_slicer(args, var, iteration):
+def run_dynamic_slicer(args, variables, iteration):
+    # The dynamic slicer cannot produce its output
+    # if the program results in an error.
+    # We need to prevent the error by making a temporary
+    # change in the input - replacing the criterion
+    # with a useless statement and an exit call.
+
+    input_file = modify_criterion(args, variables, iteration)
     output_file = f"dynamic_slice_{iteration}.txt"
 
     dynamic_slicer_args = SimpleNamespace(
-        file=args.source_file,
-        criterion=var,
+        file=input_file,
+        criterion=f"{args.line_number}:whatever",
         output=output_file,
         arguments=args.arguments,
         dynamic_slicer=True
@@ -206,19 +225,15 @@ def get_variables_on_line(args, file_path):
     return variables
 
 
-def get_extracted_slice(args, file_path):
-    c_file = pathlib.Path(slice_extractor_output["c"])
-    cpp_file = pathlib.Path(slice_extractor_output["cpp"])
+def get_extracted_slice(args, slice_extractor_output):
+    global language
 
-    if not c_file.exists() and not cpp_file.exists():
+    extracted_file = pathlib.Path(slice_extractor_output[language])
+
+    if not extracted_file.exists():
         return args.source_file
-    if c_file.exists() and not cpp_file.exists():
-        return slice_extractor_output["c"]
-    elif not c_file.exists() and cpp_file.exists():
-        return slice_extractor_output["cpp"]
 
-    return slice_extractor_output["c"] if c_file.stat().st_mtime > cpp_file.stat().st_mtime else slice_extractor_output[
-        "cpp"]
+    return slice_extractor_output[language]
 
 
 def get_adjusted_line(args, file_path):
@@ -240,41 +255,47 @@ def update_source_from_slices(args, dynamic_slices):
             args.line_number = get_adjusted_line(args, adjusted_line_path)
 
 
-def get_generated_variant(c_file, cpp_file):
-    if c_file.exists() and not cpp_file.exists():
-        result = variant_path["c"]
-    elif not c_file.exists() and cpp_file.exists():
-        result = variant_path["cpp"]
-    else:
-        result = variant_path["c"] if c_file.stat().st_mtime > cpp_file.stat().st_mtime else variant_path["cpp"]
-
-    return result
-
-
 def update_source_from_reduction(args):
-    c_file = pathlib.Path(variant_path["c"])
-    cpp_file = pathlib.Path(variant_path["cpp"])
+    reduced_file = pathlib.Path(variant_path[language])
 
-    if not c_file.exists() and not cpp_file.exists():
+    if not reduced_file.exists():
         return
 
-    variant = get_generated_variant(c_file, cpp_file)
-
     # Copy the result to the current directory.
-    args.source_file = shutil.copy2(variant, ".")
+    args.source_file = shutil.copy2(variant_path[language], ".")
+
+
+def modify_criterion(args, variables, iteration):
+    with open(args.source_file, "r") as ifs:
+        file_contents = ifs.readlines()
+
+    exit_header = "<stdlib.h>" if language == ".c" else "<cstdlib>"
+    file_contents.insert(0, f"#include {exit_header}\n")
+
+    new_criterion = ""
+
+    for var in variables:
+        new_criterion += f"(void){var.split(':')[1]}; "
+
+    new_criterion += "\n"
+    file_contents.insert(args.line_number - 1, new_criterion)
+
+    file_path = f"dynamic_{iteration}{language}"
+
+    with open(file_path, "w") as ofs:
+        ofs.write("".join(file_contents))
+
+    return file_path
 
 
 def save_result(file_path):
-    c_file = pathlib.Path(variant_path["c"])
-    cpp_file = pathlib.Path(variant_path["cpp"])
+    output_file = pathlib.Path(variant_path[language])
 
-    if not c_file.exists() and not cpp_file.exists():
+    if not output_file.exists():
         return False
 
-    result = get_generated_variant(c_file, cpp_file)
-
     # Copy the result to the current directory.
-    shutil.copy2(result, ".")
+    shutil.copy2(variant_path[language], ".")
 
     return True
 
@@ -286,7 +307,7 @@ def main(args):
     args.verbose = "true" if args.verbose else "false"
     args.log = "true" if args.log else "false"
 
-    validate_paths()
+    validate_paths(args)
 
     print(f"Extracting variables...")
     variables = get_variables_on_line(args, var_extractor_output)
@@ -304,16 +325,13 @@ def main(args):
         update_source_from_slices(args, static_slices)
 
     if args.dynamic_slice:
-        dynamic_slices = []
         i = 0
 
-        for var in variables:
-            print(f"Running dynamic slicing with the criterion '{var}'...")
+        print(f"Running dynamic slicing with the criterion '{args.line_number}'...")
 
-            dynamic_slices.append(run_dynamic_slicer(args, var, i))
-            i += 1
+        dynamic_slice = run_dynamic_slicer(args, variables, i)
 
-        update_source_from_slices(args, dynamic_slices)
+        update_source_from_slices(args, [dynamic_slice])
 
     if args.delta:
         exit_code = run_delta(args)
