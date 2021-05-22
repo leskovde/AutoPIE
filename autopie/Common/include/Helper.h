@@ -155,7 +155,7 @@ bool IsFull(BitMask& bitMask);
 
 void Increment(BitMask& bitMask);
 
-std::pair<bool, double> IsValid(const BitMask& bitMask, DependencyGraph& dependencies);
+std::pair<bool, double> IsValid(const BitMask& bitMask, DependencyGraph& dependencies, bool = true);
 
 //===----------------------------------------------------------------------===//
 //

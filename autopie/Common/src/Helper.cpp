@@ -273,10 +273,12 @@ void Increment(BitMask& bitMask)
  *
  * @param bitMask The variant represent by a bitmask.
  * @param dependencies The code unit relationship graph.
+ * @param heuristics Specifies whether a dependency graph related heuristics should be used to determine
+ * the validity of the variant.
  * @return A pair of values. True if the bitmask results in a valid source file variant in terms of code unit
  * relationships. If valid, the second value is set to the variant's size ratio when compared to the original size.
  */
-std::pair<bool, double> IsValid(const BitMask& bitMask, DependencyGraph& dependencies)
+std::pair<bool, double> IsValid(const BitMask& bitMask, DependencyGraph& dependencies, const bool heuristics)
 {
 	auto characterCount = dependencies.GetTotalCharacterCount();
 
@@ -292,15 +294,6 @@ std::pair<bool, double> IsValid(const BitMask& bitMask, DependencyGraph& depende
 				return std::pair<bool, double>(false, 0);
 			}
 
-			for (auto child : dependencies.GetDependentNodes(i))
-			{
-				// The parent will be removed and there is no point in keeping its children.
-				if (bitMask[child])
-				{
-					return std::pair<bool, double>(false, 0);
-				}
-			}
-
 			for (auto parent : dependencies.GetParentNodes(i))
 			{
 				// The node is being removed and the `clang::Rewriter` cannot remove the same snippet twice.
@@ -309,6 +302,18 @@ std::pair<bool, double> IsValid(const BitMask& bitMask, DependencyGraph& depende
 				if (!bitMask[parent])
 				{
 					return std::pair<bool, double>(false, 0);
+				}
+			}
+
+			if (heuristics)
+			{
+				for (auto child : dependencies.GetDependentNodes(i))
+				{
+					// The parent will be removed and there is no point in keeping its children.
+					if (bitMask[child])
+					{
+						return std::pair<bool, double>(false, 0);
+					}
 				}
 			}
 		}

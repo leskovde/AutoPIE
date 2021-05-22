@@ -29,7 +29,7 @@ namespace Delta
 
 		bool IsFailureInducingSubset(clang::ASTContext& context, const BitMask& bitmask, DependencyGraph& dependencyGraph) const
 		{
-			if (IsValid(bitmask, dependencyGraph).first)
+			if (IsValid(bitmask, dependencyGraph, false).first)
 			{
 				try
 				{
