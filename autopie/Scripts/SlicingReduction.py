@@ -40,8 +40,8 @@ naive_path = "../NaiveReduction/build/bin/NaiveReduction"
 var_extractor_path = "../VariableExtractor/build/bin/VariableExtractor"
 slice_extractor_path = "../SliceExtractor/build/bin/SliceExtractor"
 variant_path = {
-    ".c": "temp/autoPie.c",
-    ".cpp": "temp/autoPie.cpp"
+    ".c": "temp/autoPieOut.c",
+    ".cpp": "temp/autoPieOut.cpp"
 }
 
 unification_output = "unification.txt"
@@ -53,6 +53,7 @@ slice_extractor_output = {
 adjusted_line_path = "adjustedLineNumber.txt"
 
 language = ""
+created_files = []
 
 
 def validate_paths(args):
@@ -87,7 +88,7 @@ def validate_paths(args):
 
 def run_unification(slices):
     if len(slices) < 1:
-        return False
+        return 1
 
     raw_args = ["--file"]
 
@@ -98,9 +99,10 @@ def run_unification(slices):
 
     unification_args = unify.parser.parse_args(raw_args)
 
-    unify.unify(unification_args)
+    global created_files
+    created_files.append(unification_output)
 
-    return 0
+    return unify.unify(unification_args)
 
 
 def run_static_slicer(args, var, iteration):
@@ -115,6 +117,9 @@ def run_static_slicer(args, var, iteration):
 
     run_slicer(static_slicer_args)
 
+    global created_files
+    created_files.append(output_file)
+
     return output_file
 
 
@@ -128,15 +133,20 @@ def run_dynamic_slicer(args, variables, iteration):
     input_file = modify_criterion(args, variables, iteration)
     output_file = f"dynamic_slice_{iteration}.txt"
 
+    adjusted_line_number = str((int(args.line_number) + 1))
+
     dynamic_slicer_args = SimpleNamespace(
         file=input_file,
-        criterion=f"{args.line_number}:whatever",
+        criterion=f"{adjusted_line_number}:whatever",
         output=output_file,
         arguments=args.arguments,
         dynamic_slicer=True
     )
 
     run_slicer(dynamic_slicer_args)
+
+    global created_files
+    created_files.append(output_file)
 
     return output_file
 
@@ -218,9 +228,12 @@ def get_variables_on_line(args, file_path):
     variables = []
 
     if not run_variable_extraction(args):
-        with open(file_path, "r") as file:
-            for line in file:
+        with open(file_path, "r") as ifs:
+            for line in ifs:
                 variables.append(line.strip())
+
+    global created_files
+    created_files.append(file_path)
 
     return variables
 
@@ -233,26 +246,42 @@ def get_extracted_slice(args, slice_extractor_output):
     if not extracted_file.exists():
         return args.source_file
 
+    global created_files
+    created_files.append(slice_extractor_output[language])
+    created_files.append(adjusted_line_path)
+
     return slice_extractor_output[language]
 
 
 def get_adjusted_line(args, file_path):
-    with open(file_path, "r") as file:
-        line = file.read().strip()
+    with open(file_path, "r") as ifs:
+        line = ifs.read().strip()
 
         if line.isdigit():
             return int(line)
 
+    global created_files
+    created_files.append(file_path)
+
     return args.line_number
 
 
-def update_source_from_slices(args, dynamic_slices):
-    if not run_unification(dynamic_slices):
+def update_source_from_slices(args, slices):
+    available_slices = []
+    for slice in slices:
+        if os.path.exists(slice):
+            available_slices.append(slice)
+
+    if not run_unification(available_slices):
         print("Extracting source code for the unified slice...")
 
         if not run_slice_extraction(args, unification_output):
             args.source_file = get_extracted_slice(args, slice_extractor_output)
             args.line_number = get_adjusted_line(args, adjusted_line_path)
+
+    global created_files
+    for slice in available_slices:
+        created_files.append(slice)
 
 
 def update_source_from_reduction(args):
@@ -263,6 +292,10 @@ def update_source_from_reduction(args):
 
     # Copy the result to the current directory.
     args.source_file = shutil.copy2(variant_path[language], ".")
+
+    global created_files
+    created_files.append(args.source_file)
+    created_files.append(variant_path[language])
 
 
 def modify_criterion(args, variables, iteration):
@@ -278,12 +311,18 @@ def modify_criterion(args, variables, iteration):
         new_criterion += f"(void){var.split(':')[1]}; "
 
     new_criterion += "\n"
-    file_contents.insert(args.line_number - 1, new_criterion)
+    file_contents.insert(args.line_number, new_criterion)
+
+    exit_command = "_Exit(0);\n" if language == ".c" else "std::exit(0);\n"
+    file_contents.insert(args.line_number + 1, exit_command)
 
     file_path = f"dynamic_{iteration}{language}"
 
     with open(file_path, "w") as ofs:
         ofs.write("".join(file_contents))
+
+    global created_files
+    created_files.append(file_path)
 
     return file_path
 
@@ -344,7 +383,7 @@ def main(args):
     exit_code = run_naive(args)
 
     if exit_code != 0:
-        print("DeltaReduction returned a non-standard exit code. The reduction failed.")
+        print("NaiveReduction returned a non-standard exit code. The reduction failed.")
     else:
         update_source_from_reduction(args)
 
@@ -358,4 +397,10 @@ def main(args):
 
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
-    main(args)
+
+    try:
+        main(args)
+    finally:
+        for file in created_files:
+            if os.path.exists(file):
+                os.remove(file)

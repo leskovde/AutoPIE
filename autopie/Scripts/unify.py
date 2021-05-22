@@ -26,6 +26,9 @@ def unify(args):
 
         ifs.close()
 
+    if len(lines) == 0:
+        return 1
+
     ofs = args.output
 
     for line in lines:
@@ -34,6 +37,8 @@ def unify(args):
     ofs.close()
 
     print(f"Done, the result has been stored in '{args.output.name}'.")
+
+    return 0
 
 
 if __name__ == "__main__":
