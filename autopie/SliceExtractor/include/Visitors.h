@@ -49,13 +49,21 @@ namespace SliceExtractor
 
 		bool VisitDecl(clang::Decl* decl)
 		{
+			// Skip included files.
+			if (!astContext_.getSourceManager().isInMainFile(decl->getBeginLoc()))
+				//const auto loc = clang::FullSourceLoc(decl->getBeginLoc(), astContext_.getSourceManager());
+				//if (loc.isValid() && loc.isInSystemHeader())
+			{
+				return true;
+			}
+			
 			const auto range = GetPrintableRange(GetPrintableRange(decl->getSourceRange(), astContext_.getSourceManager()),
 				astContext_.getSourceManager());
 
 			const auto startingLine = astContext_.getSourceManager().getSpellingLineNumber(range.getBegin());
 			const auto endingLine = astContext_.getSourceManager().getSpellingLineNumber(range.getEnd());
 
-			if (decl->hasBody())
+			if (decl->hasBody() && decl->getBody() != nullptr)
 			{
 				const auto bodyRange = GetPrintableRange(GetPrintableRange(decl->getBody()->getSourceRange(), astContext_.getSourceManager()),
 					astContext_.getSourceManager());
@@ -98,6 +106,14 @@ namespace SliceExtractor
 
 		bool VisitStmt(clang::Stmt* stmt)
 		{
+			// Skip included files.
+			if (!astContext_.getSourceManager().isInMainFile(stmt->getBeginLoc()))
+				//const auto loc = clang::FullSourceLoc(decl->getBeginLoc(), astContext_.getSourceManager());
+				//if (loc.isValid() && loc.isInSystemHeader())
+			{
+				return true;
+			}
+			
 			const auto range = GetPrintableRange(GetPrintableRange(stmt->getSourceRange(), astContext_.getSourceManager()),
 				astContext_.getSourceManager());
 

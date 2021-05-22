@@ -133,6 +133,11 @@ int main(int argc, const char** argv)
 	}
 
 	out::Verb() << "Matching done.\n";
+
+	// Remove duplicates.
+	std::sort(varHandler.declRefNames.begin(), varHandler.declRefNames.end());
+	const auto it = std::unique(varHandler.declRefNames.begin(), varHandler.declRefNames.end());
+	varHandler.declRefNames.erase(it, varHandler.declRefNames.end());
 	
 	std::ofstream ofs(OutputFile);
 	

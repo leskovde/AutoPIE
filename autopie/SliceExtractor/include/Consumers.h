@@ -4,6 +4,8 @@
 
 #include <clang/AST/ASTConsumer.h>
 
+#include <algorithm>
+
 #include "Visitors.h"
 
 namespace SliceExtractor
@@ -27,6 +29,12 @@ namespace SliceExtractor
 			auto& collectedLines = sliceVisitor_->collectedLines;
 			
 			originalLines.insert(originalLines.end(), collectedLines.begin(), collectedLines.end());
+
+			// Remove duplicates.
+			std::sort(originalLines.begin(), originalLines.end());
+			const auto it = std::unique(originalLines.begin(), originalLines.end());
+			originalLines.erase(it, originalLines.end());
+			
 		}
 	};
 }

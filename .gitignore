@@ -372,3 +372,6 @@ healthchecksdb
 /autopie/Scripts/unification.txt
 /autopie/Scripts/dg-data
 /autopie/Scripts/giri-data
+/autopie/Scripts/visuals
+/autopie/SliceExtractor/ide/output.cpp
+/autopie/SliceExtractor/example20.cpp
