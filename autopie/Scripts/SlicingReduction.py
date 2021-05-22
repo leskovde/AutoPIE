@@ -153,6 +153,7 @@ def run_variable_extraction(args):
 def run_slice_extraction(args, slice_file):
     slice_extractor_args = [f"--loc-file={args.source_file}",
                             f"--slice-file={slice_file}",
+                            f"--loc-line={args.line_number}",
                             f"--verbose={args.verbose}",
                             f"--log={args.log}",
                             f"-o=slice",

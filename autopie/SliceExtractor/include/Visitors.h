@@ -14,6 +14,30 @@ namespace SliceExtractor
 	{
 		clang::ASTContext& astContext_;
 
+		bool IsMain(clang::Decl* decl) const
+		{
+			return llvm::isa<clang::FunctionDecl>(decl) && llvm::cast<clang::FunctionDecl>(decl)->isMain();
+		}
+
+		bool IsDeclInSlice(const int startingLine, const int endingLine) const
+		{
+			return std::find(originalLines.begin(), originalLines.end(), startingLine) != originalLines.end() ||
+				std::find(originalLines.begin(), originalLines.end(), endingLine) != originalLines.end();
+		}
+
+		bool HasSlicePartsInsideItsBody(const int bodyStartingLine, const int bodyEndingLine) const
+		{
+			for (auto line : originalLines)
+			{
+				if (bodyStartingLine <= line && line <= bodyEndingLine)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+		
 	public:
 
 		std::vector<int>& originalLines;
@@ -31,18 +55,16 @@ namespace SliceExtractor
 			const auto startingLine = astContext_.getSourceManager().getSpellingLineNumber(range.getBegin());
 			const auto endingLine = astContext_.getSourceManager().getSpellingLineNumber(range.getEnd());
 
-			if (llvm::isa<clang::FunctionDecl>(decl) && llvm::cast<clang::FunctionDecl>(decl)->isMain() ||
-				std::find(originalLines.begin(), originalLines.end(), startingLine) != originalLines.end() ||
-				std::find(originalLines.begin(), originalLines.end(), endingLine) != originalLines.end())
+			if (decl->hasBody())
 			{
-				if (decl->hasBody())
+				const auto bodyRange = GetPrintableRange(GetPrintableRange(decl->getBody()->getSourceRange(), astContext_.getSourceManager()),
+					astContext_.getSourceManager());
+
+				const auto bodyStartingLine = astContext_.getSourceManager().getSpellingLineNumber(bodyRange.getBegin());
+				const auto bodyEndingLine = astContext_.getSourceManager().getSpellingLineNumber(bodyRange.getEnd());
+
+				if (IsMain(decl) || IsDeclInSlice(startingLine, endingLine) || HasSlicePartsInsideItsBody(bodyStartingLine, bodyEndingLine))
 				{
-					const auto bodyRange = GetPrintableRange(GetPrintableRange(decl->getBody()->getSourceRange(), astContext_.getSourceManager()),
-						astContext_.getSourceManager());
-
-					const auto bodyStartingLine = astContext_.getSourceManager().getSpellingLineNumber(bodyRange.getBegin());
-					const auto bodyEndingLine = astContext_.getSourceManager().getSpellingLineNumber(bodyRange.getEnd());
-
 					// The declaration has a body. The whole body does not need to be in the collected line list.
 					// We only include that what is not inside the body (the signature and everything before and after
 					// the body's braces, include those braces).
@@ -57,7 +79,10 @@ namespace SliceExtractor
 						collectedLines.push_back(i);
 					}
 				}
-				else
+			}
+			else
+			{
+				if (IsMain(decl) || IsDeclInSlice(startingLine, endingLine))
 				{
 					// No body => include the whole declaration.
 
@@ -67,7 +92,7 @@ namespace SliceExtractor
 					}
 				}
 			}
-			
+
 			return true;
 		}
 

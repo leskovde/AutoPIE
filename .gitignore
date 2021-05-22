@@ -362,3 +362,13 @@ healthchecksdb
 /autopie/Scripts/out.txt
 /autopie/SliceExtractor/ide/adjustedLineNumber.txt
 /autopie/SliceExtractor/ide/output.c
+/autopie/Scripts/adjustedLineNumber.txt
+/autopie/Scripts/criteria.txt
+/autopie/Scripts/example0.c
+/autopie/Scripts/example20.cpp
+/autopie/Scripts/slice.c
+/autopie/Scripts/static_slice_0.txt
+/autopie/Scripts/static_slice_1.txt
+/autopie/Scripts/unification.txt
+/autopie/Scripts/dg-data
+/autopie/Scripts/giri-data
