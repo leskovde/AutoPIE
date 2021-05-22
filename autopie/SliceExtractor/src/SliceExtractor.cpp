@@ -118,7 +118,8 @@ int main(int argc, const char** argv)
 		
 		for (auto i = 1; std::getline(ifs, line); i++)
 		{
-			if (std::find(sliceLines.begin(), sliceLines.end(), i) != sliceLines.end())
+			if (std::find(sliceLines.begin(), sliceLines.end(), i) != sliceLines.end() ||
+				std::count_if(line.begin(), line.end(), [](const char c) { return std::isspace(c); }) == line.size())
 			{
 				out::Verb() << line << "\n";
 
