@@ -292,15 +292,23 @@ std::pair<bool, double> IsValid(const BitMask& bitMask, DependencyGraph& depende
 				return std::pair<bool, double>(false, 0);
 			}
 
-			auto children = dependencies.GetDependentNodes(i);
-
-			for (auto child : children)
+			for (auto child : dependencies.GetDependentNodes(i))
 			{
-				// Missing parent statement requires missing
-				// children as well.
+				// The parent will be removed and there is no point in keeping its children.
 				if (bitMask[child])
 				{
-					return  std::pair<bool, double>(false, 0);
+					return std::pair<bool, double>(false, 0);
+				}
+			}
+
+			for (auto parent : dependencies.GetParentNodes(i))
+			{
+				// The node is being removed and the `clang::Rewriter` cannot remove the same snippet twice.
+				// If we were to remove the node and its parent as well (the source code would overlap),
+				// we would get a buffer error.
+				if (!bitMask[parent])
+				{
+					return std::pair<bool, double>(false, 0);
 				}
 			}
 		}
