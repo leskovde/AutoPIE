@@ -143,7 +143,7 @@ def run_dynamic_slicer(args, variables, iteration):
         dynamic_slicer=True
     )
 
-    run_slicer(dynamic_slicer_args)
+    run_slicer(dynamic_slicer_args) # TODO: ! Adjust results by one line (due to #include injection)
 
     global created_files
     created_files.append(output_file)

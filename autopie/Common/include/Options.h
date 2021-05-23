@@ -41,6 +41,7 @@ inline llvm::cl::opt<std::string> ErrorMessage("error-message",
  */
 inline llvm::cl::opt<std::string> Arguments("arguments",
     llvm::cl::desc("[NaiveReduction, DeltaReduction] The arguments with which the program was run when the error occurred."),
+    llvm::cl::init(""),
     llvm::cl::value_desc("string"),
     llvm::cl::cat(AutoPieArgs));
 

@@ -799,8 +799,8 @@ namespace Common
 		DependencyGraph graph = DependencyGraph();
 
 		MappingASTVisitor(clang::CompilerInstance* ci, NodeMappingRef mapping, const int errorLine) : errorLine_(errorLine),
-			nodeMapping_(std::move(mapping)),
-			astContext_(ci->getASTContext())
+			astContext_(ci->getASTContext()),
+			nodeMapping_(std::move(mapping))
 		{
 			declNodeMapping_ = std::make_shared<NodeMapping>();
 		}

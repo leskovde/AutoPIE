@@ -1,0 +1,106 @@
+digraph g {
+forcelabels=true;
+rankdir=TD;
+19[label="int main (int argc, char** argv) 
+{
+	int i = 0;
+	
+	const int k = 0xffff;
+
+	for (int j = 0; j < k; j++) {
+		i++;
+	}
+
+	int m = i + k;
+
+	for (int j = 0; j < m; j++)
+	{
+		i += j;
+	}
+
+	print(\"Result: %d\n\", i);
+}", xlabel="No. 19 (707), Function", color="green"];
+18[label="{
+	int i = 0;
+	
+	const int k = 0xffff;
+
+	for (int j = 0; j < k; j++) {
+		i++;
+	}
+
+	int m = i + k;
+
+	for (int j = 0; j < m; j++)
+	{
+		i += j;
+	}
+
+	print(\"Result: %d\n\", i);
+}", xlabel="No. 18 (1003), CompoundStmt", color="darkorchid"];
+17[label="print(\"Result: %d\n\", i);", xlabel="No. 17 (988), CallExpr", color="goldenrod"];
+16[label="for (int j = 0; j < m; j++)
+	{
+		i += j;
+	}", xlabel="No. 16 (956), ForStmt", color="darkorchid"];
+15[label="{
+		i += j;
+	}", xlabel="No. 15 (953), CompoundStmt", color="darkorchid"];
+14[label="i += j;", xlabel="No. 14 (947), CompoundAssignOperator", color="darkorchid"];
+13[label="j++)", xlabel="No. 13 (933), UnaryOperator", color="darkorchid"];
+0[label="x += 3;", xlabel="No. 0 (609), CompoundAssignOperator", color="darkorchid"];
+1[label="print(str, x);", xlabel="No. 1 (637), CallExpr", color="green"];
+2[label="{ 
+	x += 3;
+	print(str, x);
+}", xlabel="No. 2 (649), CompoundStmt", color="darkorchid"];
+3[label="void print(const char* str, int x) 
+{ 
+	x += 3;
+	print(str, x);
+}", xlabel="No. 3 (570), Function", color="crimson"];
+4[label="int i = 0;", xlabel="No. 4 (749), DeclStmt", color="darkorchid"];
+5[label="const int k = 0xffff;", xlabel="No. 5 (772), DeclStmt", color="darkorchid"];
+6[label="int j = 0;", xlabel="No. 6 (795), DeclStmt", color="darkorchid"];
+7[label="j++)", xlabel="No. 7 (831), UnaryOperator", color="darkorchid"];
+8[label="i++;", xlabel="No. 8 (838), UnaryOperator", color="darkorchid"];
+9[label="{
+		i++;
+	}", xlabel="No. 9 (841), CompoundStmt", color="darkorchid"];
+10[label="for (int j = 0; j < k; j++) {
+		i++;
+	}", xlabel="No. 10 (844), ForStmt", color="darkorchid"];
+11[label="int m = i + k;", xlabel="No. 11 (885), DeclStmt", color="darkorchid"];
+12[label="int j = 0;", xlabel="No. 12 (908), DeclStmt", color="darkorchid"];
+19 -> 18;
+18 -> 4;
+18 -> 5;
+18 -> 10;
+18 -> 11;
+18 -> 16;
+18 -> 17;
+10 -> 6;
+10 -> 7;
+10 -> 9;
+9 -> 8;
+16 -> 12;
+16 -> 13;
+16 -> 15;
+3 -> 2;
+15 -> 14;
+2 -> 0;
+2 -> 1;
+3 -> 17 [color=maroon];
+11 -> 16 [color=maroon];
+12 -> 13 [color=maroon];
+12 -> 14 [color=maroon];
+12 -> 16 [color=maroon];
+5 -> 10 [color=maroon];
+5 -> 11 [color=maroon];
+4 -> 8 [color=maroon];
+4 -> 11 [color=maroon];
+4 -> 14 [color=maroon];
+4 -> 17 [color=maroon];
+6 -> 7 [color=maroon];
+6 -> 10 [color=maroon];
+}

@@ -14,10 +14,11 @@
 #include <clang/Driver/Driver.h>
 #include <clang/Frontend/TextDiagnosticPrinter.h>
 
+#include <lldb/API/SBError.h>
 #include <lldb/API/SBListener.h>
 #include <lldb/API/SBProcess.h>
+#include <lldb/API/SBStream.h>
 #include <lldb/API/SBTarget.h>
-#include <lldb/API/SBError.h>
 #include <lldb/API/SBThread.h>
 
 #include <llvm/ADT/SmallVector.h>
@@ -461,6 +462,22 @@ bool CheckLocationValidity(const std::string& filePath, const long lineNumber, c
 	return true;
 }
 
+static bool IsErrorMessageValid(const std::string& currentMessage)
+{
+	auto original = std::string(ErrorMessage);
+	auto actual = std::string(currentMessage);
+
+	std::for_each(original.begin(), original.end(), [](char& c) {
+		c = std::toupper(c);
+	});
+
+	std::for_each(actual.begin(), actual.end(), [](char& c) {
+		c = std::toupper(c);
+	});
+
+	return actual.find(original) != std::string::npos;
+}
+
 bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::directory_entry& entry)
 {
 	const auto compilationExitCode = Compile(entry, globalContext.language);
@@ -492,10 +509,10 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 		exit(EXIT_FAILURE);
 	}
 
-	const char* arguments[] = { nullptr };
+	const char* argv[] = { Arguments.c_str(), nullptr };
 
 	lldb::SBError error;
-	lldb::SBLaunchInfo launchInfo(arguments);
+	lldb::SBLaunchInfo launchInfo(argv);
 
 	launchInfo.SetWorkingDirectory(TempFolder);
 	launchInfo.SetLaunchFlags(lldb::eLaunchFlagExec | lldb::eLaunchFlagDebug);
@@ -605,17 +622,26 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 
 								out::Verb() << "symbolContext.GetFilename()  = " << fileName << "\n";
 								out::Verb() << "symbolContext.GetLine()      = " << lineNumber << "\n";
-								out::Verb() << "symbolContext.GetColumn()    = " << symbolContext
-									.GetLineEntry().GetColumn() << "\n";
+								out::Verb() << "symbolContext.GetColumn()    = " << symbolContext.GetLineEntry().GetColumn() << "\n";
 
-								// TODO: The debugger location is sometimes off (function declaration line instead of function call) - fix it.
-								// TODO: Confirm the message.
-
-								if (lineNumber == presumedErrorLine - 1 ||
-									lineNumber == presumedErrorLine ||
-									lineNumber == presumedErrorLine + 1)
+								if (lineNumber == presumedErrorLine)
 								{
-									return true;
+									auto stream = lldb::SBStream();
+									thread.GetStatus(stream);
+
+									out::Verb() << "stream.IsValid()              = " << static_cast<int>(stream.IsValid()) << "\n";
+
+									if (stream.IsValid())
+									{
+										const auto currentMessage = stream.GetData();
+
+										out::Verb() << "stream.GetData()              = " << currentMessage << "\n";
+
+										if (IsErrorMessageValid(currentMessage))
+										{
+											return true;
+										}
+									}
 								}
 							}
 						}
