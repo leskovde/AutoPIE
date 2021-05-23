@@ -462,6 +462,25 @@ bool CheckLocationValidity(const std::string& filePath, const long lineNumber, c
 	return true;
 }
 
+template <typename Out>
+void SplitToWords(const std::string& s, const char delimiter, Out result) {
+	std::istringstream iss(s);
+	std::string word;
+
+	while (std::getline(iss, word, delimiter))
+	{
+		*result++ = word;
+	}
+}
+
+std::vector<std::string> SplitToWords(const std::string& s, const char delimiter) {
+	std::vector<std::string> words;
+	
+	SplitToWords(s, delimiter, std::back_inserter(words));
+
+	return words;
+}
+
 static bool IsErrorMessageValid(const std::string& currentMessage)
 {
 	auto original = std::string(ErrorMessage);
@@ -475,7 +494,17 @@ static bool IsErrorMessageValid(const std::string& currentMessage)
 		c = std::toupper(c);
 	});
 
-	return actual.find(original) != std::string::npos;
+	auto messageParts = SplitToWords(original, ' ');
+
+	for (auto& part :messageParts)
+	{
+		if (actual.find(part) != std::string::npos)
+		{
+			return true;
+		}
+	}
+	
+	return false;
 }
 
 bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::directory_entry& entry)
@@ -624,7 +653,7 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 								out::Verb() << "symbolContext.GetLine()      = " << lineNumber << "\n";
 								out::Verb() << "symbolContext.GetColumn()    = " << symbolContext.GetLineEntry().GetColumn() << "\n";
 
-								if (lineNumber == presumedErrorLine)
+								if (lineNumber != presumedErrorLine)
 								{
 									auto stream = lldb::SBStream();
 									thread.GetStatus(stream);
