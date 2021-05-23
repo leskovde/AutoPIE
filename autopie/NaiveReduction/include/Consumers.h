@@ -50,8 +50,8 @@ namespace Naive
 			mappingConsumer_.HandleTranslationUnit(context);
 			const auto numberOfCodeUnits = mappingConsumer_.GetCodeUnitsCount();
 
-			globalContext_.variantAdjustedErrorLocation.clear();
-			printingConsumer_.SetData(mappingConsumer_.GetSkippedNodes(), mappingConsumer_.GetDependencyGraph());
+			globalContext_.variantAdjustedErrorLocations.clear();
+			printingConsumer_.SetData(mappingConsumer_.GetSkippedNodes(), mappingConsumer_.GetDependencyGraph(), mappingConsumer_.GetPotentialErrorLines());
 
 			auto dependencies = mappingConsumer_.GetDependencyGraph();
 
@@ -112,7 +112,7 @@ namespace Naive
 					auto fileName = TempFolder + std::to_string(variantsCount) + "_" + GetFileName(globalContext_.parsedInput.errorLocation.filePath) + LanguageToExtension(globalContext_.language);
 					printingConsumer_.HandleTranslationUnit(context, fileName, bitMask);
 
-					globalContext_.variantAdjustedErrorLocation[variantsCount] = printingConsumer_.GetAdjustedErrorLine();
+					globalContext_.variantAdjustedErrorLocations[variantsCount] = printingConsumer_.GetAdjustedErrorLines();
 				}
 				catch (...)
 				{

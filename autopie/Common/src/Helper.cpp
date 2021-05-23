@@ -520,11 +520,14 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 	const auto currentVariantName = entry.path().filename().string();
 	const auto currentVariant = std::stol(currentVariantName.substr(0, currentVariantName.find('_')));
 
-	const auto presumedErrorLine = globalContext.variantAdjustedErrorLocation[currentVariant];
+	const auto presumedErrorLines = globalContext.variantAdjustedErrorLocations[currentVariant];
 
 	out::Verb() << "Processing file: " << entry.path().string() << "\n";
 
-	CheckLocationValidity(entry.path().string(), presumedErrorLine, false);
+	for (auto presumedErrorLine : presumedErrorLines)
+	{
+		CheckLocationValidity(entry.path().string(), presumedErrorLine, false);
+	}
 
 	// Keep all LLDB logic written explicitly, not refactored in a function.
 	// The function could be called when the LLDBSentry is not initialized => unwanted behaviour.
@@ -652,24 +655,29 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 								out::Verb() << "symbolContext.GetFilename()  = " << fileName << "\n";
 								out::Verb() << "symbolContext.GetLine()      = " << lineNumber << "\n";
 								out::Verb() << "symbolContext.GetColumn()    = " << symbolContext.GetLineEntry().GetColumn() << "\n";
+								
+								for (auto presumedErrorLine : presumedErrorLines)
+								{									
+									if (lineNumber == presumedErrorLine)
+									{										
+										auto stream = lldb::SBStream();
+										thread.GetStatus(stream);
 
-								if (lineNumber != presumedErrorLine)
-								{
-									auto stream = lldb::SBStream();
-									thread.GetStatus(stream);
+										out::Verb() << "stream.IsValid()              = " << static_cast<int>(stream.IsValid()) << "\n";
 
-									out::Verb() << "stream.IsValid()              = " << static_cast<int>(stream.IsValid()) << "\n";
-
-									if (stream.IsValid())
-									{
-										const auto currentMessage = stream.GetData();
-
-										out::Verb() << "stream.GetData()              = " << currentMessage << "\n";
-
-										if (IsErrorMessageValid(currentMessage))
+										if (stream.IsValid())
 										{
-											return true;
+											const auto currentMessage = stream.GetData();
+
+											out::Verb() << "stream.GetData()              = " << currentMessage << "\n";
+
+											if (IsErrorMessageValid(currentMessage))
+											{
+												return true;
+											}
 										}
+
+										break;
 									}
 								}
 							}

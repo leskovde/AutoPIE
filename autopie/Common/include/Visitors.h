@@ -37,7 +37,7 @@ namespace Common
 
 		BitMask bitMask_;
 		int currentNode_ = 0; ///< The traversal order number.
-		int errorLineBackup_;
+		std::vector<int> errorLineBackups_;
 		RewriterRef rewriter_;
 		DependencyGraph graph_;
 		SkippedMapRef skippedNodes_;
@@ -71,13 +71,15 @@ namespace Common
 						return false;
 					});
 
-
-				if (begin < errorLineBackup_)
+				for (auto i = 0; i < adjustedErrorLines.size(); i++)
 				{
-					const int decrement = errorLineBackup_ >= begin + lineBreaks ? lineBreaks : errorLineBackup_ - begin;
-					AdjustedErrorLine -= decrement;
+					if (begin < errorLineBackups_[i])
+					{
+						const int decrement = errorLineBackups_[i] >= begin + lineBreaks ? lineBreaks : errorLineBackups_[i] - begin;
+						adjustedErrorLines[i] -= decrement;
+					}
 				}
-
+				
 				if (replace)
 				{
 					rewriter_->ReplaceText(printableRange, ";");
@@ -176,9 +178,9 @@ namespace Common
 		}
 
 	public:
-		int AdjustedErrorLine;
+		std::vector<int> adjustedErrorLines;
 
-		explicit VariantPrintingASTVisitor(clang::CompilerInstance* ci, const int errorLine) : astContext_(ci->getASTContext()), AdjustedErrorLine(errorLine), errorLineBackup_(errorLine)
+		VariantPrintingASTVisitor(clang::CompilerInstance* ci, const int errorLine) : astContext_(ci->getASTContext()), errorLineBackups_({ errorLine }), adjustedErrorLines({ errorLine })
 		{
 		}
 
@@ -194,7 +196,7 @@ namespace Common
 			currentNode_ = 0;
 			bitMask_ = mask;
 			rewriter_ = rewriter;
-			AdjustedErrorLine = errorLineBackup_;
+			adjustedErrorLines = errorLineBackups_;
 		}
 
 		/**
@@ -202,11 +204,13 @@ namespace Common
 		 *
 		 * @param skippedNodes A container of AST nodes that should not be processed.
 		 * @param graph The node dependency graph based on which nodes are removed.
+		 * @param errorLines A list of potential error-inducing lines (LLDB workaround).
 		 */
-		void SetData(SkippedMapRef skippedNodes, DependencyGraph& graph)
+		void SetData(SkippedMapRef skippedNodes, DependencyGraph& graph, std::vector<int>& errorLines)
 		{
 			skippedNodes_ = std::move(skippedNodes);
 			graph_ = graph;
+			errorLineBackups_ = errorLines;
 		}
 
 		/**
@@ -433,6 +437,7 @@ namespace Common
 	class MappingASTVisitor final : public clang::RecursiveASTVisitor<MappingASTVisitor>
 	{
 		int errorLine_;
+		bool criterionFound_ = false;
 		clang::ASTContext& astContext_;
 
 		/**
@@ -492,6 +497,7 @@ namespace Common
 			if (errorLine_ == line)
 			{
 				graph.AddCriterionNode(codeUnitsCount);
+				criterionFound_ = true;
 			}
 
 			return nodeMapping_->insert(std::pair<int, int>(astId, codeUnitsCount)).second;
@@ -796,6 +802,7 @@ namespace Common
 
 	public:
 		int codeUnitsCount = 0; ///< The traversal order number.
+		std::vector<int> errorLines;
 		DependencyGraph graph = DependencyGraph();
 
 		MappingASTVisitor(clang::CompilerInstance* ci, NodeMappingRef mapping, const int errorLine) : errorLine_(errorLine),
@@ -803,6 +810,7 @@ namespace Common
 			nodeMapping_(std::move(mapping))
 		{
 			declNodeMapping_ = std::make_shared<NodeMapping>();
+			errorLines.push_back(errorLine);
 		}
 
 		/**
@@ -850,6 +858,51 @@ namespace Common
 			ProcessDeclaration(decl);
 
 			return true;
+		}
+
+		bool VisitFunctionDecl(clang::FunctionDecl* decl)
+		{
+			if (SkipIncludeDecl(decl))
+			{
+				return true;
+			}
+
+			if (criterionFound_)
+			{
+				const auto range = GetPrintableRange(GetPrintableRange(decl->getSourceRange(), astContext_.getSourceManager()),
+					astContext_.getSourceManager());
+
+				const auto startingLine = astContext_.getSourceManager().getSpellingLineNumber(range.getBegin());
+				const auto endingLine = astContext_.getSourceManager().getSpellingLineNumber(range.getEnd());
+
+				if (decl->hasBody() && decl->getBody() != nullptr)
+				{
+					const auto bodyRange = GetPrintableRange(GetPrintableRange(decl->getBody()->getSourceRange(), astContext_.getSourceManager()),
+						astContext_.getSourceManager());
+
+					const auto bodyStartingLine = astContext_.getSourceManager().getSpellingLineNumber(bodyRange.getBegin());
+					const auto bodyEndingLine = astContext_.getSourceManager().getSpellingLineNumber(bodyRange.getEnd());
+
+					for (auto i = startingLine; i <= bodyStartingLine; i++)
+					{
+						errorLines.push_back(i);
+					}
+
+					for (auto i = bodyEndingLine; i <= endingLine; i++)
+					{
+						errorLines.push_back(i);
+					}
+				}
+				else
+				{
+					errorLines.push_back(startingLine);
+				}
+				
+				criterionFound_ = false;
+			}
+			
+			return true;
+
 		}
 
 		/**

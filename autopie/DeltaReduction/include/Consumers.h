@@ -39,7 +39,7 @@ namespace Delta
 					}
 					
 					printingConsumer_.HandleTranslationUnit(context, fileName_, bitmask);
-					globalContext_.variantAdjustedErrorLocation[iteration_] = printingConsumer_.GetAdjustedErrorLine();
+					globalContext_.variantAdjustedErrorLocations[iteration_] = printingConsumer_.GetAdjustedErrorLines();
 
 					if (ValidateVariant(globalContext_, std::filesystem::directory_entry(fileName_)))
 					{
@@ -87,7 +87,7 @@ namespace Delta
 			const auto numberOfCodeUnits = mappingConsumer_.GetCodeUnitsCount();
 
 			globalContext_.deltaContext.latestCodeUnitCount = numberOfCodeUnits;
-			globalContext_.variantAdjustedErrorLocation.clear();
+			globalContext_.variantAdjustedErrorLocations.clear();
 
 			printingConsumer_.SetData(mappingConsumer_.GetSkippedNodes(), mappingConsumer_.GetDependencyGraph());
 
