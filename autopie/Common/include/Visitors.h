@@ -959,6 +959,16 @@ namespace Common
 
 			ProcessRelevantExpression(expr, "goldenrod");
 
+			const auto decl = expr->getCalleeDecl();
+
+			if (decl != nullptr) 
+			{
+				if (nodeMapping_->find(decl->getID()) != nodeMapping_->end())
+				{
+					graph.InsertVariableDependency(nodeMapping_->at(decl->getID()), codeUnitsCount - 1);
+				}
+			}
+			
 			return true;
 		}
 
