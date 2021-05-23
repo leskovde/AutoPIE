@@ -11,7 +11,7 @@
  */
 
 int minval(int *A, int n) {
-	int currmin;
+	int currmin = 0;
 
 	for (int i=0; i<n; i++)
 		if (A[i] < currmin)
@@ -44,6 +44,8 @@ main()
 	int b = minval(a, n);
 	
 	assert(b == 5);
+
+	printf("%d, %d\n", n, b);
 
 	return (0);
 }

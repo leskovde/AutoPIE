@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
+int MAX = 2147483647;
+
 /*
  * Here, the ">" on line 5 should be "<". Even people who are not normally 
  * dyslexic are subject to these types of errors. 
@@ -9,7 +11,7 @@
  */
 
 int minval(int *A, int n) {
-	int currmin = MAXINT;
+	int currmin = MAX;
 
 	for (int i=0; i<n; i++)
 		if (A[i] > currmin)
@@ -42,6 +44,8 @@ main()
 	int b = minval(a, n);
 	
 	assert(b == 5);
+
+	printf("%d, %d\n", n, b);
 
 	return (0);
 }

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 /*
  * This illustrates some fun with global/local variables. In function foo, 
@@ -25,7 +26,7 @@ int different_narrative(int n)
 } 
 
 int i = 5;
-int j;
+int j = 7;
 
 void do_nothing(int i)
 {
@@ -41,7 +42,7 @@ int ineedj(void) {
 	return j;
 }
 
-main() {
+int main() {
 	int different_narrative1 = 5;
 
 	int j;
@@ -50,6 +51,10 @@ main() {
 	int different_narrative2 = different_narrative(different_narrative1);
 
 	int k = ineedj();  
+
+	assert(k == j);
+
+	printf("%d\n", k);
 	
 	return (0);
 }

@@ -1,5 +1,9 @@
 #include <iostream>
 
+/*
+ * An example from the text. An endless recursion in C++.
+ */
+
 long get_factorial(int n)
 {
 	// Missing the stopping 

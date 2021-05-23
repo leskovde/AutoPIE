@@ -17,6 +17,19 @@ do_something(int i)
 	global_i = i;
 }
 
+unsigned long int different_narrative(unsigned int n)
+{
+	if (n <= 1)
+		return 1;
+
+	unsigned long int res = 0;
+	for (int i = 0; i < n; i++)
+		res += different_narrative(i)
+		* different_narrative(n - i - 1);
+
+	return res;
+}
+
 int
 main()
 {
@@ -24,17 +37,24 @@ main()
 
 	switch (i) {
   	case 1:
-    		do_something(1); break;
+    		do_something(1); 
+			break;
   	case 2:
-    		do_something(2); break;
+    		do_something(2);
+			break;
   	case 3:
-    		do_something(1); break;
+    		do_something(1);
+			break;
   	case 4:
-    		do_something(4); break;
+    		do_something(4); 
+			break;
   	default:
     		break;
 	}
 	
+	unsigned int different_narrative1 = 5;
+	unsigned long int different_narrative2 = different_narrative(different_narrative1);
+
 	assert(global_i == i);
 	
 	return (0);

@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/*
+ * Only a single execution path assigns a value to a variable.
+ *
+ */
+
 double squared(double x)
 {
 	return x * x;

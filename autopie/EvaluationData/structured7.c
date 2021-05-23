@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
 /*
- * Essentially the same bug as the previous example. The space for the string 
+ * Essentially the same bug as `structured6`. The space for the string 
  * is local to assign, and gets returned after leaving that function. 
  *
  */
