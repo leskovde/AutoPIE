@@ -467,6 +467,8 @@ namespace Common
 		 */
 		SkippedMapRef skippedNodes_ = std::make_shared<std::unordered_map<int, bool>>();
 
+		std::unordered_map<int, bool> childStatements_;
+
 		/**
 		 * Maps an AST node based on its internal ID to the traversal order number on which the node was found.\n
 		 * Mapping is not set if a node with the same ID or the same source range was previously processed.\n
@@ -597,6 +599,39 @@ namespace Common
 			declReferences_ = toBeKept;
 		}
 
+		std::vector<clang::Stmt*> GetChildrenRecursively(clang::Stmt* stmt) const
+		{
+			auto children = std::vector<clang::Stmt*>();
+
+			for (auto it = stmt->child_begin(); it != stmt->child_end(); ++it)
+			{
+				if (*it != nullptr)
+				{
+					if (nodeMapping_->find(it->getID(astContext_)) != nodeMapping_->end())
+					{
+						children.push_back(*it);
+					}
+					
+					auto recursiveChildren = GetChildrenRecursively(*it);
+					children.insert(children.end(), recursiveChildren.begin(), recursiveChildren.end());
+				}
+			}
+
+			return children;
+		}
+		
+		void CreateChildDependencies(clang::Stmt* stmt)
+		{
+			for (auto& child : GetChildrenRecursively(stmt))
+			{
+				if (child != nullptr && childStatements_.find(child->getID(astContext_)) != childStatements_.end())
+				{
+					graph.InsertStatementDependency(codeUnitsCount, nodeMapping_->at(child->getID(astContext_)));
+					childStatements_.erase(child->getID(astContext_));
+				}
+			}
+		}
+
 		/**
 		 * The body of VisitDecl after all invalid Decl types have been ruled out.\n
 		 * Namely handles functions and maps their bodies to their declarations as a dependency.
@@ -629,12 +664,6 @@ namespace Common
 					if (child != nullptr && nodeMapping_->find(child->getID(astContext_)) != nodeMapping_->end())
 					{
 						graph.InsertStatementDependency(codeUnitsCount, nodeMapping_->at(child->getID(astContext_)));
-						/*
-						if (graph.IsInCriterion(nodeMapping_->at(child->getID(astContext_))))
-						{
-							graph.AddCriterionNode(codeUnitsCount);
-						}
-						*/
 					}
 				}
 
@@ -672,19 +701,11 @@ namespace Common
 					graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, color);
 
 					// Map children as dependencies.
-					for (auto it = expr->child_begin(); it != expr->child_end(); ++it)
-					{
-						if (*it != nullptr && nodeMapping_->find(it->getID(astContext_)) != nodeMapping_->end())
-						{
-							graph.InsertStatementDependency(codeUnitsCount, nodeMapping_->at(it->getID(astContext_)));
-							/*
-							if (graph.IsInCriterion(nodeMapping_->at(it->getID(astContext_))))
-							{
-								graph.AddCriterionNode(codeUnitsCount);
-							}
-							*/
-						}
-					}
+					CreateChildDependencies(expr);
+
+					// This expression was just found and might be a child of another statement.
+					// Add it to the unmapped children container.
+					childStatements_.insert(std::pair<int, bool>(id, true));
 				}
 
 				codeUnitsCount++;
@@ -720,19 +741,11 @@ namespace Common
 					CheckFoundDeclReferences(stmt);
 
 					// Map visited children as dependencies.
-					for (auto it = stmt->child_begin(); it != stmt->child_end(); ++it)
-					{
-						if (*it != nullptr && nodeMapping_->find(it->getID(astContext_)) != nodeMapping_->end())
-						{
-							graph.InsertStatementDependency(codeUnitsCount, nodeMapping_->at(it->getID(astContext_)));
-							/*
-							if (graph.IsInCriterion(nodeMapping_->at(it->getID(astContext_))))
-							{
-								graph.AddCriterionNode(codeUnitsCount);
-							}
-							*/
-						}
-					}
+					CreateChildDependencies(stmt);
+
+					// This expression was just found and might be a child of another statement.
+					// Add it to the unmapped children container.
+					childStatements_.insert(std::pair<int, bool>(id, true));
 				}
 
 				codeUnitsCount++;

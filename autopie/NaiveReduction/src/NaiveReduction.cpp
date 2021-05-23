@@ -23,7 +23,7 @@ using namespace Common;
  * 
  * Call:\n
  * > NaiveReduction.exe [file with error] [line with error] [error description message] [reduction ratio] <source path 0> [... <source path N>] --
- * e.g. NaiveReduction.exe --loc-file="example.cpp" --loc-line=17 --error-message="segmentation fault" --ratio=0.5 example.cpp --
+ * e.g. NaiveReduction.exe --loc-line=17 --error-message="segmentation fault" --ratio=0.5 example.cpp --
  */
 int main(int argc, const char** argv)
 {
@@ -52,9 +52,8 @@ int main(int argc, const char** argv)
 	auto context = GlobalContext(parsedInput, *op.getSourcePathList().begin(), epochCount);
 	clang::tooling::ClangTool tool(op.getCompilations(), context.parsedInput.errorLocation.filePath);
 
-	clang::tooling::ArgumentsAdjuster ardj1 =
-		clang::tooling::getInsertArgumentAdjuster("-I/usr/local/lib/clang/11.0.0/include/");
-	tool.appendArgumentsAdjuster(ardj1);
+	auto includes = clang::tooling::getInsertArgumentAdjuster("-I/usr/local/lib/clang/11.0.0/include/");
+	tool.appendArgumentsAdjuster(includes);
 	
 	auto inputLanguage = clang::Language::Unknown;
 	// Run a language check inside a separate scope so that all built ASTs get freed at the end.

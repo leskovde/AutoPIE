@@ -26,23 +26,14 @@ using namespace clang;
 using namespace llvm;
 
 /**
- * Extract variables on a given line in a given file.
+ * Extracts a slice from source code based on a given list of lines.
  *
  * Call:\n
- * > VariableExtractor.exe [file with error] [line with error] <source path> --
- * e.g. VariableExtractor.exe --loc-file="example.cpp" --loc-line=17 example.cpp --
+ * > SliceExtractor.exe [file with error] [line with error] <source path> --
+ * e.g. SliceExtractor.exe --loc-line=17 --slice-file="slice.txt" example.cpp --
  */
 int main(int argc, const char** argv)
 {
-	/*
-	// Pre-parse options to print the appropriate help message.
-	// LLVM does not handle options with multiple categories well when it comes to help messages.
-	// Unfortunately, we need to print options for all tools.
-	std::vector<const cl::OptionCategory*> categories{ &NaiveReductionArgs, &DeltaReductionArgs, &VarExtractorArgs, &SliceExtractorArgs };
-	HideUnrelatedOptions(ArrayRef<const cl::OptionCategory*>(categories));
-	cl::ParseCommandLineOptions(argc, argv);
-	*/
-	
 	// Parse the command-line args passed to the tool.
 	tooling::CommonOptionsParser op(argc, argv, AutoPieArgs);
 	

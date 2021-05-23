@@ -61,11 +61,11 @@ public:
 };
 
 /**
- * Extract variables on a given line in a given file.
+ * Extracts variables on a given line in a given file.
  *
  * Call:\n
  * > VariableExtractor.exe [file with error] [line with error] <source path> --
- * e.g. VariableExtractor.exe --loc-file="example.cpp" --loc-line=17 example.cpp --
+ * e.g. VariableExtractor.exe --loc-line=17 example.cpp --
  */
 int main(int argc, const char** argv)
 {
