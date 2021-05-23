@@ -1,7 +1,10 @@
+#include <iostream>
 #include <stack>
 
 /**
- * Dead enum values.
+ * This example fails due to an null reference error.
+ * It also features unused enum values that must be
+ * removed during minimization.
  */
 
 enum PayloadType
@@ -22,6 +25,32 @@ struct SpecifiedNode : Node
 	PayloadType type;
 };
 
+class Calculation
+{
+	int timeout_ = 360;
+
+public:
+	int result{ 0 };
+
+	explicit Calculation(int x)
+	{
+		result = Run(x);
+	}
+
+	int Run(int x)
+	{
+		for (int i = 0; i < timeout_; i++)
+		{
+			if (i % 2)
+				x += (int)(0.1 * x * x * i);
+			else
+				x -= (int)(0.1 * x * x * i);
+		}
+
+		return x;
+	}
+};
+
 int
 main()
 {
@@ -38,6 +67,10 @@ main()
 		previousNode = node;
 		nodes.push(node);
 	}
+
+	Calculation calc = Calculation(3);
+
+	std::cout << calc.result << "\n";
 
 	for (int i = 0; i < 6; i++)
 	{

@@ -10,7 +10,7 @@ class Record
 
     void Join(Record* ptr)
     {
-	self = ptr;
+	    self = ptr;
     }
 
     void Initialize()

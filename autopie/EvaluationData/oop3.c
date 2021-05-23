@@ -27,6 +27,21 @@ main()
 	strncpy(head.str2, "h_str2", 20);
 	strncpy(head.str3, "h.str3", 20);
 	head.link = &tail;
+
+	int different_narrative1 = 15;
+	int different_narrative4 = 10;
+
+	long different_narrative2[different_narrative1 + 1];
+	long long different_narrative3 = 1000000007;
+
+	different_narrative2[1] = different_narrative4;
+	different_narrative2[2] = different_narrative4 * different_narrative4;
+
+	for (int i = 3; i <= different_narrative1; i++) 
+	{
+		different_narrative2[i] = ((different_narrative4 - 1) * 
+			(different_narrative2[i - 1] + different_narrative2[i - 2])) % different_narrative3;
+	}
 	
 	strncpy(tail.str1, "t_str1", 20);
 	strncpy(tail.str2, "t_str2", 20);
