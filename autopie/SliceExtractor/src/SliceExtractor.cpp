@@ -119,7 +119,8 @@ int main(int argc, const char** argv)
 		for (auto i = 1; std::getline(ifs, line); i++)
 		{
 			if (std::find(sliceLines.begin(), sliceLines.end(), i) != sliceLines.end() ||
-				std::count_if(line.begin(), line.end(), [](const char c) { return std::isspace(c); }) == line.size())
+				std::count_if(line.begin(), line.end(), [](const char c) { return std::isspace(c); }) == line.size() ||
+				line.rfind("#include", 0) == 0)
 			{
 				out::Verb() << line << "\n";
 
@@ -153,7 +154,7 @@ int main(int argc, const char** argv)
 		return EXIT_FAILURE;
 	}
 
-	out::All() << "Variable extraction done.\n";
+	out::All() << "Slice extraction done.\n";
 
 	return EXIT_SUCCESS;
 }
