@@ -6,10 +6,7 @@
 
 #include "Helper.h"
 
-inline llvm::cl::OptionCategory DeltaReductionArgs("DeltaReduction Options");
-inline llvm::cl::OptionCategory NaiveReductionArgs("NaiveReduction Options");
-inline llvm::cl::OptionCategory VarExtractorArgs("VariableExtractor Options");
-inline llvm::cl::OptionCategory SliceExtractorArgs("SliceExtractor Options");
+inline llvm::cl::OptionCategory AutoPieArgs("AutoPie Options");
 
 /**
  * Defines a --help option for the tool. Shows all available options and their descriptions.\n
@@ -18,29 +15,13 @@ inline llvm::cl::OptionCategory SliceExtractorArgs("SliceExtractor Options");
 inline llvm::cl::extrahelp CommonHelp(clang::tooling::CommonOptionsParser::HelpMessage);
 
 /**
- * Specifies the source file in which an error was found.\n
- * The value is later used for location confirmation.
- */
-inline llvm::cl::opt<std::string> SourceFile("loc-file",
-                                             llvm::cl::desc("The name of the file in which the error occurred."),
-                                             llvm::cl::value_desc("filename"),
-                                             llvm::cl::Required,
-                                             llvm::cl::cat(NaiveReductionArgs),
-                                             llvm::cl::cat(DeltaReductionArgs),
-                                             llvm::cl::cat(VarExtractorArgs),
-                                             llvm::cl::cat(SliceExtractorArgs));
-
-/**
  * Specifies the line number in the previously specified source file on which an error was found.\n
  * The value is later used for location confirmation.
  */
 inline llvm::cl::opt<int> LineNumber("loc-line",
-                                     llvm::cl::desc("The line number on which the error occurred."),
+                                     llvm::cl::desc("[NaiveReduction, DeltaReduction, VarExtractor, SliceExtractor] The line number on which the error occurred."),
                                      llvm::cl::value_desc("int"),
-                                     llvm::cl::cat(NaiveReductionArgs),
-                                     llvm::cl::cat(DeltaReductionArgs),
-                                     llvm::cl::cat(VarExtractorArgs),
-                                     llvm::cl::cat(SliceExtractorArgs));
+                                     llvm::cl::cat(AutoPieArgs));
 
 /**
  * A description of a runtime error. The description should be reproducible, e.g., 'segmentation fault'.\n
@@ -49,10 +30,9 @@ inline llvm::cl::opt<int> LineNumber("loc-line",
  */
 inline llvm::cl::opt<std::string> ErrorMessage("error-message",
                                                llvm::cl::desc(
-	                                               "A part of the error message specifying the nature of the error."),
+	                                               "[NaiveReduction, DeltaReduction] A part of the error message specifying the nature of the error."),
                                                llvm::cl::value_desc("string"),
-                                               llvm::cl::cat(NaiveReductionArgs),
-                                               llvm::cl::cat(DeltaReductionArgs));
+                                               llvm::cl::cat(AutoPieArgs));
 
 /**
  * The set of arguments applied to the failing program upon execution.\n
@@ -60,10 +40,9 @@ inline llvm::cl::opt<std::string> ErrorMessage("error-message",
  * The value is later used for execution during validation.
  */
 inline llvm::cl::opt<std::string> Arguments("arguments",
-    llvm::cl::desc("The arguments with which the program was run when the error occurred."),
+    llvm::cl::desc("[NaiveReduction, DeltaReduction] The arguments with which the program was run when the error occurred."),
     llvm::cl::value_desc("string"),
-    llvm::cl::cat(NaiveReductionArgs),
-    llvm::cl::cat(DeltaReductionArgs));
+    llvm::cl::cat(AutoPieArgs));
 
 /**
  * Specifies the desired best-possible size of the output. Values are between 0 and 1, with 0 being an empty
@@ -73,10 +52,10 @@ inline llvm::cl::opt<std::string> Arguments("arguments",
  * its size in bytes, with three quarters being removed.
  */
 inline llvm::cl::opt<double> ReductionRatio("ratio",
-                                            llvm::cl::desc("Limits the reduction to a specific ratio between 0 and 1."),
+                                            llvm::cl::desc("[NaiveReduction] Limits the reduction to a specific ratio between 0 and 1."),
                                             llvm::cl::init(1.0),
                                             llvm::cl::value_desc("double"),
-                                            llvm::cl::cat(NaiveReductionArgs));
+                                            llvm::cl::cat(AutoPieArgs));
 
 /**
  * If set to true, the program generates a .dot file containing a graph of code units.\n
@@ -85,11 +64,10 @@ inline llvm::cl::opt<double> ReductionRatio("ratio",
  */
 inline llvm::cl::opt<bool> DumpDot("dump-dot",
                                    llvm::cl::desc(
-	                                   "Specifies whether a GraphViz file containing relationships of code units should be created."),
+	                                   "[NaiveReduction, DeltaReduction] Specifies whether a GraphViz file containing relationships of code units should be created."),
                                    llvm::cl::init(false),
                                    llvm::cl::value_desc("bool"),
-                                   llvm::cl::cat(NaiveReductionArgs),
-                                   llvm::cl::cat(DeltaReductionArgs));
+                                   llvm::cl::cat(AutoPieArgs));
 
 inline llvm::cl::alias DumpDotAlias("d",
                                     llvm::cl::desc(
@@ -103,13 +81,10 @@ inline llvm::cl::alias DumpDotAlias("d",
  */
 inline llvm::cl::opt<bool> Verbose("verbose",
                                    llvm::cl::desc(
-	                                   "Specifies whether the tool should flood the standard output with its optional messages."),
+	                                   "[NaiveReduction, DeltaReduction, VarExtractor, SliceExtractor] Specifies whether the tool should flood the standard output with its optional messages."),
                                    llvm::cl::init(false),
                                    llvm::cl::value_desc("bool"),
-                                   llvm::cl::cat(NaiveReductionArgs),
-                                   llvm::cl::cat(DeltaReductionArgs),
-                                   llvm::cl::cat(VarExtractorArgs),
-                                   llvm::cl::cat(SliceExtractorArgs));
+                                   llvm::cl::cat(AutoPieArgs));
 
 inline llvm::cl::alias VerboseAlias("v",
                                     llvm::cl::desc(
@@ -122,13 +97,10 @@ inline llvm::cl::alias VerboseAlias("v",
  */
 inline llvm::cl::opt<bool> LogToFile("log",
                                      llvm::cl::desc(
-	                                     "Specifies whether the tool should output its optional message (with timestamps) to an external file."),
+	                                     "[NaiveReduction, DeltaReduction, VarExtractor, SliceExtractor] Specifies whether the tool should output its optional message (with timestamps) to an external file."),
                                      llvm::cl::init(false),
                                      llvm::cl::value_desc("bool"),
-                                     llvm::cl::cat(NaiveReductionArgs),
-                                     llvm::cl::cat(DeltaReductionArgs),
-                                     llvm::cl::cat(VarExtractorArgs),
-                                     llvm::cl::cat(SliceExtractorArgs));
+                                     llvm::cl::cat(AutoPieArgs));
 
 inline llvm::cl::alias LogToFileAlias("l",
                                       llvm::cl::desc(
@@ -140,11 +112,10 @@ inline llvm::cl::alias LogToFileAlias("l",
  * Specifies the output file to which the extracted result should be dumped.
  */
 inline llvm::cl::opt<std::string> OutputFile("out-file",
-    llvm::cl::desc("The name of the file to which the result should be dumped."),
+    llvm::cl::desc("[VarExtractor, SliceExtractor] The name of the file to which the result should be dumped."),
     llvm::cl::value_desc("filename"),
     llvm::cl::init("output.txt"),
-    llvm::cl::cat(VarExtractorArgs),
-    llvm::cl::cat(SliceExtractorArgs));
+    llvm::cl::cat(AutoPieArgs));
 
 inline llvm::cl::alias OutputFileAlias("o",
     llvm::cl::desc("The name of the file to which the result should be dumped."),
@@ -154,8 +125,8 @@ inline llvm::cl::alias OutputFileAlias("o",
  * Specifies the path to the text file containing line numbers of the slice.
  */
 inline llvm::cl::opt<std::string> SliceFile("slice-file",
-    llvm::cl::desc("The name of the file containing line numbers of the slice."),
+    llvm::cl::desc("[SliceExtractor] The name of the file containing line numbers of the slice."),
     llvm::cl::value_desc("filename"),
-    llvm::cl::cat(SliceExtractorArgs));
+    llvm::cl::cat(AutoPieArgs));
 
 #endif

@@ -461,13 +461,6 @@ namespace Common
 		 */
 		std::vector<std::pair<int, int>> declReferences_;
 
-		// TODO: Rework the snippet set (if a statement is repeated in the code, it does not get recognized).
-		/**
-		 * Stores a snippet of source code and its recognition flag.\n
-		 * Upon discovering a node and successfully mapping it, the underlying source code is stored.\n
-		 */
-		std::unordered_map<std::string, bool> snippetSet_;
-
 		/**
 		 * Keeps note of which nodes should be skipped during traversal.\n
 		 * If a node is a duplicate of an already processed node, it is added to this map.
@@ -486,7 +479,7 @@ namespace Common
 		 */
 		bool InsertMapping(const int astId, const std::string& snippet, const int line)
 		{
-			if (snippetSet_.find(snippet) != snippetSet_.end() || nodeMapping_->find(astId) != nodeMapping_->end())
+			if (nodeMapping_->find(astId) != nodeMapping_->end())
 			{
 				// This node's code has already been processed.
 				skippedNodes_->insert(std::pair<int, bool>(codeUnitsCount, true));
@@ -623,7 +616,6 @@ namespace Common
 
 				if (InsertMapping(id, codeSnippet, line))
 				{
-					snippetSet_[codeSnippet] = true;
 					graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, "crimson");
 
 					if (llvm::isa<clang::FunctionDecl>(decl) && llvm::cast<clang::FunctionDecl>(decl)->isMain())
@@ -677,7 +669,6 @@ namespace Common
 
 				if (InsertMapping(id, codeSnippet, line))
 				{
-					snippetSet_[codeSnippet] = true;
 					graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, color);
 
 					// Map children as dependencies.
@@ -723,7 +714,6 @@ namespace Common
 
 				if (InsertMapping(id, codeSnippet, line))
 				{
-					snippetSet_[codeSnippet] = true;
 					graph.InsertNodeDataForDebugging(codeUnitsCount, id, codeSnippet, typeName, "darkorchid");
 
 					HandleDeclarationsInStatements(stmt);

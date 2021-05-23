@@ -27,19 +27,9 @@ using namespace Common;
  */
 int main(int argc, const char** argv)
 {
-	/*
-	// Pre-parse options to print the appropriate help message.
-	// LLVM does not handle options with multiple categories well when it comes to help messages.
-	// Unfortunately, we need to print options for all tools.
-	std::vector<const cl::OptionCategory*> categories{ &NaiveReductionArgs, &DeltaReductionArgs, &VarExtractorArgs, &SliceExtractorArgs };
-	HideUnrelatedOptions(ArrayRef<const cl::OptionCategory*>(categories));
-	cl::ParseCommandLineOptions(argc, argv);
-	*/
-	
 	// Parse the command-line args passed to the tool.
-	clang::tooling::CommonOptionsParser op(argc, argv, NaiveReductionArgs);
+	clang::tooling::CommonOptionsParser op(argc, argv, AutoPieArgs);
 
-	// TODO(Denis): Create multi-file support.
 	if (op.getSourcePathList().size() > 1)
 	{
 		errs() << "Only a single source file is supported.\n";
@@ -47,7 +37,7 @@ int main(int argc, const char** argv)
 	}
 	
 	auto parsedInput = InputData(static_cast<std::basic_string<char>>(ErrorMessage),
-	                             Location(static_cast<std::basic_string<char>>(SourceFile), LineNumber), ReductionRatio,
+	                             Location(op.getSourcePathList()[0], LineNumber), ReductionRatio,
 	                             DumpDot);
 
 	// Prompt the user to clear the temp directory.
