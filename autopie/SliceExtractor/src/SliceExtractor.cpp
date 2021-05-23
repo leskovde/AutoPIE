@@ -44,7 +44,7 @@ int main(int argc, const char** argv)
 	*/
 	
 	// Parse the command-line args passed to the tool.
-	tooling::CommonOptionsParser op(argc, argv, SliceExtractorArgs);
+	tooling::CommonOptionsParser op(argc, argv, AutoPieArgs);
 	
 	if (op.getSourcePathList().size() > 1)
 	{
@@ -52,7 +52,7 @@ int main(int argc, const char** argv)
 		return EXIT_FAILURE;
 	}
 
-	tooling::ClangTool tool(op.getCompilations(), SourceFile);
+	tooling::ClangTool tool(op.getCompilations(), op.getSourcePathList()[0]);
 
 	auto includes = tooling::getInsertArgumentAdjuster("-I/usr/local/lib/clang/11.0.0/include/");
 	tool.appendArgumentsAdjuster(includes);
@@ -78,9 +78,9 @@ int main(int argc, const char** argv)
 
 	assert(inputLanguage != clang::Language::Unknown);
 
-	if (!CheckLocationValidity(SourceFile, LineNumber))
+	if (!CheckLocationValidity(op.getSourcePathList()[0], LineNumber))
 	{
-		errs() << "The specified error location is invalid!\nSource path: " << SourceFile
+		errs() << "The specified error location is invalid!\nSource path: " << op.getSourcePathList()[0]
 			<< ", line: " << LineNumber << " could not be found.\n";
 	}
 	
@@ -103,7 +103,7 @@ int main(int argc, const char** argv)
 	
 	// Keep the relevant lines only.
 	ifs.close();
-	ifs.open(SourceFile);
+	ifs.open(op.getSourcePathList()[0]);
 
 	auto const outputFileWithCorrectExtension = RemoveFileExtensions(OutputFile) + LanguageToExtension(inputLanguage);
 	std::ofstream ofs(outputFileWithCorrectExtension);

@@ -69,17 +69,8 @@ public:
  */
 int main(int argc, const char** argv)
 {
-	/*
-	// Pre-parse options to print the appropriate help message.
-	// LLVM does not handle options with multiple categories well when it comes to help messages.
-	// Unfortunately, we need to print options for all tools.
-	std::vector<const cl::OptionCategory*> categories{ &NaiveReductionArgs, &DeltaReductionArgs, &VarExtractorArgs, &SliceExtractorArgs };
-	HideUnrelatedOptions(ArrayRef<const cl::OptionCategory*>(categories));
-	cl::ParseCommandLineOptions(argc, argv);
-	*/
-	
 	// Parse the command-line args passed to the tool.
-	tooling::CommonOptionsParser op(argc, argv, VarExtractorArgs);
+	tooling::CommonOptionsParser op(argc, argv, AutoPieArgs);
 
 	if (op.getSourcePathList().size() > 1)
 	{
@@ -87,7 +78,7 @@ int main(int argc, const char** argv)
 		return EXIT_FAILURE;
 	}
 
-	tooling::ClangTool tool(op.getCompilations(), SourceFile);
+	tooling::ClangTool tool(op.getCompilations(), op.getSourcePathList()[0]);
 
 	auto includes = tooling::getInsertArgumentAdjuster("-I/usr/local/lib/clang/11.0.0/include/");
 	tool.appendArgumentsAdjuster(includes);
@@ -113,9 +104,9 @@ int main(int argc, const char** argv)
 
 	assert(inputLanguage != clang::Language::Unknown);
 
-	if (!CheckLocationValidity(SourceFile, LineNumber))
+	if (!CheckLocationValidity(op.getSourcePathList()[0], LineNumber))
 	{
-		errs() << "The specified error location is invalid!\nSource path: " << SourceFile
+		errs() << "The specified error location is invalid!\nSource path: " << op.getSourcePathList()[0]
 			<< ", line: " << LineNumber << " could not be found.\n";
 	}
 
