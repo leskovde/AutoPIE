@@ -17,7 +17,7 @@ OBJECTS = $(SOURCES:%.cpp=$(OBJ_PATH)/%.o)
 DEPENDENCIES = $(OBJECTS:.o=.d)
 
 # Compiler flags.
-CXX = g++
+CXX = clang++
 CFLAGS = -std=c++17 -fno-rtti
 CLANGLIBS = \
 		-lpthread \
