@@ -177,7 +177,7 @@ Metrics introduced in Section~\ref{chap:metrics} are denoted as follows:
     29 & {$2^{14}$} & 140 & 21.8 & 0.0 & 0.882s & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0  \\
     30 & {$2^{16}$} & 168 & 0.0 & 0.0 & 4.333s & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0  \\ \bottomrule
 \end{tabular}
-\caption{A benchmark of the three minimization approaches.}
+\caption{Results of a benchmark of the three minimization approaches.}
 \label{tab:results}
 \end{table}
 
@@ -293,7 +293,7 @@ readability as possible.
 Due to this belief, we do not rename variables, functions, and classes to 
 shorter names.
 
-\paragraph{Single input file.}
+\paragraph{Multiple files as the input.}
 While the pseudocode shown in Section~\ref{chap:minimization} does not look 
 at the input as a set of multiple files, we can assume that a correct 
 implementation can handle multiple input files without any issues. 
@@ -315,7 +315,7 @@ require a custom compilation command.
 In order to simplify the matter, we only support single-file projects that 
 can be trivially compiled into an executable binary.
 
-\paragraph{Slicer accuracy.}
+\paragraph{Slicer inaccuracy.}
 As was already mentioned, the used slicer implementations have their 
 pitfalls. 
 However, even in the best-case scenarios, they still might provide us with 
@@ -334,7 +334,7 @@ We are aware of this and other problems surrounding the used implementations.
 Due to this project's scope, we decided to ignore inaccurate slices and 
 replace them with the original input file if needed.
 
-\paragraph{LLDB symbol accuracy.}
+\paragraph{LLDB symbol inconsistency.}
 The use of LLDB is the reason why our implementation does not run correctly 
 on Windows. 
 LLDB suffers from a couple of issues - in the mentioned Windows case, it does 
