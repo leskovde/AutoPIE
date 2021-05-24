@@ -739,6 +739,11 @@ However, this feature is not used in our project.
 Similar to DG, Giri also produces a list of line numbers. 
 This slice representation then has to be extracted from the original source 
 code.
+The dynamic slicer has a dodgy behavior when processing C++ code. 
+Hence, we have decided to omit using the slicer in the slicing-based approach 
+whenever an input written in C++ is present. 
+We believe that in this case, Giri can be substituted by DG using argument 
+injection.
 
 Giri's repository can be found on GitHub on the following address: 
 \url{https://github.com/liuml07/giri}.

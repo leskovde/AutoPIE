@@ -27,6 +27,12 @@ This is because executions of multithreaded and random programs cannot be
 easily reproduced.
 Instead, the program minimization described in this project focuses 
 on simple single-threaded console applications with consistent executions.
+Furthermore, programs that wait for the standard input are not supported. 
+Analogically, programs that utilize any stream reading must provide 
+the resources to that stream. 
+For example, a program that reads from a file must guarantee to supply 
+that file alongside itself. 
+A failure to comply with this guarantee results in an unsupported input.
 
 The problem of program minimization while preserving runtime errors can be 
 described as follows.

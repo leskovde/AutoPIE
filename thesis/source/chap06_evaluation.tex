@@ -238,3 +238,120 @@ Not only does the code in those containers run slower than native code,
 but running containers also introduces a delay in the processing. 
 Small inputs suffer from this issue the most since the constant delay stacks 
 up, outweighing the time spent running the minimizing techniques.
+
+\section{Limitations}
+The implementation described in Section~\ref{chap:implementation} has its 
+pitfalls. 
+While the proposed algorithms might work with any project in the domain 
+described in Section~\ref{chap:minimization}, the implementation cuts corners 
+and further narrows down the supported input. 
+The following paragraphs describe the challenges we faced and how they have 
+impacted the capabilities of the proposed approaches.
+
+\paragraph{Input reading at runtime.}
+A problem that immediately comes to mind is getting user input from 
+the standard input. 
+Generally, we could simulate the input in two ways. 
+First, we could ask the user for a list of all entered values during 
+the user's run. 
+The list would then be provided to the program during validation. 
+The second option is always to assume the direst outcome. 
+Places in the code that expect an input would be supplied with 
+the worst-case input. 
+However, it should be noted that the latter approach does not consistently 
+trigger the desired behavior.
+
+While this paragraph serves as a proof of concept for handling standard 
+input, we decided not to implement any handlers. 
+Instead, processing programs that utilize the standard input will result in 
+undefined behavior.
+
+
+\paragraph{Variables in namespaces.}
+Used slicer implementations have their interfaces. 
+In particular, DG's variable criterion interface requires the user to enter 
+a criterion in the form of \icode{line:variable}. 
+Since the criterion contains a colon character, it cannot parse variable 
+names that contain namespaces. 
+We do not explicitly handle this case and instead deem this kind of input as 
+unsupported.
+
+\paragraph{Non-optimal minimal solutions.}
+Due to the enormous scope of this project, we could not implement advanced 
+and more granular techniques for code reduction. 
+Notably, we do not remove function arguments, constructor initializers, and 
+control flow statements. 
+The last is due to semantical reasons. 
+We also do not substitute function bodies. 
+The lack of these techniques leads to sub-optimal results in more 
+complicated code. 
+The implemented approaches lack the granularity to reduce the sub-optimal 
+solution further. 
+
+Additionally, we believe that the reduction should preserve as much 
+readability as possible. 
+Due to this belief, we do not rename variables, functions, and classes to 
+shorter names.
+
+\paragraph{Single input file.}
+While the pseudocode shown in Section~\ref{chap:minimization} does not look 
+at the input as a set of multiple files, we can assume that a correct 
+implementation can handle multiple input files without any issues. 
+However, we have decided against supporting the following: header file 
+reduction and multiple source file reduction. 
+Instead, our implementation can only handle a single input file.
+The file must not be header, although it can contain includes for header 
+files. 
+Those header files will not be reduced. 
+Moreover, any included non-standard header files must be available at their 
+presumed locations for correct parsing and compilation.
+
+The decision to support only a single input file comes from 
+the complications implicated by non-trivial compilation. 
+Section~\ref{chap:validationimplementation} describes how generated reduced 
+program variants are validated. 
+The validation compiles the project, and any complicated project would 
+require a custom compilation command. 
+In order to simplify the matter, we only support single-file projects that 
+can be trivially compiled into an executable binary.
+
+\paragraph{Slicer accuracy.}
+As was already mentioned, the used slicer implementations have their 
+pitfalls. 
+However, even in the best-case scenarios, they still might provide us with 
+poor output. 
+Most notably, the conversion from LLVM bitcode to a list of line numbers is 
+not always accurate. 
+Often, the result is incomplete, and we have to perform additional steps to 
+get a syntactically correct slice. 
+For example, variables with the *const* qualifier might be absent from 
+the slice even though their values are necessary for parts of the slice. 
+We have tacked and fixed most of these inaccurate cases. 
+Still, there remain inaccuracies in the slices. 
+For example, the slicer result might contain a line number greater than 
+the length of the sliced source file. 
+We are aware of this and other problems surrounding the used implementations. 
+Due to this project's scope, we decided to ignore inaccurate slices and 
+replace them with the original input file if needed.
+
+\paragraph{LLDB symbol accuracy.}
+The use of LLDB is the reason why our implementation does not run correctly 
+on Windows. 
+LLDB suffers from a couple of issues - in the mentioned Windows case, it does 
+not load files with debugging symbols.
+A significant problem we encountered while working with LLDB is 
+the inconsistency of symbol locations. 
+
+During validation, we found out that an error's location might vary from run 
+to run. 
+When considering the top-most frame on the stack, LLDB might read its 
+location correctly. 
+The source file variant being validated can then be rightly processed further. 
+However, LLDB often misinterprets the frame's location and instead reports 
+a line number we might consider invalid. 
+The line number often corresponds to the declaration of the current function 
+or the function's opening or closing curly braces. 
+We have tried our best to capture these locations during the initial parsing 
+and later handle them correctly. 
+Nonetheless, we are aware of the fact that the modified validation might 
+result in an irregular result.
