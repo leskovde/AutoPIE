@@ -89,7 +89,7 @@ namespace Delta
 			globalContext_.deltaContext.latestCodeUnitCount = numberOfCodeUnits;
 			globalContext_.variantAdjustedErrorLocations.clear();
 
-			printingConsumer_.SetData(mappingConsumer_.GetSkippedNodes(), mappingConsumer_.GetDependencyGraph());
+			printingConsumer_.SetData(mappingConsumer_.GetSkippedNodes(), mappingConsumer_.GetDependencyGraph(), mappingConsumer_.GetPotentialErrorLines());
 
 			auto dependencies = mappingConsumer_.GetDependencyGraph();
 			
