@@ -750,6 +750,18 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 	return false;
 }
 
+void DisplayStats(Statistics& stats)
+{
+	out::All() << "===------------------------ Reduction statistics ------------------------===\n";
+
+	out::All() << "Expected iterations:          " << stats.expectedIterations << "\n";
+	out::All() << "Total iterations:             " << stats.totalIterations << "\n";
+	out::All() << "Original size [bytes]:        " << stats.inputSizeInBytes << "\n";
+	out::All() << "Size of the result [bytes]:   " << stats.outputSizeInBytes << "\n";
+	
+	out::All() << "===----------------------------------------------------------------------===\n";
+}
+
 /**
  * Attempts to validate results of the last epoch.\n
  * Searches the temporary directory for any files, sorts them by smallest and then validates them.\n
@@ -789,8 +801,6 @@ bool ValidateResults(GlobalContext& globalContext)
 		}
 	}
 
-	// TODO: Conclude the result, print statistics (reduction rate, time consumed, variants created, variants compiled, etc.).
-
 	if (!resultFound.has_value())
 	{
 		return false;
@@ -804,6 +814,9 @@ bool ValidateResults(GlobalContext& globalContext)
 
 	std::filesystem::rename(resultFound.value(), newFileName);
 
+	globalContext.stats.Finalize(newFileName);
+	DisplayStats(globalContext.stats);
+	
 	return true;
 }
 

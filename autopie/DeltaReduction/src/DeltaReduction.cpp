@@ -86,7 +86,6 @@ int main(int argc, const char** argv)
 
 	LLDBSentry sentry;
 
-
 	auto iteration = 0;
 	const auto cutOffLimit = 0xffff;
 
@@ -94,6 +93,7 @@ int main(int argc, const char** argv)
 	auto currentTestCase = context.parsedInput.errorLocation.filePath;
 
 	auto done = false;
+	auto first = true;
 	
 	while (!done && iteration < cutOffLimit)
 	{
@@ -117,6 +117,13 @@ int main(int argc, const char** argv)
 			errs() << "The tool returned a non-standard value: " << result << "\n";
 		}
 
+		if (first)
+		{
+			auto k = context.deltaContext.latestCodeUnitCount;
+			context.stats.expectedIterations = k * k + 3 * k;
+			first = false;
+		}
+		
 		switch (iterationResult)
 		{
 		case DeltaIterationResults::FailingPartition:
@@ -156,6 +163,9 @@ int main(int argc, const char** argv)
 
 		std::filesystem::rename(currentTestCase, newFileName);
 
+		context.stats.Finalize(newFileName);
+		DisplayStats(context.stats);
+		
 		return EXIT_SUCCESS;
 	}
 

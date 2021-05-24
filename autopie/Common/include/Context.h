@@ -31,6 +31,28 @@ namespace Delta
 	};
 }
 
+struct Statistics
+{
+	double expectedIterations = 0;
+	size_t totalIterations = 0;
+	size_t inputSizeInBytes = 0;
+	size_t outputSizeInBytes = 0;
+
+	Statistics()
+	{
+	}
+	
+	explicit Statistics(const std::string& inputFile)
+	{
+		inputSizeInBytes = file_size(std::filesystem::path(inputFile));
+	}
+
+	void Finalize(const std::string& outputFile)
+	{
+		outputSizeInBytes = file_size(std::filesystem::path(outputFile));
+	}
+};
+
 /**
  * Serves as a container for all publicly available global information.
  * Currently includes the parsed input.
@@ -45,6 +67,7 @@ class GlobalContext
 public:
 
 	// Variant generation properties.
+	Statistics stats;
 	int currentEpoch{ 0 };
 	InputData parsedInput;
 	Delta::DeltaAlgorithmContext deltaContext;
@@ -52,8 +75,8 @@ public:
 	clang::Language language{ clang::Language::Unknown };
 	std::unordered_map<int, std::vector<int>> variantAdjustedErrorLocations;
 
-	GlobalContext(InputData& input, const std::string& /*source*/, const int epochs) : parsedInput(input),
-		deepeningContext(epochs)
+	GlobalContext(InputData& input, const std::string& inputFile, const int epochs) : parsedInput(input),
+		deepeningContext(epochs), stats(inputFile)
 	{
 		out::Verb() << "DEBUG: GlobalContext - New non-default constructor call.\n";
 	}

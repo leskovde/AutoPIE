@@ -55,7 +55,7 @@ namespace Naive
 
 			auto dependencies = mappingConsumer_.GetDependencyGraph();
 
-			//out::All() << "Maximum expected variants: " << pow(2, numberOfCodeUnits) << "\n";
+			globalContext_.stats.expectedIterations = pow(2, numberOfCodeUnits);
 
 			// The first epoch requires special handling.
 			// All valid bitmask variants should be iterated and separated into bins based on their size.
@@ -99,6 +99,7 @@ namespace Naive
 			for (auto& bitMask : bitMasks)
 			{
 				variantsCount++;
+				globalContext_.stats.totalIterations++;
 
 				if (variantsCount % 50 == 0)
 				{

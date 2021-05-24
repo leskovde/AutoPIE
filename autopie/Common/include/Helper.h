@@ -40,6 +40,7 @@ enum class DeltaIterationResults
 };
 
 class GlobalContext;
+class Statistics;
 class DependencyGraph;
 
 using BitMask = std::vector<bool>;
@@ -166,6 +167,8 @@ std::pair<bool, double> IsValid(const BitMask& bitMask, DependencyGraph& depende
 int Compile(const std::filesystem::directory_entry& entry, clang::Language language);
 
 bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::directory_entry& entry);
+
+void DisplayStats(Statistics& stats);
 
 bool ValidateResults(GlobalContext& context);
 

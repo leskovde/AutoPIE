@@ -31,6 +31,8 @@ namespace Delta
 		{
 			if (IsValid(bitmask, dependencyGraph, false).first)
 			{
+				globalContext_.stats.totalIterations++;
+
 				try
 				{
 					if (std::filesystem::exists(fileName_))
