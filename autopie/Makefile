@@ -9,19 +9,19 @@ VARIABLE_EXTRACTOR_PATH = VariableExtractor
 all: common naive delta slice variables
 
 common:
-	$(MAKE) -C $(COMMON_PATH)
+	$(MAKE) -C $(COMMON_PATH) release
 
 naive:
-	$(MAKE) -C $(NAIVE_PATH)
+	$(MAKE) -C $(NAIVE_PATH) release
 
 delta:
-	$(MAKE) -C $(DELTA_PATH)
+	$(MAKE) -C $(DELTA_PATH) release
 
 slice:
-	$(MAKE) -C $(SLICE_EXTRACTOR_PATH)
+	$(MAKE) -C $(SLICE_EXTRACTOR_PATH) release
 
 variables:
-	$(MAKE) -C $(VARIABLE_EXTRACTOR_PATH)
+	$(MAKE) -C $(VARIABLE_EXTRACTOR_PATH) release
 
 clean:
 	$(MAKE) -C $(COMMON_PATH) clean

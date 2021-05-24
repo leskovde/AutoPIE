@@ -27,7 +27,7 @@ DEPENDENCIES = $(OBJECTS:.o=.d)
 DEPENDENCIES += $(COMMON_OBJECTS:.o=.d)
 
 # Compiler flags.
-CXX = g++
+CXX = clang++
 CFLAGS = -std=c++17 -fno-rtti
 CLANGLIBS = \
 		-lpthread \
