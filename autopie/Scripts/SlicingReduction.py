@@ -34,6 +34,9 @@ parser.add_argument("--dynamic_slice", type=bool, default=True, help="Runs a pas
                                                                      "preprocessing. Enabled by default.")
 parser.add_argument("--delta", type=bool, default=True, help="Uses the minimizing Delta debugging algorithm before "
                                                              "launching naive reduction. Enabled by default.")
+parser.add_argument("--inject", type=bool, default=False, help="Instead of calling the debugged program with its "
+                                                               "arguments, the tool specifies the arguments directly "
+                                                               "in source code.")
 
 delta_path = "../DeltaReduction/build/bin/DeltaReduction"
 naive_path = "../NaiveReduction/build/bin/NaiveReduction"
@@ -106,21 +109,75 @@ def run_unification(slices):
 
 
 def run_static_slicer(args, var, iteration):
+    input_file = shutil.copy2(args.source_file, f"./slice_input{language}")
     output_file = f"static_slice_{iteration}.txt"
 
+    criterion = var
+    main_loc = 1
+
+    if args.inject:
+        parts = criterion.split(":")
+        adjusted_line = int(parts[0])
+
+        found = False
+
+        with open(input_file, "r") as ifs:
+            for line in ifs:
+                main_loc += 1
+
+                if found:
+                    if "{" in line:
+                        break
+
+                if "main(" in line or "main (" in line:
+                    if "{" in line:
+                        break
+                    found = True
+
+        inject_arguments(args.arguments, input_file, main_loc)
+
+        adjusted_line += (0 if adjusted_line <= main_loc else 2)
+
+        criterion = f"{adjusted_line}:{parts[1]}"
+
     static_slicer_args = SimpleNamespace(
-        file=args.source_file,
-        criterion=var,
+        file=input_file,
+        criterion=criterion,
         output=output_file,
         dynamic_slicer=False
     )
 
     run_slicer(static_slicer_args)
 
+    if args.inject:
+        adjust_slice(output_file, main_loc)
+
     global created_files
+    created_files.append(input_file)
     created_files.append(output_file)
 
     return output_file
+
+
+def inject_arguments(arguments, file_path, location):
+    with open(file_path, "r") as ifs:
+        file_contents = ifs.readlines()
+
+    words = arguments.split()
+
+    argv = 'const char* n_argv[] = { "program", '
+
+    for word in words:
+        argv += f'"{word}, "'
+
+    argv += "};\n"
+    argc = f"argc = {len(words) + 1}; argv = n_argv;\n"
+
+    file_contents.insert(location - 1, argv)
+    file_contents.insert(location, argc)
+
+    with open(file_path, "w") as ofs:
+        ofs.write("".join(file_contents))
 
 
 def run_dynamic_slicer(args, variables, iteration):
@@ -143,12 +200,28 @@ def run_dynamic_slicer(args, variables, iteration):
         dynamic_slicer=True
     )
 
-    run_slicer(dynamic_slicer_args) # TODO: ! Adjust results by one line (due to #include injection)
+    run_slicer(dynamic_slicer_args)
+
+    adjust_slice(output_file, 1)
 
     global created_files
     created_files.append(output_file)
 
     return output_file
+
+
+def adjust_slice(output_file, start):
+    lines = []
+    if os.path.exists(output_file):
+        with open(output_file, "r") as ifs:
+            for line in ifs:
+                line = line.strip()
+                if line.isdigit() and int(line) >= start:
+                    lines.append(int(line) - 1)
+
+        with open(output_file, "w") as ofs:
+            for line in lines:
+                ofs.write(f"{line}\n")
 
 
 def run_tool(binary_path, arguments):
@@ -167,8 +240,7 @@ def run_tool(binary_path, arguments):
 
 
 def run_variable_extraction(args):
-    var_extractor_args = [f"--loc-file={args.source_file}",
-                          f"--loc-line={args.line_number}",
+    var_extractor_args = [f"--loc-line={args.line_number}",
                           f"--verbose={args.verbose}",
                           f"--log={args.log}",
                           f"-o={var_extractor_output}",
@@ -180,8 +252,7 @@ def run_variable_extraction(args):
 
 
 def run_slice_extraction(args, slice_file):
-    slice_extractor_args = [f"--loc-file={args.source_file}",
-                            f"--slice-file={slice_file}",
+    slice_extractor_args = [f"--slice-file={slice_file}",
                             f"--loc-line={args.line_number}",
                             f"--verbose={args.verbose}",
                             f"--log={args.log}",
@@ -194,8 +265,7 @@ def run_slice_extraction(args, slice_file):
 
 
 def run_delta(args):
-    delta_args = [f"--loc-file={args.source_file}",
-                  f"--loc-line={args.line_number}",
+    delta_args = [f"--loc-line={args.line_number}",
                   f"--error-message={args.error_message}",
                   f"--arguments={args.arguments}",
                   f"--dump-dot={args.dump_dot}",
@@ -209,8 +279,7 @@ def run_delta(args):
 
 
 def run_naive(args):
-    naive_args = [f"--loc-file={args.source_file}",
-                  f"--loc-line={args.line_number}",
+    naive_args = [f"--loc-line={args.line_number}",
                   f"--error-message={args.error_message}",
                   f"--arguments={args.arguments}",
                   f"--ratio={args.reduction_ratio}",
