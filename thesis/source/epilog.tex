@@ -1,2 +1,80 @@
-\chapter*{Conclusion}
-\addcontentsline{toc}{chapter}{Conclusion}
+\chapter{Conclusions}
+
+%% \addcontentsline{toc}{chapter}{Conclusion}
+
+Source code minimization is a computationally demanding search problem. 
+Generally, to achieve optimal results, i.e., the global minimum, one must 
+generate and validate all possible results. 
+Such a task results in exponentially many validations and is thus not feasible 
+for any non-minor input. 
+We attempt to avoid as many validations as possible, improving the running 
+time while preserving the optimal result.
+
+Approaches shown in this paper significantly differ in their time complexity. 
+Analysis shows how a naive exponential algorithm can be sped up using 
+heuristics. Those heuristics include iterative deepening and validating 
+dependencies. 
+A combination of search techniques and static analysis helps us formulate 
+a more refined naive algorithm. 
+Moreover, a rough approximation of the optimal result can be achieved 
+in polynomial time by deploying a simple binary search technique. 
+The approximation is denoted as a local minimum since it does not share 
+the same optimality properties as the global minimum.
+
+Relevant preprocessing techniques were presented, and their performance impact 
+was measured. 
+Running static and dynamic slicing reduced the source code's size 
+significantly while preserving the desired runtime error. 
+Furthermore, both slicers also conserved the cause of the error.
+This paper shows that combining the mentioned preprocessing techniques with 
+the presented algorithms yields good reduction results in average use cases. 
+Such cases include unstructured, structured, and object-oriented source code. 
+Unstructured programs saw the best results; we suppose that might be due to 
+the nature of our implementation. 
+The execution time is dramatically reduced compared to naive minimization. 
+Introduced heuristics shaved off an immense number of validations in 
+the average case. 
+Though, the complexity for generating optimal results remains exponential in 
+the worst case.
+
+The premise of this project was to find a sophisticated way of minimizing 
+a program while preserving the desired runtime error. 
+We found out the slicing-based technique worked the best on all but trivial 
+inputs. 
+This result has confirmed and validated our beliefs held while formulating 
+this technique.
+
+\section{Future work}
+
+Suggested techniques and algorithms have the potential to work well. 
+They, however, require reliable and easy-to-use implementations. 
+As mentioned in Section~\ref{chap:limitations}, our implementation of 
+a minimization tool is not user-friendly due to several limitations. 
+Upcoming enhancements focus on removing or relaxing these limitations. 
+The main focus is on supporting a more comprehensive range of inputs. 
+This goal can be achieved by implementing multi-file input support, reducing 
+programs that interact with the user, and supporting multi-threaded 
+applications.
+
+Ideas that have been explained but not implemented are another focus of 
+future attention. 
+For example, the analysis explains how a static analyzer can be utilized to 
+achieve better results. 
+However, due to technical reasons, the implementation of this step could not 
+be finished. 
+There is room for more complicated heuristics, instrumentation, or pattern 
+recognition for further improvements to speed and accuracy.
+
+AutoPIE - the implementation of this project - can only be launched on 
+Unix-based and Unix-like systems. 
+We plan to extend the support to other platforms by creating a Docker image. 
+This way, the implementation can be quickly shipped and executed. 
+In order to improve the user interface, we plan on introducing an extension 
+for Visual Studio Code, through which AutoPIE can be launched.
+
+In the last months of working on this project, we came across CReduce - 
+a tool for test case size reduction. 
+Like our implementation, CReduce uses techniques such as Delta debugging to 
+reduce the size of a program while preserving a wanted property. 
+We might analyze CReduce in the future and perhaps contribute our findings 
+to the project.
