@@ -57,7 +57,7 @@ The program either throws an exception, produces an unreduced source code as
 its result, or outputs a program that does not result in the desired runtime 
 error.
 
-\section{Data set}
+\section{Dataset}
 
 Each implemented approach works with three major input parts:
 \begin{itemize}
@@ -117,7 +117,7 @@ The project was compiled using Clang 11.0.0 with high optimizations
 (\icode{-O2}) and ran on Ubuntu 20.04.2.0 LTS.
 
 Table~\ref{tab:results} contains the results of all executed benchmarks. 
-Each row represents a single entry from the data set. 
+Each row represents a single entry from the dataset. 
 The entry has been used three times: in the naive approach, the Delta 
 debugging algorithm, and the slicing-based approach. 
 Those 30 rows thus represent a matrix of all executed runs and their results. 
@@ -180,3 +180,61 @@ Metrics introduced in Section~\ref{chap:metrics} are denoted as follows:
 \caption{A benchmark of the three minimization approaches.}
 \label{tab:results}
 \end{table}
+
+The table's test numbering is systematic. 
+The first ten tests correspond to the unstructured portion of the dataset. 
+They are meant to make the most effective use of every proposed approach. 
+These test programs are written exclusively in C. Tests 11 to 20 represent 
+the structured part of the dataset. 
+These programs definite several functions and call them inside 
+the \icode{main} function. 
+This portion consists of both C and C++ programs.
+The ten remaining tests numbered 21 to 30 correspond to the OOP part of 
+the dataset. 
+These tests are almost solely written in C++, and they test the reduction 
+of classes, structures, and their respective members.
+The numbering is not sorted by any means.
+
+The \emph{reduction ratio} is calculated using the raw input and output 
+files. 
+These files contain explanatory comments, and thus their size might be 
+inflated. 
+For example, a reduction from 953 bytes to 445 bytes only results in a ratio 
+of $46.7\%$. 
+One might think that this ratio is not impressive. 
+However, the output removed all but three statements. 
+The 445-byte large output mainly consists of comments leftover from the input.
+
+The \emph{minimization ratio} is determined based on a handcrafted minimal 
+program variant. 
+We checked the optimal solution for each element in the dataset and compared 
+the output to that solution. 
+Although it was just stated that the optimal reference variant is minimal, 
+it is not entirely true. 
+This project does not employ advanced techniques such as argument removal 
+and function body substitution. 
+Therefore, it cannot produce the optimal variant in terms of language 
+constructs and raw byte size. 
+Instead, we considered the best possible solution this project can achieve, 
+knowing its limitations. 
+This consideration leads to the fact that the minimal reference variant 
+might be larger than the optimal solution since it might contain additional 
+arguments or required function definitions.
+
+The measured \emph{execution time} is based on the \icode{time(1)} Unix shell 
+utility readings. 
+Values in the table match the wall clock time reported by the utility. 
+While the time was being measured for a given minimization approach, we 
+executed the approach in its most efficient configuration. 
+In other words, we disabled all logging and verbose options, omitted 
+the GraphViz visualization, and set appropriate reduction ratios for 
+the naive approach. 
+Each execution of the naive approach ran with its bin heuristic, and we 
+opted for five bins for every run. 
+
+This method of measuring can be unfair to the slicing-based approach. 
+Its implementation launches multiple Docker containers. 
+Not only does the code in those containers run slower than native code, 
+but running containers also introduces a delay in the processing. 
+Small inputs suffer from this issue the most since the constant delay stacks 
+up, outweighing the time spent running the minimizing techniques.
