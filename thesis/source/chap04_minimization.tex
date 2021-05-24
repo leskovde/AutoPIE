@@ -508,7 +508,7 @@ We can then terminate the algorithm upon finding the first valid variant.
 This heuristic saves time and memory that would otherwise be spent on 
 generating all possible variants.
 
-\section{Delta debugging}\label{chap:deltaimplementation}
+\section{Delta debugging}\label{chap:deltaanalysis}
 
 Zeller's Delta debugging \cite{Zeller99, Zeller02, Zeller01} has been 
 described in detail in section~\ref{chap:delta}.
@@ -768,7 +768,7 @@ be minimal yet.
 However, it can be assumed that it is valid, i.e., ends with the desired 
 runtime error.
 Using the observations made in Section~\ref{chap:naive} and 
-Section~\ref{chap:deltaimplementation}, we can create an efficient and 
+Section~\ref{chap:deltaanalysis}, we can create an efficient and 
 precise minimizing algorithm that takes care of the penultimate step 
 in Figure~\ref{alg:slicing}. 
 We utilize a pipeline of the minimizing Delta debugging algorithm and 
