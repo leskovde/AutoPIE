@@ -94,7 +94,7 @@ static and dynamic slicing.
 
 \section{Delta debugging}\label{chap:delta}
 
-Delta debugging is an iterative approach described by Zeller\citep{Zeller99}. 
+Delta debugging is an iterative approach described by Zeller~\citep{Zeller99}. 
 It has two primary goals for a given program and the program's 
 failure-inducing input. 
 The first is to simplify the input by keeping only those parts that lead to 
@@ -110,7 +110,7 @@ simplifies the test case's input.
 It assumes that each execution of the program has the following results: 
 pass, fail, inconclusive. 
 
-Zeller and Hildebrandt\citep*{Zeller02} have presented the following 
+Zeller and Hildebrandt~\citep*{Zeller02} have presented the following 
 definitions to be more precise with the terminology.
 
 \begin{defn}[Test case]\label{def02:1}
@@ -285,7 +285,7 @@ The first introduced slicing method was static backward slicing.
 And with it came brand new formalism concerning program analysis. 
 Specifically for static slicing methods, definitions for the~target 4
 statement and variable needed to be written.
-Weiser \citep{Weiser84}
+Weiser~\citep{Weiser84}
 defined a~slice with respect to criterion C 
 as a~part of~a~program that potentially affects given variables in~a given point. 
 
@@ -436,7 +436,7 @@ The static slice with respect to $C$, seen in Figure~\ref{lst:staticslice},
 still contains all of~the~branching statements. 
 Note that the~independent printing loop is gone.
 
-Later that year, K. J. Ottenstein and L. M. Ottenstein \citep*{Ottenstein84}
+Later that year, K. J. Ottenstein and L. M. Ottenstein~\citep*{Ottenstein84}
 restated the~problem as a~reachability
 search in~the program dependence graph (PDG).
 PDG represents statements in~the code as vertices and data and control
@@ -509,7 +509,7 @@ While the~idea of~building a~program slice prevails, dynamic slicing
 drastically differs from static slicing in~terms of~input and the~way
 it is processed. 
 
-Korel \citep{Korel88} described a~slicing approach that took into 
+Korel~\citep{Korel88} described a~slicing approach that took into 
 consideration information regarding a~program's concrete execution. 
 As opposed to static slicing, which builds a~slice for any execution, 
 dynamic slicing builds a~slice for a~given execution of~a~program. 

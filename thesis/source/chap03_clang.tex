@@ -73,7 +73,7 @@ are easily readable.
 \paragraph{LibTooling.}
 
 The most feature woven set of~libraries is LibTooling. 
-Unlike Plugins, LibTooling \citep{libtooling:online} 
+Unlike Plugins, LibTooling~\citep{libtooling:online} 
 allows the~developer to build standalone 
 Clang tools. 
 This robust framework is written in~C++ and has an active 
@@ -103,7 +103,7 @@ These concepts will be referenced further in~the text.
 \section{Compilation databases}
 
 To accurately and faithfully recreate a~compilation, tools created using 
-LibTooling require a~compilation database (CD) \citep{cd:online} 
+LibTooling require a~compilation database (CD)~\citep{cd:online} 
 for a~given input project.
 
 The motivation behind a~CD is simple.
@@ -142,7 +142,7 @@ compilation database.
 
 \section{Clang AST}\label{chap:ast}
 
-The abstract syntax tree used in~the Clang front-end \citep{ast:online}
+The abstract syntax tree used in~the Clang front-end~\citep{ast:online}
 is different from the~typical AST. 
 It saves and carries more data, namely context.  
 For example, it contains additional information to map source 
@@ -502,7 +502,7 @@ Matchers will be talked about in~detail later.
 
 LibTooling offers a~built-in curiously recurring template pattern 
 (CRTP) visitor. 
-The class \icode{RecursiveASTVisitor} \citep{visitor:online} 
+The class \icode{RecursiveASTVisitor}~\citep{visitor:online} 
 offers \icode{Visit} methods that 
 can be overridden to the~programmer's liking. 
 Each override specifies the~type of~node on which the~method 
@@ -652,7 +652,7 @@ the visit function as opposed to \icode{true}.
 
 \section{Matchers}
 
-Clang's ASTMatchers \citep{matchers:online} 
+Clang's ASTMatchers~\citep{matchers:online} 
 is a~domain-specific language (DSL) used for querying 
 specified AST nodes. 
 Each matcher represents a~predicate on nodes. 
@@ -730,7 +730,7 @@ side of~the~operation.
 In the~tool, expressions are build by calling a~creator function. 
 The expression is then represented as a~tree of~matchers. 
 While the~developer has access to a~plethora of~predefined matchers, 
-as seen in~the Matchers Reference \citep{matchersreference:online}, 
+as seen in~the Matchers Reference~\citep{matchersreference:online}, 
 they can define custom ones as well. 
 Creating a~custom matcher can be done in~two ways. 
 First, a~matcher can be created by inheriting an existing Matcher class 
@@ -756,7 +756,7 @@ the AST from the~code, alter the~AST, and then translate it back to valid
 source code. 
 LibTooling allows the~programmer to extract the~AST and examine it. 
 Additional functionality also allows modifying the~AST both directly 
-and indirectly \citep{sourcetosource:online}. 
+and indirectly~\citep{sourcetosource:online}. 
 However, there are obstacles and limitations to both approaches. 
 
 Let us examine the~pitfalls of~direct AST transformation first. 
