@@ -233,7 +233,7 @@ is considerably slower.
 	\label{alg:dd}
 \end{figure}
 
-The simplified algorithm description seen in figure~\ref{alg:dd} splits 
+The simplified algorithm description seen in Figure~\ref{alg:dd} splits 
 the~test case into $n$ even-sized partitions and their respective complements. 
 These partitions are tested first, followed by all complements. 
 The testing can result in~three different outcomes.
@@ -262,7 +262,7 @@ minimization into source code minimization:
   \item We test each iteration on whether it contains the desired runtime 
   error.
 \end{enumerate}
-The details on the usage of Delta debugging are described in section~
+The details on the usage of Delta debugging are described in Section~
 \ref{chap:deltaanalysis}.
 
 \section{Static slicing}\label{chap:staticslicing}
@@ -423,7 +423,7 @@ Since static slicing considers statements that \textbf{might}
 impact the~criterion, it leaves otherwise useless branches in~the slice,
 thus negating the~potential decrease in~size. 
 
-In listing~\ref{lst:simpleexample}, we can see the~code of~a~simple program.
+In Figure~\ref{lst:simpleexample}, we can see the~code of~a~simple program.
 It loads a~value $a$, which then alters the~control-flow of~the~code.
 Meanwhile, it iterates through a~printing loop. 
 The intriguing part, however, is the~output of~the~$write(x)$ 
@@ -432,7 +432,7 @@ Let the~criterion be $C = (write(x)_{42}, \{x\})$.
 The value of~$x$ on that line is changed in~the branching 
 part of~the~program, which entirely depends on the~value of~$a$.
 Since $a$ is unknown, no significant code reduction can be made. 
-The static slice with respect to $C$, seen in listing~\ref{lst:staticslice}, 
+The static slice with respect to $C$, seen in Figure~\ref{lst:staticslice}, 
 still contains all of~the~branching statements. 
 Note that the~independent printing loop is gone.
 
@@ -458,7 +458,7 @@ with respect to the~number of~vertices.
 \begin{figure}[ht]\centering
 \includegraphics[scale=0.35]{pdg_sliced}
 \caption{Sliced PDG. The~graph was created from the~source 
-code shown in listing~\ref{lst:simpleexample}.
+code shown in Listing~\ref{lst:simpleexample}.
 Red edges indicate the~sliced part of~the~program w.r.t.
 $C = (write(x)_{42}, \{x\})$.}
 \label{img:pdg}
@@ -546,7 +546,7 @@ int main(void)
 }  
 \end{lstlisting}
 \caption{Dynamic slice of~the~simple branching program seen
-in listing~\ref{lst:simpleexample} w.r.t. 
+in Listing~\ref{lst:simpleexample} w.r.t. 
 $C = (write(x)_{42}, \{x\}, \{2\})$.}
 \label{lst:dynamicslice}
 \end{figure}
@@ -570,13 +570,13 @@ The criterion is therefore defined as follows.
   is called a~\emph{slicing criterion}.
 \end{defn}
 
-The example listing~\ref{lst:dynamicslice} was computed from the~original
-listing~\ref{lst:simpleexample}. 
+The example in Figure~\ref{lst:dynamicslice} was computed from the~original
+Listing~\ref{lst:simpleexample}. 
 The criterion was set to $C = (write(x)_{42}, \{x\}, \{2\})$.
 Since the~dynamic slicer witnessed the~program's execution,
 it could precisely reduce the~code to only those statements
 that were executed. the~result is a~significantly smaller slice
-than the static slice shown in listing~\ref{lst:staticslice}.
+than the static slice shown in Listing~\ref{lst:staticslice}.
 Note that branching statements are gone.
 
 Since dynamic slicing requires the~user to run the~program, 

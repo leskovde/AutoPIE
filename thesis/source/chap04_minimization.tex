@@ -241,7 +241,7 @@ The following sections describe several techniques of code removal.
 The naive approach is explained briefly. 
 Possible improvements to that approach concerning runtime are then described. 
 Subsequent approaches employ techniques discussed in 
-chapter~\ref{chap:automated}. 
+Chapter~\ref{chap:automated}. 
 The method based on Delta debugging offers a modified version of 
 the debugging algorithm. 
 Another approach combines different types of slicing to achieve the best 
@@ -280,7 +280,7 @@ For example, the atomic code unit might be a \icode{for} loop with its body
 or an assignment expression, such as \icode{x = 3;}.
 The rest of the text will refer to atomic code units simply as code units. 
 
-Algorithm in figure~\ref{alg:naive} describes the naive process. 
+Algorithm in Figure~\ref{alg:naive} describes the naive process. 
 Once the input source code is provided, it is split into $n$ code units.
 Every unit has two possible states: it is either kept or removed.
 Let us represent each statement with a single bit. 
@@ -517,13 +517,13 @@ generating all possible variants.
 \section{Delta debugging}\label{chap:deltaanalysis}
 
 Zeller's Delta debugging \cite{Zeller99, Zeller02, Zeller01} has been 
-described in detail in section~\ref{chap:delta}.
+described in detail in Section~\ref{chap:delta}.
 It is an automated debugging technique that focuses on input size reduction.
 For a given input, Delta debugging attempts to find the input's 
 smallest failure-inducing subset and isolate the a failure-inducing element 
 using two algorithms.
 This project is only concerned with the minimizing algorithm described in
-section~\ref{chap:delta} and in the figure~\ref{alg:dd}.
+Section~\ref{chap:delta} and in the Figure~\ref{alg:dd}.
 
 For the rest of this section, the input will be referred to as 
 a \emph{test case}.
@@ -563,13 +563,13 @@ The body would not contain the terminating curly bracket.
 Similarly, the second would be missing an opening curly bracket.
 Instead, it makes more sense to operate on code units.
 A more detailed description of code units can be found in 
-section~\ref{chap:naive}.
+Section~\ref{chap:naive}.
 
 Initially, the test case is split into $k$ code units.
 Those code units are then assigned into $n$ partitions of roughly the same 
 size.
 The number of partitions changes based on the current iteration, as described
-in figure~\ref{alg:dd}.
+in Figure~\ref{alg:dd}.
 In our case, each iteration compiles current test case subsets and executes 
 them.
 Executions are validated as described earlier and the algorithm reduces
@@ -604,7 +604,7 @@ This scenario leads to $2 * \log{}k$ validations.
 Extracting an approximation of the minimal program variant after 
 $\mathcal{O}(k^2)$ validations is undoubtedly practical. 
 Especially when compared to the exponential time complexity of the naive 
-approach described in section~\ref{chap:naive}. 
+approach described in Section~\ref{chap:naive}. 
 Those who desire the minimal variant might want to get the approximation 
 first and provide it to the naive reduction. 
 Nevertheless, there is no way of avoiding the exponential complexity when 
@@ -630,7 +630,7 @@ the slice and the running time of the slicing algorithm.
 
 We have shown how the output of static and dynamic slicers differs. 
 Figure~\ref{lst:staticcomparison} shows an example of a static slice, 
-and figure~\ref{lst:dynamicslice} shows a dynamic slice. 
+and Figure~\ref{lst:dynamicslice} shows a dynamic slice. 
 Both slices were extracted from the same program seen in the former example.
 It is known that dynamic slices are the smallest they can be. 
 However, they require information available at execution time. 
@@ -763,7 +763,7 @@ in size.
 	\label{alg:slicing}
 \end{figure}
 
-The proposed slicing-based solution is described in figure~\ref{alg:slicing}.
+The proposed slicing-based solution is described in Figure~\ref{alg:slicing}.
 The input program is sliced statically w.r.t.
 every variable available at the failure-inducing line.
 The slices are then unified and given as the input to a dynamic slicer.

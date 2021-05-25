@@ -484,7 +484,7 @@ Visit methods of~the~\icode{ASTRecursiveVisitor} should not be called
 directly. 
 Details concerning the~visitor can be found in~the following section.
 
-In the example shown in listing~\ref{lst:astconsumer}, the consumer passes 
+In the example shown in Figure~\ref{lst:astconsumer}, the consumer passes 
 variable references to the visitor. 
 These references have previously been attained from the frontend action. 
 A reference to the constructed visitor is stored inside the consumer. 
@@ -550,7 +550,7 @@ The full documentation can be found at
 \label{tab:astvisitor}
 \end{table}
 
-The implementation seen on listing~\ref{lst:countvisitor} illustrates
+The implementation seen in Figure~\ref{lst:countvisitor} illustrates
 the idea. a~custom class with a~strict dedication, i.e., counting
 program's statements, has two visit functions.
 Firstly, a~\icode{VisitStmt} method, which is triggered upon
@@ -722,7 +722,7 @@ binaryOperator(hasOperatorName("+"), hasLHS(integerLiteral(equals(0)))).
 \label{lst:matcherexpr}
 \end{figure}
 
-The expression in listing~\ref{lst:matcherexpr} searches for a~binary 
+The expression in Figure~\ref{lst:matcherexpr} searches for a~binary 
 operator. 
 The search is further narrowed to a~plus sign with a~zero left-hand 
 side of~the~operation.
