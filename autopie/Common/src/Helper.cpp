@@ -281,6 +281,22 @@ void InitializeBitMask(BitMask& bitMask, Unsigned number)
 	}
 }
 
+void MergeVectorMaps(EpochRanges& from, EpochRanges& to)
+{
+	for (auto it = from.begin(); it != from.end(); ++it) 
+	{
+		const auto toIt = to.insert(*it);
+		
+		if (!toIt.second) 
+		{  
+			auto fromElement = &(it->second);
+			auto toElement = &(toIt.first->second);
+			
+			toElement->insert(toElement->end(), fromElement->begin(), fromElement->end());
+		}
+	}
+}
+
 /**
  * Determines whether the bitmask that represents a certain source file variant is valid.\n
  * In order to be valid, it must satisfy the relationships given by the dependency graph.\n

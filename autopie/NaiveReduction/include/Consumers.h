@@ -4,6 +4,7 @@
 
 #include <clang/AST/ASTConsumer.h>
 
+#include <future>
 #include <utility>
 
 #include "Visitors.h"
@@ -64,6 +65,42 @@ namespace Naive
 			out::All() << "Finished. Done " << variantsCount << " variants.\n";
 		}
 
+		EpochRanges GetValidBitMasksInRange(const Unsigned startingPoint, const Unsigned numberOfVariants, const int numberOfCodeUnits, DependencyGraph* dependencies) const
+		{
+			// Create ranges for each epoch.
+			EpochRanges bins;
+			
+			for (auto i = 0; i < globalContext_.deepeningContext.epochCount; i++)
+			{
+				bins.insert(
+					std::pair<double, std::vector<BitMask>>((i + 1) * globalContext_.deepeningContext.epochStep,
+						std::vector<BitMask>()));
+			}
+
+			// Add the last range (of invalid bit masks).
+			bins.insert(std::pair<double, std::vector<BitMask>>(1.0, std::vector<BitMask>()));
+			bins.insert(std::pair<double, std::vector<BitMask>>(INFINITY, std::vector<BitMask>()));
+			
+			auto bitMask = BitMask(numberOfCodeUnits);
+			InitializeBitMask(bitMask, startingPoint);
+
+			// Iterate over the given range and assign valid bit masks into bins.
+			for (Unsigned i = 0; i < numberOfVariants; i++)
+			{
+				Increment(bitMask);
+
+				const auto validation = IsValid(bitMask, *dependencies);
+
+				if (validation.first)
+				{
+					auto it = bins.upper_bound(validation.second);
+					it->second.push_back(bitMask);
+				}
+			}
+
+			return bins;
+		}
+		
 		void PartitionVariantsIntoBins(const int numberOfCodeUnits, DependencyGraph& dependencies) const
 		{
 			out::All() << "Binning variants...\n";
@@ -92,31 +129,46 @@ namespace Naive
 			const auto threadCount = 12;
 			Unsigned ranges[threadCount];
 
+			// Determine the number of variants for each thread.
 			for (auto i = 0; i < threadCount; i++)
 			{
-				ranges[i] = totalNumberOfVariants / threadCount;
+				ranges[i] = (totalNumberOfVariants - 1) / threadCount;
 			}
 
-			for (auto i = 0; i < totalNumberOfVariants % threadCount; i++)
+			for (Unsigned i = 0; i < (totalNumberOfVariants - 1) % threadCount; i++)
 			{
 				ranges[i]++;
 			}
+
+			auto futures = std::vector<std::future<EpochRanges>>();
 			
-			auto bitMask = BitMask(numberOfCodeUnits);
-			InitializeBitMask(bitMask, totalNumberOfVariants);
+			// Launch all threads.
+			for (auto i = 0; i < threadCount; i++)
+			{
+				const auto numberOfVariants = ranges[i];
+				Unsigned startingPoint = 0;
+				
+				// Determine the starting point of each thread by summing up the previous counts.
+				if (i > 0)
+				{
+					ranges[i] += ranges[i - 1];
+					startingPoint = ranges[i - 1];
+				}
+
+				futures.emplace_back(std::async(std::launch::async, &VariantGeneratingConsumer::GetValidBitMasksInRange, this, startingPoint, numberOfVariants, numberOfCodeUnits, &dependencies));
+			}
+
+			auto results = std::vector<EpochRanges>();
+
+			for (auto& future : futures)
+			{
+				results.push_back(future.get());
+			}
 			
 			// Distribute bit masks into ranges.
-			while (!IsFull(bitMask))
+			for (auto& result : results)
 			{
-				Increment(bitMask);
-
-				const auto validation = IsValid(bitMask, dependencies);
-
-				if (validation.first)
-				{
-					auto it = globalContext_.deepeningContext.bitMasks.upper_bound(validation.second);
-					it->second.push_back(bitMask);
-				}
+				MergeVectorMaps(result, globalContext_.deepeningContext.bitMasks);
 			}
 		}
 

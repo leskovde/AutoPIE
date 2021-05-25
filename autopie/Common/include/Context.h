@@ -5,6 +5,8 @@
 #include "Helper.h"
 #include "Streams.h"
 
+using EpochRanges = std::map<double, std::vector<BitMask>>;
+
 namespace Naive
 {
 	/**
@@ -14,7 +16,7 @@ namespace Naive
 	{
 		const int epochCount;
 		const double epochStep;
-		std::map<double, std::vector<BitMask>> bitMasks;
+		EpochRanges bitMasks;
 
 		explicit IterativeDeepeningContext(const int epochs) : epochCount(epochs),
 		                                                       epochStep(static_cast<double>(ReductionRatio) / epochCount)

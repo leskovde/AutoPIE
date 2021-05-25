@@ -124,6 +124,7 @@ namespace Delta
 			out::Verb() << "Splitting " << numberOfCodeUnits << " code units into " << partitionCount_
 				<< " partitions of size " << partitionSize << " units...\n";
 
+			// Create even-sized splittings.
 			std::vector<int> ranges(partitionCount_);
 
 			for (auto i = 0; i < partitionCount_; i++)

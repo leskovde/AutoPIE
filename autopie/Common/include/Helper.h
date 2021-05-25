@@ -45,6 +45,7 @@ class DependencyGraph;
 
 using BitMask = std::vector<bool>;
 using Unsigned = unsigned long long;
+using EpochRanges = std::map<double, std::vector<BitMask>>;
 
 //===----------------------------------------------------------------------===//
 //
@@ -158,6 +159,8 @@ bool IsFull(BitMask& bitMask);
 void Increment(BitMask& bitMask);
 
 void InitializeBitMask(BitMask& bitMask, Unsigned number);
+
+void MergeVectorMaps(EpochRanges& from, EpochRanges& to);
 
 std::pair<bool, double> IsValid(const BitMask& bitMask, DependencyGraph& dependencies, bool = true);
 
