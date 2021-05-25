@@ -250,8 +250,6 @@ bool IsFull(BitMask& bitMask)
  */
 void Increment(BitMask& bitMask)
 {
-	// TODO(Denis): Write unit tests for this function (and the all variant generation), e.g. bitmask overflow.
-
 	for (auto i = bitMask.size(); i > 0; i--)
 	{
 		if (bitMask[i - 1])
@@ -263,6 +261,23 @@ void Increment(BitMask& bitMask)
 			bitMask[i - 1].flip();
 			break;
 		}
+	}
+}
+
+void InitializeBitMask(BitMask& bitMask, Unsigned number)
+{	
+	for (auto i = bitMask.size(); number != 0; i--)
+	{		
+		if (number & 1)
+		{
+			bitMask[i - 1] = true;
+		}
+		else
+		{
+			bitMask[i - 1] = false;
+		}
+		
+		number >>= 1;
 	}
 }
 

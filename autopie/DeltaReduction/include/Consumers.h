@@ -123,16 +123,29 @@ namespace Delta
 			// Split into `n` partition and their complements.
 			out::Verb() << "Splitting " << numberOfCodeUnits << " code units into " << partitionCount_
 				<< " partitions of size " << partitionSize << " units...\n";
-			
+
+			std::vector<int> ranges(partitionCount_);
+
+			for (auto i = 0; i < partitionCount_; i++)
+			{
+				ranges[i] = partitionSize;
+			}
+
+			for (auto i = 0; i < numberOfCodeUnits % partitionCount_; i++)
+			{
+				ranges[i]++;
+			}
+
+			auto sum = 0;
 			for (auto i = 0; i < partitionCount_; i++)
 			{
 				auto partition = BitMask(numberOfCodeUnits);
 				auto complement = BitMask(numberOfCodeUnits);
-
+				
 				// Determine whether each code unit belongs to the current partition.
 				for (auto j = 0; j < numberOfCodeUnits; j++)
 				{
-					if (i * partitionSize <= j && (j < (i + 1) * partitionSize || i == partitionCount_ - 1))
+					if (sum <= j && j < sum + ranges[i])
 					{
 						partition[j] = true;
 						complement[j] = false;
@@ -143,6 +156,8 @@ namespace Delta
 						complement[j] = true;
 					}
 				}
+
+				sum += ranges[i];
 
 				partitions.emplace_back(partition);
 				complements.emplace_back(complement);

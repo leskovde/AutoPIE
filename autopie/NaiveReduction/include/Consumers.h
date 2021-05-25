@@ -68,6 +68,15 @@ namespace Naive
 		{
 			out::All() << "Binning variants...\n";
 
+			const auto totalNumberOfVariants = static_cast<Unsigned>(1) << numberOfCodeUnits;
+
+			if (totalNumberOfVariants == 0)
+			{
+				std::cerr << "The expected number of variants is greater than supported data types."
+					<< "It is not wise to run the algorithm on such a large input. Exiting...\n";
+				return;
+			}
+			
 			// Create ranges for each epoch.
 			for (auto i = 0; i < globalContext_.deepeningContext.epochCount; i++)
 			{
@@ -80,8 +89,22 @@ namespace Naive
 			globalContext_.deepeningContext.bitMasks.insert(std::pair<double, std::vector<BitMask>>(1.0, std::vector<BitMask>()));
 			globalContext_.deepeningContext.bitMasks.insert(std::pair<double, std::vector<BitMask>>(INFINITY, std::vector<BitMask>()));
 
-			auto bitMask = BitMask(numberOfCodeUnits);
+			const auto threadCount = 12;
+			Unsigned ranges[threadCount];
 
+			for (auto i = 0; i < threadCount; i++)
+			{
+				ranges[i] = totalNumberOfVariants / threadCount;
+			}
+
+			for (auto i = 0; i < totalNumberOfVariants % threadCount; i++)
+			{
+				ranges[i]++;
+			}
+			
+			auto bitMask = BitMask(numberOfCodeUnits);
+			InitializeBitMask(bitMask, totalNumberOfVariants);
+			
 			// Distribute bit masks into ranges.
 			while (!IsFull(bitMask))
 			{
@@ -126,6 +149,12 @@ namespace Naive
 			// The bins are then iterated in their respective epochs.
 			PartitionVariantsIntoBins(numberOfCodeUnits, dependencies);
 
+			if (globalContext_.deepeningContext.bitMasks.empty())
+			{
+				globalContext_.stats.exitCode = EXIT_FAILURE;
+				return;
+			}
+			
 			for (auto i = 0; i < globalContext_.deepeningContext.epochCount; i++)
 			{			
 				auto& bitMasks = globalContext_.deepeningContext.bitMasks.lower_bound((i+ 1) * globalContext_.deepeningContext.epochStep - globalContext_.deepeningContext.epochStep / 2)->second;
@@ -135,6 +164,7 @@ namespace Naive
 				if (ValidateResults(globalContext_))
 				{
 					globalContext_.stats.exitCode = EXIT_SUCCESS;
+					return;
 				}
 
 				out::All() << "Epoch " << i + 1 << " out of " << globalContext_.deepeningContext.epochCount << ": A smaller program variant could not be found.\n";

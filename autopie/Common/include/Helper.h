@@ -44,6 +44,7 @@ class Statistics;
 class DependencyGraph;
 
 using BitMask = std::vector<bool>;
+using Unsigned = unsigned long long;
 
 //===----------------------------------------------------------------------===//
 //
@@ -155,6 +156,8 @@ std::string Stringify(const BitMask& bitMask);
 bool IsFull(BitMask& bitMask);
 
 void Increment(BitMask& bitMask);
+
+void InitializeBitMask(BitMask& bitMask, Unsigned number);
 
 std::pair<bool, double> IsValid(const BitMask& bitMask, DependencyGraph& dependencies, bool = true);
 
