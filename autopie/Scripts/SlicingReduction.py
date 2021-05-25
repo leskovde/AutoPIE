@@ -163,12 +163,12 @@ def inject_arguments(arguments, file_path, location):
     with open(file_path, "r") as ifs:
         file_contents = ifs.readlines()
 
-    words = arguments.split()
+    words = arguments.strip("\"").split()
 
     argv = 'const char* n_argv[] = { "program", '
 
     for word in words:
-        argv += f'"{word}, "'
+        argv += f'"{word}", '
 
     argv += "};\n"
     argc = f"argc = {len(words) + 1}; argv = n_argv;\n"
@@ -216,8 +216,11 @@ def adjust_slice(output_file, start):
         with open(output_file, "r") as ifs:
             for line in ifs:
                 line = line.strip()
-                if line.isdigit() and int(line) >= start:
-                    lines.append(int(line) - 1)
+                if line.isdigit():
+                    if int(line) >= start:
+                        lines.append(int(line) - 2)
+                    else:
+                        lines.append(line)
 
         with open(output_file, "w") as ofs:
             for line in lines:
@@ -440,6 +443,14 @@ def main(args):
         dynamic_slice = run_dynamic_slicer(args, variables, i)
 
         update_source_from_slices(args, [dynamic_slice])
+
+    """
+    TODO:
+    - vratit vysledek Delty, pokud Naive nic nenajde
+    - pridat do Naive plnou bitmask, aby to garantovane naslo variantu
+    - pridat do Naive hlasku "try increasing the reduction ratio, if you set it manually"
+    - odebrat z Naive ty vypisy lokace, ktere se ukazi nekolikrat behem validace
+    """
 
     if args.delta:
         exit_code = run_delta(args)

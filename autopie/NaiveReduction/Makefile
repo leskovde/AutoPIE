@@ -48,7 +48,7 @@ all: build common $(BIN_PATH)/$(TARGET)
 
 $(OBJ_PATH)/%.o: %.cpp
 	@mkdir -p $(@D)
-	$(CXX) $(CFLAGS) $(CLANGLIBS) -c $< -MMD -o $@
+	$(CXX) $(CFLAGS) -c $< -MMD -o $@
 
 $(BIN_PATH)/$(TARGET): $(OBJECTS)
 	@mkdir -p $(@D)
@@ -67,13 +67,6 @@ common:
 
 release: CFLAGS += -O2
 release: all
-
-test:
-	@$(BIN_PATH)/$(TARGET) --loc-line=10 \
-		--error-message="segmentation fault" --ratio=0.75 --dump-dot=true \
-		--verbose=true unstructured0.c --
-
-#	cd test_suite; python3 ./runtests.py; cd ..
 
 clean:
 	-@rm -rvf $(OBJ_PATH)/*

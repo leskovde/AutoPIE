@@ -19,26 +19,11 @@ DEPENDENCIES = $(OBJECTS:.o=.d)
 # Compiler flags.
 CXX = clang++
 CFLAGS = -std=c++17 -fno-rtti
-CLANGLIBS = \
-		-lpthread \
-		-lRemarks -llldb -lclang-cpp -lclang \
-		-lclangARCMigrate -lclangAST -lclangASTMatchers \
-		-lclangAnalysis -lclangBasic -lclangCodeGen -lclangCrossTU \
-		-lclangDependencyScanning -lclangDirectoryWatcher -lclangDriver \
-		-lclangDynamicASTMatchers -lclangEdit -lclangFormat -lclangFrontend \
-		-lclangFrontendTool -lclangHandleCXX -lclangHandleLLVM -lclangIndex \
-		-lclangLex -lclangParse -lclangRewrite \
-		-lclangRewriteFrontend -lclangSema \
-		-lclangSerialization -lclangStaticAnalyzerCheckers -lclangStaticAnalyzerCore \
-		-lclangStaticAnalyzerFrontend -lclangTesting -lclangTooling \
-		-lclangToolingASTDiff -lclangToolingCore -lclangToolingInclusions \
-		-lclangToolingRefactoring -lclangToolingSyntax -lclangTransformer
-
 all: build $(OBJECTS)
 
 $(OBJ_PATH)/%.o: %.cpp
 	@mkdir -p $(@D)
-	$(CXX) $(CFLAGS) $(CLANGLIBS) -c $< -MMD -o $@
+	$(CXX) $(CFLAGS) -c $< -MMD -o $@
 
 -include $(DEPENDENCIES)
 

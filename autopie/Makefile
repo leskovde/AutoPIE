@@ -4,6 +4,8 @@ DELTA_PATH = DeltaReduction
 SLICE_EXTRACTOR_PATH = SliceExtractor
 VARIABLE_EXTRACTOR_PATH = VariableExtractor
 
+export CXX = clang++
+
 .PHONY: all common naive delta slice variables clean
 
 all: common naive delta slice variables
