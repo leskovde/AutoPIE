@@ -1,9 +1,5 @@
 \chapter{Implementation}\label{chap:implementation}
 
-\change[inline]{TODO: Mention that the location in implementation does 
-not use columns, since the presumed location in LibTooling is not
-precise.}
-
 The problem analysis in Section~\ref{chap:minimization} established several 
 approaches to program reduction and minimization. 
 The next step is to compare the described algorithms and techniques. 
@@ -382,8 +378,15 @@ The binary is stored to a specified path, which by default is the same file
 path as the input source file.
 The file extension is substituted with \icode{.exe}.
 
-\paragraph{Static analysis.}
-\change[inline]{TODO: Research and implement calls to the Clang static analyzer.}
+\paragraph{Static analysis.} Since our implementation is written in Clang's 
+tooling library, we can reuse Clang's code and other Clang tools. 
+Running the Clang Static Analyzer should not be a problem. 
+However, we decided to skip the analysis step due to issues with processing 
+the analyzer's results. 
+Similarly to source code reduction, processing the analyzer's results would 
+require us to understand the analyzer and write manual rules accordingly. 
+Therefore, running the static analysis as a means of validation remains 
+a proof-of-concept with no concrete implementation.
 
 \paragraph{Execution.} Compiled binaries need to be validated at runtime.
 This way, we check whether the program results in the desired runtime error.
@@ -404,6 +407,17 @@ state, indicating a thrown exception.
 If the symbol's location on top of the stack trace is the same as the one of 
 the desired error, the program is tagged as valid.
 Otherwise, the execution continues.
+
+Previous sections, namely Chapter~\ref{chap:minimization}, have defined 
+the \emph{location} of the error as a line and column number, as per 
+Definition~\ref{def04:1}. 
+Since Clang and LLDB are not necessarily precise with their source locations, 
+we decided to relax the column requirement. 
+Therefore, we only consider the error's line number. 
+Additionally, we are required to check the error's description or its 
+message. 
+We do so by analyzing LLDB's stream and checking whether it contains 
+the error message specified by the user.
 
 \section{Naive reduction}\label{chap:naiveimplementation}
 

@@ -821,8 +821,6 @@ A more common threat, macros, has a~similar effect.
 Modifying a~source code containing macros and comments results in~
 losing both.
 
-\change[inline]{TODO: Show an example of instrumentation code.}
-
 Doing source-to-source transformation is often accompanied by 
 inserting instrumentation code. 
 By performing so-called cross-checking, one can make sure that 
@@ -840,3 +838,9 @@ While they might be excessive for small refactorings,
 they are beneficial when debugging source-to-source 
 transformations of~larger scales, such as translating 
 one language's source code to another's.
+
+We thought about using instrumentation as a validation technique for our 
+implementation. 
+However, implementing this approach is not a simple task. 
+It is still essential that the reader knows the possibilities of 
+source-to-source transformation, including cross-checking.
