@@ -593,7 +593,7 @@ First, every executed validation is inconclusive.
 That would lead to $v = 2 + 4 + 8 + \ldots + 2 * k = 4 * k$ validations. 
 Second, the validation succeeds, i.e., finds a failing subset, for every 
 last complement. 
-This case given us $v = (k - 1) + (k - 2) + \ldots + 2 = k^2 - k$ validations.
+This case gives us $v = (k - 1) + (k - 2) + \ldots + 2 = k^2 - k$ validations.
 Combined, these two scenarios lead to $k^2 + 3 * k$ validations at worst.
 
 \paragraph{Best case.} The best case is the ideal scenario for utilizing 
@@ -652,10 +652,10 @@ the sliced program.
 
 We see that static slicing is a significantly less expensive operation in 
 terms of running time. 
-Out of the two main issues concerning the previously discussed 
-approaches - the input size and its execution time - static slicing helps to 
-eliminate both. 
-Both the input size and subsequent execution time could both be brought down 
+The two main issues concerning the previously discussed approaches are 
+the input size and its execution time.
+Static slicing helps to eliminate both of these issues by a small margin. 
+The input size and subsequent execution time could both be brought down 
 further by using dynamic slicing.  
 The usage of dynamic slices, as opposed to static, has the mentioned benefit 
 of generating smaller slices.
