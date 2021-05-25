@@ -318,7 +318,7 @@ in the~unreduced form.
 For each parsed source code file, an instance of~\icode{ASTContext} 
 is used to represent the~AST. 
 The \icode{ASTContext} allows the~programmer to use many valuable methods. 
-Table~\ref{tab:astcontext} contains a part of \icode{ASTContext}'s Doxygen 
+Table~\ref{tab:astcontext} contains a digest of \icode{ASTContext}'s Doxygen 
 documentation. 
 It mainly presents methods that were used in this project.
 
@@ -338,7 +338,7 @@ It mainly presents methods that were used in this project.
 		\bottomrule
 	\end{tabular}
 \caption{Digest of \icode{ASTContext}'s documentation.
-The documentation can be found at
+The full documentation can be found at
 \url{https://clang.llvm.org/doxygen/classclang_1_1ASTContext.html}.}
 \label{tab:astcontext}
 \end{table}
@@ -507,8 +507,9 @@ offers \icode{Visit} methods that
 can be overridden to the~programmer's liking. 
 Each override specifies the~type of~node on which the~method 
 triggers and the~actions that should be performed.
-A portion of these methods is presented in table~\ref{tab:astvisitor}. 
-The table's contents are based on the Doxygen documentation.
+A selection of these methods is presented in Table~\ref{tab:astvisitor}. 
+The table's content is based on the Doxygen documentation of
+the \icode{RecursiveASTVisitor} class.
 
 \begin{table}[b!]\centering
 	\begin{tabular}{p{0.39\linewidth} p{0.52\linewidth}}
@@ -544,7 +545,7 @@ The table's contents are based on the Doxygen documentation.
 		$^a$ All presented methods return \icode{bool}.}
 	\end{tabular}
 \caption{Digest of \icode{RecursiveASTVisitor}'s documentation.
-The documentation can be found at 
+The full documentation can be found at 
 \url{https://clang.llvm.org/doxygen/classclang_1_1RecursiveASTVisitor.html}.}
 \label{tab:astvisitor}
 \end{table}
