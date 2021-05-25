@@ -37,6 +37,7 @@ struct Statistics
 	size_t totalIterations = 0;
 	size_t inputSizeInBytes = 0;
 	size_t outputSizeInBytes = 0;
+	int exitCode = EXIT_FAILURE;
 
 	Statistics()
 	{

@@ -150,7 +150,7 @@ std::string EscapeQuotes(const std::string& text);
 //
 //===----------------------------------------------------------------------===//
 
-std::string Stringify(BitMask& bitMask);
+std::string Stringify(const BitMask& bitMask);
 
 bool IsFull(BitMask& bitMask);
 

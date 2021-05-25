@@ -86,26 +86,13 @@ int main(int argc, const char** argv)
 
 	LLDBSentry sentry;
 	
-	for (auto i = 0; i < context.deepeningContext.epochCount; i++)
-	{
-		context.currentEpoch = i;
-		
-		// Run all Clang AST related actions.
-		auto result = tool.run(Naive::VariantGeneratingFrontendActionFactory(context).get());
+	// Run all Clang AST related actions.
+	auto result = tool.run(Naive::VariantGeneratingFrontendActionFactory(context).get());
 
-		if (result)
-		{
-			errs() << "The tool returned a non-standard value: " << result << "\n";
-		}
-		
-		if (ValidateResults(context))
-		{
-			return EXIT_SUCCESS;
-		}
-		
-		out::All() << "Epoch " << i + 1 << " out of " << epochCount << ": A smaller program variant could not be found.\n";
-		ClearTempDirectory();
+	if (result)
+	{
+		errs() << "The tool returned a non-standard value: " << result << "\n";
 	}
 
-	return EXIT_FAILURE;
+	return context.stats.exitCode;
 }

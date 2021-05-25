@@ -203,7 +203,7 @@ std::string EscapeQuotes(const std::string& text)
  * @param bitMask The bitmask to be converted to string.
  * @return The string form of the bitmask, read from the most significant bit.
  */
-std::string Stringify(BitMask& bitMask)
+std::string Stringify(const BitMask& bitMask)
 {
 	std::string bits;
 
