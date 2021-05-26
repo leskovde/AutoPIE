@@ -1,7 +1,7 @@
 % Metadata to be stored in PDF, see documentation of the pdfx package for more details.
 
-\Author{Name Surname}
-\Title{Thesis title}
-\Keywords{keywords\sep more such\sep yet another}
+\Author{Denis Leskovar}
+\Title{Automated Program Minimization With Preserving of Runtime Errors}
+\Keywords{automated debugging\sep code analysis\sep syntax tree\sep statement reduction\sep clang libtooling}
 \Subject{Abstract of thesis}
 \Publisher{Charles University}

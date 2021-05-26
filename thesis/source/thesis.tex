@@ -94,30 +94,34 @@ Dedication.
 
 % Abstract (recommended length around 80-200 words; this is not a copy of your thesis assignment!)
 \def\Abstract{%
-Debugging~of large programs is a~difficult and time consuming task.
-Given~a runtime error, the~developer must first reproduce it. 
-He then has~to find the cause~of the~error and create a~bugfix.
-This process can be made significantly more efficient by reducing 
-the amount~of code the developer has~to look into. 
-This paper introduces three different methodologies~of automatically reducing
-a~given program $\mathcal{P}$ into its minimal runnable subset $\mathcal{P'}$.
-The automatically generated program $\mathcal{P'}$ also has~to 
-result~in the~same runtime error as~$\mathcal{P}$.
-The main focus~of the reduction is on~correctness when operating in a~concrete
-application domain set by this study.
-Implementations~of introduced methodologies written using the~LLVM compiler
-infrastructure are then compared and classified.
-Performance is measured based~on the statement count~of the~newly generated
-program and the~speed at which the~minimal variant was generated.
-Moreover, the~limits of the~three different approaches are investigated
-with respect~to~the general application domain.
-The~paper concludes with an~overview~of the~most general and efficient 
-methodology.
+Debugging large programs is a complex and time-consuming task, which has not 
+been fully automated yet. 
+Given a runtime error, the developer must first reproduce it. 
+He then has to find the root cause of the error and create a proper bug fix. 
+Automation can make this process significantly more efficient by reducing 
+the amount of code the developer has to look through. 
+This thesis introduces three methodologies of automatically reducing a given 
+failing program into its minimal runnable subset. 
+The techniques are based on existing findings in the field of debugging. 
+The automatically minimized program must result in the same runtime error 
+as the original program. 
+The minimization focuses on optimal results in a domain of small and simple 
+applications. 
+
+The goal of this thesis is to discuss techniques that are practical for 
+program reduction. 
+These techniques are implemented using Clang LibTooling, a library for 
+standalone Clang tools. 
+The inner workings of each implementation are explained, and their limitations 
+are exposed. 
+The implementations are benchmarked on a set of C and C++ source files.  
+Performance is measured based on the size of the generated output and 
+the running time of the algorithm.
 }
 
 % 3 to 5 keywords (recommended), each enclosed in curly braces
 \def\Keywords{%
-{automated debugging}, {code analysis}, {syntax tree}, {statement reduction}, {clang}
+{automated debugging}, {code analysis}, {syntax tree}, {statement reduction}, {clang libtooling}
 }
 
 %% The hyperref package for clickable links in PDF and also for storing
