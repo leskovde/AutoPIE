@@ -177,6 +177,46 @@ methodology.
 \chapter{Attachments}
 
 \section{Content of the attachment}
+\dirtree{%
+.1 Attachment{.zip}.
+.2 AutoPie.
+.3 Common \DTcomment{Source code shared by multiple projects.}.
+.4 include.
+.4 src.
+.4 Makefile.
+.3 DeltaReduction \DTcomment{Delta debugging algorithm's project directory.}.
+.4 docs.
+.4 include.
+.4 src.
+.4 Makefile.
+.4 evaluate{.sh}.
+.3 EvaluationData \DTcomment{Evaluation dataset.}.
+.3 NaiveReduction \DTcomment{Project directory of the naive approach.}.
+.4 docs.
+.4 include.
+.4 src.
+.4 Makefile.
+.4 evaluate{.sh}.
+.3 Scripts \DTcomment{Slicing-related components.}.
+.4 SlicingReduction{.py} \DTcomment{Slicing-based minimization script.}.
+.4 evaluate{.sh}.
+.4 slice{.py}.
+.4 unify{.py}.
+.3 SliceExtractor \DTcomment{Slice-processing helper utility.}.
+.4 docs.
+.4 include.
+.4 src.
+.4 Makefile.
+.3 VariableExtractor \DTcomment{Slice-preprocessing utility}.
+.4 docs.
+.4 src.
+.4 Makefile.
+.3 Makefile \DTcomment{Master Makefile that builds all components.}.
+.3 buildLLVM{.sh} \DTcomment{Setup script for building LLVM.}.
+}
+
+The attachment is also available through an online repository. 
+The repository can be found at \url{https://github.com/leskovde/AutoPIE}.
 
 \section{User Documentation}
 
