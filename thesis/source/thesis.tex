@@ -176,7 +176,130 @@ methodology.
 \appendix
 \chapter{Attachments}
 
-\section{First Attachment}
+\section{Content of the attachment}
+
+\section{User Documentation}
+
+\subsection{System requirements}
+
+The target system has to build AutoPIE, LLVM, Clang, and LLDB as well. 
+Building the LLVM project utilizes a large number of system resources.  
+In order to build the project correctly, the system must meet the following 
+requirements:
+\begin{itemize}
+  \item The system must have at least 8 GB of memory.
+  \item The system must have an x86-based CPU.
+  \item The system should have at least 5 GB of free disk space and 
+  optionally up to 40 GB of disk space for the debug build.
+  \item The system must run a Linux distribution supported by LLVM 11.0.0.
+\end{itemize}
+
+Any mainstream Linux distributions released in the year 2020 and later are 
+supported, provided they can run the tools specified in the following 
+section. 
+This list includes, for example, Manjaro 21.0, Arch Linux 2020.06.01, and 
+Ubuntu 20.04.
+
+\subsection{Prerequisites}
+
+In order to build and launch AutoPIE, one must first install all underlying 
+tools, libraries, and frameworks. 
+The following list contains all tools and utilities that are required to 
+build and run the project.
+
+\begin{itemize}
+  \item python2
+  \item python3
+  \item python-dev
+  \item libedit-dev
+  \item cmake
+  \item ninja-build
+  \item make
+  \item gcc
+  \item zlib
+  \item coreutils
+  \item graphviz
+  \item docker
+  \item swig
+\end{itemize}
+
+Additionally, the user must have the following packages available in their 
+Python interpreter:
+
+\begin{itemize}
+  \item docker
+  \item argparse
+  \item shutil
+  \item pathlib
+\end{itemize}
+
+Once these requirements are met, the user can proceed to build LLVM, Clang, 
+and LLDB. 
+The building process is lengthy, complex, and tedious. 
+Therefore, we have created a script that automizes the process. 
+The build can be launched by following the described steps.
+
+\begin{enumerate}
+  \item Navigate to the *autopie* directory.
+  \item Use *chmod +x ./buildLLVM.sh* to give the script required permissions.
+  \item Run the script as root using *sudo ./buildLLVM.sh*.
+\end{enumerate}
+
+The build script performs the following steps:
+
+\begin{enumerate}
+  \item It downloads the required version of the LLVM from the official GitHub repository. The specific version for this project is 11.0.0.
+  \item It extracts the downloaded archive into a temporary directory.
+  \item It creates a build subdirectory in the temporary path and navigates to it.
+  \item It executes the CMake command, which prepares the build configuration for the required projects. Notably, the Clang and LLVM projects are configured in x86 Release mode with libraries and scripting support.
+  \item It launches the Ninja tool, which builds the LLVM project. It then installs the necessary headers and libraries into system paths.
+  \item It exports the linker library path, which now contains */usr/local/lib/*. This export expires once the current shell is terminated.
+\end{enumerate}
+
+If successful, the user can now use LLVM libraries when linking C++ projects.
+
+\subsection{Building AutoPIE}
+
+The project consists of several C++ binaries. 
+These binaries can be built using makefiles in their respective directories. 
+The \icode{autopie} directory also contains a \icode{Makefile} that builds 
+all the projects. 
+Once built, the binaries can be found in the following directories:
+\icode{NaiveReduction} is available under 
+\icode{autopie\-/NaiveReduction\-/build\-/bin\-/NaiveReduction}.
+\icode{DeltaReduction} can be found under 
+\icode{autopie\-/DeltaReduction\-/build\-/bin\-/DeltaReduction}.
+The helper utilities \icode{VariableExtractor} and \icode{SliceExtractor} can 
+be found in 
+\icode{autopie\-/VariableExtractor\-/build\-/bin\-/VariableExtractor} 
+and \icode{autopie\-/SliceExtractor\-/build\-/bin\-/SliceExtractor} 
+respectivelly.
+
+The slicing-based approach does not need to be built since it is implemented 
+in Python. 
+However, it utilizes all four mentioned C++ projects. 
+Those must be present in order for the Python script to work correctly.
+
+\subsection{Running AutoPIE}
+
+The user can execute the three approaches as follows:
+
+\begin{itemize}
+  \item The naive approach can be launched by executing 
+  the \icode{NaiveReduction} program built from the earlier steps.
+  \item The minimizing Delta debugging algorithm can be launched by 
+  executing the \icode{DeltaReduction} program built from the earlier steps.
+  \item The slicing-based approach can be launched by running 
+  \icode{python3 autopie/Scripts/SlicingReduction.py <args>}, having built 
+  all other projects from the earlier steps.
+\end{itemize}
+
+Each project's required and supported arguments can be viewed using 
+the \icode{--help} option available for each program and script.
+
+The user can run the evaluation dataset by navigating to a subdirectory of 
+an approach and launching \icode{evaluate.sh}. 
+For example: \icode{cd autopie/NaiveReduction \&\& make \&\& ./evaluate.sh}.
 
 \openright
 \end{document}
