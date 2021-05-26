@@ -1,173 +1,157 @@
+#ifndef VISITORS_SLICE_H
+#define VISITORS_SLICE_H
 #pragma once
+
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <clang/Frontend/CompilerInstance.h>
-#include <clang/Rewrite/Core/Rewriter.h>
 
-#include "Helper.h"
-#include "Context.h"
-
-// Traverses the AST and removes a selected statement set by the CurrentLine number.
-class StatementReductionASTVisitor : public clang::RecursiveASTVisitor<StatementReductionASTVisitor>
+namespace SliceExtractor
 {
-	int iteration = 0;
-	std::vector<clang::Stmt*> ignoredNodes;
-	clang::ASTContext* astContext; // used for getting additional AST info
-	GlobalContext* globalContext;
+	class SliceExtractorASTVisitor;
+	using SliceExtractorASTVisitorRef = std::unique_ptr<SliceExtractorASTVisitor>;
 
-	std::vector<clang::Stmt*> GetAllChildren(clang::Stmt* st)
+	class SliceExtractorASTVisitor final : public clang::RecursiveASTVisitor<SliceExtractorASTVisitor>
 	{
-		auto retval = std::vector<clang::Stmt*>();
+		clang::ASTContext& astContext_;
 
-		if (st == nullptr)
+		bool IsMain(clang::Decl* decl) const
 		{
-			return retval;
+			return llvm::isa<clang::FunctionDecl>(decl) && llvm::cast<clang::FunctionDecl>(decl)->isMain();
+		}
+
+		bool IsInSlice(const int startingLine, const int endingLine) const
+		{
+			return std::find(originalLines.begin(), originalLines.end(), startingLine) != originalLines.end() ||
+				std::find(originalLines.begin(), originalLines.end(), endingLine) != originalLines.end();
+		}
+
+		bool HasSlicePartsInsideItsBody(const int bodyStartingLine, const int bodyEndingLine) const
+		{
+			for (auto line : originalLines)
+			{
+				if (bodyStartingLine <= line && line <= bodyEndingLine)
+				{
+					return true;
+				}
+			}
+
+			return false;
 		}
 		
-		for (auto it = st->child_begin(); it != st->child_end(); ++it)
+	public:
+
+		std::vector<int>& originalLines;
+		std::vector<int> collectedLines;
+
+		explicit SliceExtractorASTVisitor(clang::CompilerInstance* ci, std::vector<int>& lines) : astContext_(ci->getASTContext()), originalLines(lines)
 		{
-			auto child = *it;
-			retval.push_back(child);
-			auto recursiveChildren = GetAllChildren(child);
-			retval.insert(retval.end(), recursiveChildren.begin(), recursiveChildren.end());
 		}
 
-		return retval;
-	}
-	
-	void InvalidateChildren(clang::Stmt* st)
-	{
-		auto allChildren = GetAllChildren(st);
-		ignoredNodes.insert(ignoredNodes.end(), allChildren.begin(), allChildren.end());
-	}
-	
-public:
-	virtual ~StatementReductionASTVisitor() = default;
-
-	StatementReductionASTVisitor(clang::CompilerInstance* ci, GlobalContext* ctx)
-		: astContext(&ci->getASTContext()), globalContext(ctx)
-	{
-		globalContext->globalRewriter.setSourceMgr(astContext->getSourceManager(),
-			astContext->getLangOpts());
-
-		if (globalContext->createNewRewriter)
+		bool VisitDecl(clang::Decl* decl)
 		{
-			globalContext->globalRewriter = clang::Rewriter();
-		}
+			// Skip included files.
+			if (!astContext_.getSourceManager().isInMainFile(decl->getBeginLoc()))
+				//const auto loc = clang::FullSourceLoc(decl->getBeginLoc(), astContext_.getSourceManager());
+				//if (loc.isValid() && loc.isInSystemHeader())
+			{
+				return true;
+			}
+			
+			const auto range = GetPrintableRange(GetPrintableRange(decl->getSourceRange(), astContext_.getSourceManager()),
+				astContext_.getSourceManager());
 
-		globalContext->globalRewriter.setSourceMgr(astContext->getSourceManager(),
-			astContext->getLangOpts());
-	}
+			const auto startingLine = astContext_.getSourceManager().getSpellingLineNumber(range.getBegin());
+			const auto endingLine = astContext_.getSourceManager().getSpellingLineNumber(range.getEnd());
 
-	/**
-	 * Gets the portion of the code that corresponds to given SourceRange, including the
-	 * last token. Returns expanded macros.
-	 *
-	 * @see get_source_text_raw()
-	 */
-	llvm::StringRef get_source_text(clang::SourceRange range, const clang::SourceManager& sm) {
-		clang::LangOptions lo;
+			if (decl->hasBody() && decl->getBody() != nullptr)
+			{
+				const auto bodyRange = GetPrintableRange(GetPrintableRange(decl->getBody()->getSourceRange(), astContext_.getSourceManager()),
+					astContext_.getSourceManager());
 
-		// NOTE: sm.getSpellingLoc() used in case the range corresponds to a macro/preprocessed source.
-		auto start_loc = sm.getSpellingLoc(range.getBegin());
-		auto last_token_loc = sm.getSpellingLoc(range.getEnd());
-		auto end_loc = clang::Lexer::getLocForEndOfToken(last_token_loc, 0, sm, lo);
-		auto printable_range = clang::SourceRange{ start_loc, end_loc };
-		return get_source_text_raw(printable_range, sm);
-	}
+				const auto bodyStartingLine = astContext_.getSourceManager().getSpellingLineNumber(bodyRange.getBegin());
+				const auto bodyEndingLine = astContext_.getSourceManager().getSpellingLineNumber(bodyRange.getEnd());
 
-	/**
-	 * Gets the portion of the code that corresponds to given SourceRange exactly as
-	 * the range is given.
-	 *
-	 * @warning The end location of the SourceRange returned by some Clang functions
-	 * (such as clang::Expr::getSourceRange) might actually point to the first character
-	 * (the "location") of the last token of the expression, rather than the character
-	 * past-the-end of the expression like clang::Lexer::getSourceText expects.
-	 * get_source_text_raw() does not take this into account. Use get_source_text()
-	 * instead if you want to get the source text including the last token.
-	 *
-	 * @warning This function does not obtain the source of a macro/preprocessor expansion.
-	 * Use get_source_text() for that.
-	 */
-	llvm::StringRef get_source_text_raw(clang::SourceRange range, const clang::SourceManager& sm) {
-		return clang::Lexer::getSourceText(clang::CharSourceRange::getCharRange(range), sm, clang::LangOptions());
-	}
-	
-	virtual bool VisitStmt(clang::Stmt* st)
-	{
-		// TODO: Possible change - change the the number of children from 0 to something more sensible.
+				if (IsMain(decl) || IsInSlice(startingLine, endingLine) || HasSlicePartsInsideItsBody(bodyStartingLine, bodyEndingLine))
+				{
+					// The declaration has a body. The whole body does not need to be in the collected line list.
+					// We only include that what is not inside the body (the signature and everything before and after
+					// the body's braces, include those braces).
 
-		if (st == nullptr || std::find(ignoredNodes.begin(), ignoredNodes.end(), st) != ignoredNodes.end())
-		{
+					for (auto i = startingLine; i <= bodyStartingLine; i++)
+					{
+						collectedLines.push_back(i);
+					}
+
+					for (auto i = bodyEndingLine; i <= endingLine; i++)
+					{
+						collectedLines.push_back(i);
+					}
+				}
+			}
+			else
+			{
+				if (IsMain(decl) || IsInSlice(startingLine, endingLine))
+				{
+					// No body => include the whole declaration.
+
+					for (auto i = startingLine; i <= endingLine; i++)
+					{
+						collectedLines.push_back(i);
+					}
+				}
+			}
+
 			return true;
 		}
-		
-		auto range = GetSourceRange(*st);
 
-		const auto startLineNumber = astContext->getSourceManager().getSpellingLineNumber(range.getBegin());
-		const auto endLineNumber = astContext->getSourceManager().getSpellingLineNumber(range.getEnd());
-		
-		const auto endTokenLoc = astContext->getSourceManager().getSpellingLoc(range.getEnd());
-
-		const auto startLoc = astContext->getSourceManager().getSpellingLoc(range.getBegin());
-		const auto endLoc = clang::Lexer::getLocForEndOfToken(endTokenLoc, 0, astContext->getSourceManager(), clang::LangOptions());
-
-		range = clang::SourceRange(startLoc, endLoc);
-
-		if (
-			(std::find(globalContext->lines.begin(), globalContext->lines.end(), startLineNumber) != globalContext->lines.end())
-			//|| (std::find(globalContext->lines.begin(), globalContext->lines.end(), endLineNumber) != globalContext->lines.end())
-			)
+		bool VisitStmt(clang::Stmt* stmt)
 		{
-
-			clang::Rewriter localRewriter;
-			localRewriter.setSourceMgr(astContext->getSourceManager(), astContext->getLangOpts());
-
-			auto s = get_source_text(range, astContext->getSourceManager());
+			// Skip included files.
+			if (!astContext_.getSourceManager().isInMainFile(stmt->getBeginLoc()))
+				//const auto loc = clang::FullSourceLoc(decl->getBeginLoc(), astContext_.getSourceManager());
+				//if (loc.isValid() && loc.isInSystemHeader())
+			{
+				return true;
+			}
 			
-			llvm::outs() << "============================================================\n";
-			llvm::outs() << "CODE TO BE REMOVED: " << localRewriter.getRewrittenText(range) << "\n";
-			llvm::outs() << range.printToString(astContext->getSourceManager()) << "\n";
-			llvm::outs() << "============================================================\n\n";
+			const auto range = GetPrintableRange(GetPrintableRange(stmt->getSourceRange(), astContext_.getSourceManager()),
+				astContext_.getSourceManager());
 
-			globalContext->globalRewriter.RemoveText(range);
+			const auto startingLine = astContext_.getSourceManager().getSpellingLineNumber(range.getBegin());
+			const auto endingLine = astContext_.getSourceManager().getSpellingLineNumber(range.getEnd());
+			
+			if (IsInSlice(startingLine, endingLine))
+			{
+				for (auto i = startingLine; i <= endingLine; i++)
+				{
+					collectedLines.push_back(i);
+				}
 
-			InvalidateChildren(st);
+				// Const declarations might be absent in the slice even though they are referenced.
+				// These declarations need to be added manually.
+				if (llvm::isa<clang::DeclRefExpr>(stmt))
+				{
+					const auto decl = llvm::cast<clang::DeclRefExpr>(stmt)->getFoundDecl();
+
+					if (!decl->hasBody())
+					{
+						const auto declRange = GetPrintableRange(GetPrintableRange(decl->getSourceRange(), astContext_.getSourceManager()),
+							astContext_.getSourceManager());
+
+						const auto declStartingLine = astContext_.getSourceManager().getSpellingLineNumber(declRange.getBegin());
+						const auto declEndingLine = astContext_.getSourceManager().getSpellingLineNumber(declRange.getEnd());
+
+						for (auto i = declStartingLine; i <= declEndingLine; i++)
+						{
+							collectedLines.push_back(i);
+						}
+					}
+				}
+			}
+			
+			return true;
 		}
+	};
+}
 
-		return true;
-	}
-};
-
-// Counts the number of leaf statements and stores it in CountVisitorCurrentLine.
-class CountASTVisitor : public clang::RecursiveASTVisitor<CountASTVisitor>
-{
-	clang::ASTContext* astContext; // used for getting additional AST info
-	GlobalContext* globalContext;
-
-public:
-	CountASTVisitor(clang::CompilerInstance* ci, GlobalContext* ctx)
-		: astContext(&ci->getASTContext()), globalContext(ctx)
-	{
-		globalContext->countVisitorContext = CountVisitorContext();
-	}
-
-	virtual bool VisitStmt(clang::Stmt* st)
-	{
-		// TODO: Possible change - change the the number of children from 0 to something more sensible.
-		
-		//st->viewAST();
-		
-		if (st->children().empty())
-		{
-			// The statement is a leaf statement.
-			globalContext->countVisitorContext.Increment();
-
-			const auto range = GetSourceRange(*st);
-			const auto locStart = astContext->getSourceManager().getPresumedLoc(range.getBegin());
-			const auto locEnd = astContext->getSourceManager().getPresumedLoc(range.getEnd());
-		}
-
-		return true;
-	}
-};
+#endif

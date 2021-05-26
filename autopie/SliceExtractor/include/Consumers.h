@@ -1,41 +1,42 @@
+#ifndef CONSUMERS_SLICE_H
+#define CONSUMERS_SLICE_H
 #pragma once
+
 #include <clang/AST/ASTConsumer.h>
 
+#include <algorithm>
+
 #include "Visitors.h"
-#include "Context.h"
 
-class StatementReductionASTConsumer final : public clang::ASTConsumer
+namespace SliceExtractor
 {
-	StatementReductionASTVisitor* visitor;
-
-public:
-	StatementReductionASTConsumer(clang::CompilerInstance* ci, GlobalContext* ctx)
-		: visitor(new StatementReductionASTVisitor(ci, ctx)) // initialize the visitor
+	class SliceExtractorASTConsumer final : public clang::ASTConsumer
 	{
-	}
+		SliceExtractorASTVisitorRef sliceVisitor_{};
 
-	void HandleTranslationUnit(clang::ASTContext& context) override
-	{
-		/* we can use ASTContext to get the TranslationUnitDecl, which is
-			 a single Decl that collectively represents the entire source file */
-		visitor->TraverseDecl(context.getTranslationUnitDecl());
-	}
-};
+	public:
+		SliceExtractorASTConsumer(clang::CompilerInstance* ci, std::vector<int>& lines)
+		{
+			sliceVisitor_ = std::make_unique<SliceExtractorASTVisitor>(ci, lines);
+		}
 
-class CountASTConsumer final : public clang::ASTConsumer
-{
-	CountASTVisitor* visitor;
+		void HandleTranslationUnit(clang::ASTContext& context) override
+		{
+			sliceVisitor_->TraverseDecl(context.getTranslationUnitDecl());
 
-public:
-	explicit CountASTConsumer(clang::CompilerInstance* ci, GlobalContext* ctx)
-		: visitor(new CountASTVisitor(ci, ctx)) // initialize the visitor
-	{
-	}
+			// Concatenate found lines.
+			auto& originalLines = sliceVisitor_->originalLines;
+			auto& collectedLines = sliceVisitor_->collectedLines;
+			
+			originalLines.insert(originalLines.end(), collectedLines.begin(), collectedLines.end());
 
-	void HandleTranslationUnit(clang::ASTContext& context) override
-	{
-		/* we can use ASTContext to get the TranslationUnitDecl, which is
-			 a single Decl that collectively represents the entire source file */
-		visitor->TraverseDecl(context.getTranslationUnitDecl());
-	}
-};
+			// Remove duplicates.
+			std::sort(originalLines.begin(), originalLines.end());
+			const auto it = std::unique(originalLines.begin(), originalLines.end());
+			originalLines.erase(it, originalLines.end());
+			
+		}
+	};
+}
+
+#endif

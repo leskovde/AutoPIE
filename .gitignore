@@ -338,8 +338,6 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
-/TheToolSolution/ClangDemo/tempFile.cpp
-/TheToolSolution/ClangDemo/temp
 /thesis/source/abstract.out
 *.aux
 /thesis/source/thesis.bbl
@@ -349,9 +347,35 @@ healthchecksdb
 /thesis/source/thesis.out
 /thesis/source/thesis.toc
 /autopie/AutoPIE/temp
-/autopie/AutoPIE/visuals/concreteTestCase.png
-/autopie/AutoPIE/visuals/concreteTestCase.png
 /autopie/NaiveReduction/temp
-/autopie/NaiveReduction/visuals/concreteTestCase.png
 /autopie/NaiveReduction/ide/temp
 /autopie/temp
+/autopie/NaiveReduction/test_suite/autoPieOut.c
+/autopie/NaiveReduction/ide/bak_temp
+/autopie/NaiveReduction/ide/visuals
+/autopie/DeltaReduction/temp
+/autopie/DeltaReduction/ide/temp
+/autopie/DeltaReduction/visuals
+/autopie/Scripts/slice1.txt
+/autopie/Scripts/slice2.txt
+/autopie/Scripts/slice3.txt
+/autopie/Scripts/out.txt
+/autopie/SliceExtractor/ide/adjustedLineNumber.txt
+/autopie/SliceExtractor/ide/output.c
+/autopie/Scripts/adjustedLineNumber.txt
+/autopie/Scripts/criteria.txt
+/autopie/Scripts/example0.c
+/autopie/Scripts/example20.cpp
+/autopie/Scripts/slice.c
+/autopie/Scripts/static_slice_0.txt
+/autopie/Scripts/static_slice_1.txt
+/autopie/Scripts/unification.txt
+/autopie/Scripts/dg-data
+/autopie/Scripts/giri-data
+/autopie/Scripts/visuals
+/autopie/SliceExtractor/ide/output.cpp
+/autopie/SliceExtractor/example20.cpp
+/autopie/NaiveReduction/structured5.c
+/autopie/NaiveReduction/unstructured0.c
+/autopie/DeltaReduction/ide/visuals
+/autopie/Scripts/temp

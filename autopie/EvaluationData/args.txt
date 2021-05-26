@@ -1,0 +1,30 @@
+unstructured0.c;10;segmentation fault;;0.75
+unstructured1.c;45;assert;;0.5
+unstructured2.c;35;assert;;0.5
+unstructured3.c;39;assert;;0.75
+unstructured4.c;99;assert;;0.3
+unstructured5.c;27;assert;;0.75
+unstructured6.c;36;segmentation fault;;0.75
+unstructured7.c;64;assert;;0.75
+unstructured8.c;39;assert;;0.5
+unstructured9.c;39;assert;;0.5
+structured0.c;89;assert;;0.3
+structured1.cpp;53;assert;arg1 arg2 arg3;0.75
+structured2.c;46;assert;;0.75
+structured3.c;46;assert;;0.75
+structured4.c;58;assert;;0.5
+structured5.c;58;segmentation fault;;0.25
+structured6.c;47;assert;;0.75
+structured7.c;36;assert;;0.75
+structured8.c;55;assert;;0.75
+structured9.cpp;12;segmentation fault;;0.5
+oop0.cpp;34;segmentation fault;;0.75
+oop1.cpp;18;segmentation fault;;0.9
+oop2.cpp;77;segmentation fault;;0.9
+oop3.c;52;segmentation fault;;0.75
+oop4.cpp;26;assert;;0.9
+oop5.cpp;33;assert;;0.9
+oop6.cpp;60;assert;;0.9
+oop7.cpp;59;assert;;0.9
+oop8.cpp;89;assert;;0.95
+oop9.cpp;97;segmentation fault;;0.95

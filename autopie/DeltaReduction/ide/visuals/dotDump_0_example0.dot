@@ -1,0 +1,67 @@
+digraph g {
+forcelabels=true;
+rankdir=TD;
+0[label="x += 3;", xlabel="No. 0 (580), CompoundAssignOperator", color="darkorchid"];
+1[label="print(str, x);", xlabel="No. 1 (607), CallExpr", color="green"];
+2[label="{ 
+	x += 3;
+	print(str, x);
+}", xlabel="No. 2 (619), CompoundStmt", color="green"];
+3[label="void print(const char* str, int x) 
+{ 
+	x += 3;
+	print(str, x);
+}", xlabel="No. 3 (540), Function", color="green"];
+4[label="int i = 0;", xlabel="No. 4 (720), DeclStmt", color="darkorchid"];
+5[label="const int k = 0xffff;", xlabel="No. 5 (744), DeclStmt", color="darkorchid"];
+6[label="int j = 0;", xlabel="No. 6 (768), DeclStmt", color="darkorchid"];
+7[label="j++)", xlabel="No. 7 (802), UnaryOperator", color="darkorchid"];
+8[label="i++;", xlabel="No. 8 (809), UnaryOperator", color="darkorchid"];
+9[label="{
+		i++;
+	}", xlabel="No. 9 (812), CompoundStmt", color="darkorchid"];
+10[label="for (int j = 0; j < k; j++) {
+		i++;
+	}", xlabel="No. 10 (815), ForStmt", color="darkorchid"];
+11[label="print(\"Result: %d\n\", i);", xlabel="No. 11 (846), CallExpr", color="goldenrod"];
+12[label="{
+	int i = 0;
+	
+	const int k = 0xffff;
+
+	for (int j = 0; j < k; j++) {
+		i++;
+	}
+
+	print(\"Result: %d\n\", i);
+}", xlabel="No. 12 (861), CompoundStmt", color="darkorchid"];
+13[label="int
+main (int argc, char** argv) {
+	int i = 0;
+	
+	const int k = 0xffff;
+
+	for (int j = 0; j < k; j++) {
+		i++;
+	}
+
+	print(\"Result: %d\n\", i);
+}", xlabel="No. 13 (677), Function", color="green"];
+10 -> 6;
+10 -> 7;
+10 -> 9;
+2 -> 0;
+2 -> 1;
+3 -> 2;
+9 -> 8;
+12 -> 4;
+12 -> 5;
+12 -> 10;
+12 -> 11;
+13 -> 12;
+6 -> 7 [color=maroon];
+6 -> 10 [color=maroon];
+4 -> 8 [color=maroon];
+4 -> 11 [color=maroon];
+5 -> 10 [color=maroon];
+}

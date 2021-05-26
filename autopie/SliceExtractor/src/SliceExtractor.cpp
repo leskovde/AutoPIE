@@ -16,152 +16,136 @@
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 
-#include "../include/Context.h"
 #include "../include/Actions.h"
+#include "../../Common/include/Helper.h"
+#include "../../Common/include/Streams.h"
 
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 
 using namespace clang;
-using namespace ast_matchers;
-using namespace driver;
-using namespace tooling;
 using namespace llvm;
 
-cl::OptionCategory MyToolCategory("my-tool options");
-
-extern cl::OptionCategory MyToolCategory;
-
-// Returns the number statements in the fileName source code file.
-int GetLeafStatementCount(GlobalContext& ctx, clang::tooling::CompilationDatabase& cd)
+/**
+ * Extracts a slice from source code based on a given list of lines.
+ *
+ * Call:\n
+ * > SliceExtractor.exe [file with error] [line with error] <source path> --
+ * e.g. SliceExtractor.exe --loc-line=17 --slice-file="slice.txt" example.cpp --
+ */
+int main(int argc, const char** argv)
 {
-	ctx.countVisitorContext.ResetStatementCount();
-
-	clang::tooling::ClangTool tool(cd, ctx.currentFileName);
-	auto result = tool.run(clang::tooling::newFrontendActionFactory<CountAction>().get());
-
-	return ctx.countVisitorContext.GetTotalStatementCount();
-}
-
-// Removes statementNumber-th statement in the fileName source code file.
-std::string ReduceStatement(GlobalContext& ctx, clang::tooling::CompilationDatabase& cd, std::vector<int>& lines)
-{
-	ctx.lines = lines;
-
-	clang::tooling::ClangTool tool(cd, ctx.currentFileName);
-	auto result = tool.run(clang::tooling::newFrontendActionFactory<StatementReduceAction>().get());
-
-	return ctx.lastGeneratedFileName;
-}
-
-class FuncDeclHandler : public MatchFinder::MatchCallback
-{
-public:
-	std::tuple<int, int> lineRange;
-
-	explicit FuncDeclHandler() {}
-
-	virtual void run(const MatchFinder::MatchResult &Result)
-	{
-		if (const FunctionDecl *FD = Result.Nodes.getNodeAs<clang::FunctionDecl>("mainFunction"))
-		{
-			//FD->dump();
-
-			auto bodyRange = FD->getBody()->getSourceRange();
-			
-			const auto startLineNumber = Result.Context->getSourceManager().getSpellingLineNumber(bodyRange.getBegin());
-			const auto endLineNumber = Result.Context->getSourceManager().getSpellingLineNumber(bodyRange.getEnd());
-
-			const auto endTokenLoc = Result.Context->getSourceManager().getSpellingLoc(bodyRange.getEnd());
-
-			const auto startLoc = Result.Context->getSourceManager().getSpellingLoc(bodyRange.getBegin());
-			const auto endLoc = clang::Lexer::getLocForEndOfToken(endTokenLoc, 0, Result.Context->getSourceManager(), clang::LangOptions());
-
-			bodyRange = clang::SourceRange(startLoc, endLoc);
-			lineRange = std::make_tuple(startLineNumber, endLineNumber);
-			
-			outs() << "Range: " << bodyRange.printToString(Result.Context->getSourceManager()) << " (lines " << startLineNumber << " - " << endLineNumber << ")\n";
-		}
-	}
-};
-
-std::vector<int> GetAllLineNumbersOfMain(clang::tooling::CompilationDatabase& cd, const std::string& fileName)
-{
-	FuncDeclHandler handlerForMain;
-
-	MatchFinder finder;
-	finder.addMatcher(functionDecl(hasName("main")).bind("mainFunction"), &handlerForMain);
+	// Parse the command-line args passed to the tool.
+	tooling::CommonOptionsParser op(argc, argv, AutoPieArgs);
 	
-	clang::tooling::ClangTool tool(cd, fileName);
-	auto result = tool.run(newFrontendActionFactory(&finder).get());
+	if (op.getSourcePathList().size() > 1)
+	{
+		errs() << "Only a single source file is supported.\n";
+		return EXIT_FAILURE;
+	}
+
+	tooling::ClangTool tool(op.getCompilations(), op.getSourcePathList()[0]);
+
+	auto includes = tooling::getInsertArgumentAdjuster("-I/usr/local/lib/clang/11.0.0/include/");
+	tool.appendArgumentsAdjuster(includes);
+
+	auto inputLanguage = Language::Unknown;
+	// Run a language check inside a separate scope so that all built ASTs get freed at the end.
+	{
+		Out::Verb() << "Checking the language...\n";
+
+		std::vector<std::unique_ptr<ASTUnit>> trees;
+		tool.buildASTs(trees);
+
+		if (trees.size() != 1)
+		{
+			errs() << "Although only one AST was expected, " << trees.size() << " ASTs have been built.\n";
+			return EXIT_FAILURE;
+		}
+
+		inputLanguage = (*trees.begin())->getInputKind().getLanguage();
+
+		Out::Verb() << "File: " << (*trees.begin())->getOriginalSourceFileName() << ", language: " << LanguageToString(inputLanguage) << "\n";
+	}
+
+	assert(inputLanguage != clang::Language::Unknown);
+
+	if (!CheckLocationValidity(op.getSourcePathList()[0], LineNumber))
+	{
+		errs() << "The specified error location is invalid!\nSource path: " << op.getSourcePathList()[0]
+			<< ", line: " << LineNumber << " could not be found.\n";
+	}
+	
+	// Get all lines of the slice.
+	std::vector<int> sliceLines;
+	std::ifstream ifs(SliceFile);
+
+	int lineNumber;
+	while (ifs >> lineNumber)
+	{
+		sliceLines.push_back(lineNumber);
+	}
+
+	auto result = tool.run(SliceExtractor::SliceExtractorFrontendActionFactory(sliceLines).get());
 
 	if (result)
 	{
-		throw std::invalid_argument("Could not compile the given file!");
+		errs() << "The tool returned a non-standard value: " << result << "\n";
 	}
 	
-	auto lineRange = handlerForMain.lineRange;
+	// Keep the relevant lines only.
+	ifs.close();
+	ifs.open(op.getSourcePathList()[0]);
 
-	auto retval = std::vector<int>();
+	auto const outputFileWithCorrectExtension = RemoveFileExtensions(OutputFile) + LanguageToExtension(inputLanguage);
+	std::ofstream ofs(outputFileWithCorrectExtension);
 
-	for (auto i = std::get<0>(lineRange) + 1; i < std::get<1>(lineRange); i++)
+	int adjustedErrorLine = LineNumber;
+	
+	if (ifs && ofs)
 	{
-		retval.push_back(i);
-	}
+		Out::Verb() << "Source code after slice extraction:\n";
 
-	return retval;
-}
-
-std::vector<int> GetLineNumbersComplement(const std::vector<int> allLines, const std::vector<int>& sliceLines)
-{
-	auto retval = std::vector<int>();
-
-	for (auto line : allLines)
-	{
-		if (std::find(sliceLines.cbegin(), sliceLines.cend(), line) == sliceLines.cend())
+		std::string line;
+		
+		for (auto i = 1; std::getline(ifs, line); i++)
 		{
-			retval.push_back(line);
+			if (std::find(sliceLines.begin(), sliceLines.end(), i) != sliceLines.end() ||
+				std::count_if(line.begin(), line.end(), [](const char c) { return std::isspace(c); }) == line.size() ||
+				line.rfind("#include", 0) == 0)
+			{
+				Out::Verb() << line << "\n";
+
+				ofs << line << "\n";
+			}
+			else
+			{
+				if (i <= LineNumber)
+				{
+					adjustedErrorLine--;
+				}
+			}
 		}
 	}
-
-	return retval;
-}
-
-// Generates a minimal program variant using delta debugging.
-// Call:
-// > TheTool.exe [path to a cpp file] -- [slice line number sequence]
-// e.g. TheTool.exe C:\Users\User\llvm\llvm-project\TestSource.cpp -- std::invalid_argument 15
-int main(int argc, const char** argv)
-{
-	assert(argc > 2);
-
-	// Parse the command-line args passed to the code.
-	CommonOptionsParser op(argc, argv, MyToolCategory);
-
-	if (op.getSourcePathList().size() > 1)
+	else
 	{
-		outs() << "Only a single source file is supported.\n";
-		return 0;
+		errs() << "The input or output file could not be opened.\n";
+		return EXIT_FAILURE;
 	}
 
-	std::string line;
-	std::ifstream ifs(argv[3]);
-	std::vector<int> sliceLines;
-	
-	while (std::getline(ifs, line))
+	ofs.close();
+	ofs.open("adjustedLineNumber.txt");
+
+	if (ofs)
 	{
-		sliceLines.push_back(std::stoi(line, nullptr, 10));
+		ofs << adjustedErrorLine;
+	}
+	else
+	{
+		errs() << "The input or output file could not be opened.\n";
+		return EXIT_FAILURE;
 	}
 
-	// Clean the temp directory.
-	std::filesystem::remove_all("temp/");
-	std::filesystem::create_directory("temp");
+	Out::All() << "Slice extraction done.\n";
 
-	auto context = GlobalContext::GetInstance(*op.getSourcePathList().begin());
-
-	auto allLines = GetAllLineNumbersOfMain(op.getCompilations(), context->currentFileName);
-	auto lines = GetLineNumbersComplement(allLines, sliceLines);
-	
-	auto newFile = ReduceStatement(*context, op.getCompilations(), lines);
-
-	return 0;
+	return EXIT_SUCCESS;
 }
