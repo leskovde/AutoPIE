@@ -47,6 +47,7 @@ int main(int argc, const char** argv)
 		return EXIT_FAILURE;
 	}
 
+	// The epoch count must be specified in the code, since it must have the const qualifier.
 	const auto epochCount = 5;
 	
 	auto context = GlobalContext(parsedInput, *op.getSourcePathList().begin(), epochCount);

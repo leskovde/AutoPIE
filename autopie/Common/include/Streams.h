@@ -81,7 +81,7 @@ namespace Out
 	 * If the `Log` option is specified, the output is written both to the standard output and to
 	 * the default .log file. Log file entries are prefixed with a time stamp for each line.
 	 *
-	 * Usage: `out::All() << "foo" << "bar";`
+	 * Usage: `Out::All() << "foo" << "bar";`
 	 */
 	inline Logger& All()
 	{
@@ -99,7 +99,7 @@ namespace Out
 	 * both to the standard output and to the default .log file. Log file entries are prefixed
 	 * with a time stamp for each line.
 	 *
-	 * Usage: `out::Verb() << "foo" << "bar";`
+	 * Usage: `Out::Verb() << "foo" << "bar";`
 	 */
 	inline FilteredLogger& Verb()
 	{

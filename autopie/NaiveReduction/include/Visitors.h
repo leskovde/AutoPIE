@@ -46,7 +46,7 @@ namespace Naive
 		{
 			if (rewriter_)
 			{
-				out::Verb() << "Removing node " << currentNode_ << ":\n" << RangeToString(astContext_, range) << "\n";
+				Out::Verb() << "Removing node " << currentNode_ << ":\n" << RangeToString(astContext_, range) << "\n";
 
 				const auto printableRange = GetPrintableRange(GetPrintableRange(range, astContext_.getSourceManager()),
 					astContext_.getSourceManager());

@@ -129,6 +129,7 @@ namespace Naive
 			const auto originalVariant = BitMask(numberOfCodeUnits, true);
 			globalContext_.deepeningContext.bitMasks.at(1.0).push_back(originalVariant);
 
+			// The thread count must be specified in code, since it must have the const qualifier.
 			const auto threadCount = 12;
 			Unsigned ranges[threadCount];
 
