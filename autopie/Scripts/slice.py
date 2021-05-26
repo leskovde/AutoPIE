@@ -3,7 +3,6 @@
 import os
 import docker
 import argparse
-
 import shutil
 
 parser = argparse.ArgumentParser()
