@@ -409,7 +409,7 @@ namespace Common
 			{
 				const auto range = stmt->getSourceRange();
 
-				if (llvm::isa<clang::CompoundStmt>(stmt))
+				if (llvm::isa<clang::CompoundStmt>(stmt) || llvm::isa<clang::NullStmt>(stmt))
 				{
 					// Replace compound statements with a null statement instead of removing them.
 					// Removing a compound statement could result in an semantically invalid variant.
