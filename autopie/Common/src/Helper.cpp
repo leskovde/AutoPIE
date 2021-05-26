@@ -594,7 +594,7 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 	Out::Verb() << "listener.IsValid()           = " << static_cast<int>(listener.IsValid()) << "\n";
 
 	auto done = false;
-	const auto timeOut = 360;
+	const auto timeOut = 10;
 
 	// The debugger is set to run asynchronously (debugger.GetAsync() => true).
 	// The communication is done via events. Listen for events broadcast by the forked process.
