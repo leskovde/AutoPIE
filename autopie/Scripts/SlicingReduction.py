@@ -129,7 +129,7 @@ def run_static_slicer(args, var, iteration):
     criterion = var
     main_loc = 1
 
-    if args.inject:
+    if args.inject and args.arguments != "":
         parts = criterion.split(":")
         adjusted_line = int(parts[0])
 

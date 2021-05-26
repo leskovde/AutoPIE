@@ -132,13 +132,14 @@ namespace Naive
 					std::pair<double, std::vector<BitMask>>((i + 1) * globalContext_.deepeningContext.epochStep,
 					                                        std::vector<BitMask>()));
 			}
+			
+			const auto originalVariant = BitMask(numberOfCodeUnits, true);
+			globalContext_.deepeningContext.bitMasks.at(globalContext_.deepeningContext.epochCount * globalContext_.deepeningContext.epochStep).push_back(originalVariant);
 
 			// Add the last range (of invalid bit masks).
 			globalContext_.deepeningContext.bitMasks.insert(std::pair<double, std::vector<BitMask>>(1.0, std::vector<BitMask>()));
 			globalContext_.deepeningContext.bitMasks.insert(std::pair<double, std::vector<BitMask>>(INFINITY, std::vector<BitMask>()));
 
-			const auto originalVariant = BitMask(numberOfCodeUnits, true);
-			globalContext_.deepeningContext.bitMasks.at(1.0).push_back(originalVariant);
 
 			// The thread count must be specified in code, since it must have the const qualifier.
 			const auto threadCount = 12;

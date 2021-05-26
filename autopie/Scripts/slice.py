@@ -22,13 +22,13 @@ parser.set_defaults(dynamic_slicer=False)
 
 
 def slice_dg(args):
-    vol_path = "dg-data"
+    if not os.path.exists("./dg-data"):
+        os.mkdir("./dg-data")
 
-    if not os.path.exists(vol_path):
-        os.mkdir(vol_path)
+    vol_path = os.path.abspath("./dg-data")
 
     print("Copying the input file to the shared medium...")
-    call(f"cp {args.file} {vol_path}", shell=True)
+    shutil.copy2(args.file, vol_path)
 
     print("Initializing docker...")
     client = docker.from_env()
@@ -68,20 +68,20 @@ def slice_dg(args):
 
     print("Checking and moving the result...")
     if os.path.exists(os.path.join(vol_path, args.output)):
-        print(container.logs().decode("utf-8"))
         shutil.move(os.path.join(vol_path, args.output), args.output)
+        print(container.logs().decode("utf-8"))
 
     container.remove()
 
 
 def slice_giri(args):
-    vol_path = "giri-data"
+    if not os.path.exists("./giri-data"):
+        os.mkdir("./giri-data")
 
-    if not os.path.exists(vol_path):
-        os.mkdir(vol_path)
+    vol_path = os.path.abspath("./giri-data")
 
     print("Copying the input file to the shared medium...")
-    call(f"cp {args.file} {vol_path}", shell=True)
+    shutil.copy2(args.file, vol_path)
 
     print("Initializing docker...")
     client = docker.from_env()
@@ -131,8 +131,8 @@ def slice_giri(args):
 
     print("Checking and moving the result...")
     if os.path.exists(os.path.join(vol_path, args.output)):
-        print(container.logs().decode("utf-8"))
         shutil.move(os.path.join(vol_path, args.output), args.output)
+        print(container.logs().decode("utf-8"))
 
     container.remove()
 
