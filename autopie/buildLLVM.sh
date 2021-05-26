@@ -3,15 +3,15 @@
 echo "This script will build LLVM from source."
 echo "Building LLVM, Clang, and LLDB can be difficult for newbies."
 echo "Therefore, some work is taken care of by this script."
-echo "\nFollowing commands will be used:"
-echo "\t\twget to download the LLVM source"
-echo "\t\ttar with xz-utils"
-echo "\t\tmktemp to create a temporary directory"
-echo "\t\tmkdir to create a build subdirectory in the temp directory"
-echo "\t\trm to remove the temp directory"
+echo -e "\nFollowing commands will be used:"
+echo -e "\t\twget to download the LLVM source"
+echo -e "\t\ttar with xz-utils"
+echo -e "\t\tmktemp to create a temporary directory"
+echo -e "\t\tmkdir to create a build subdirectory in the temp directory"
+echo -e "\t\trm to remove the temp directory"
 
 if [ "$EUID" -ne 0 ]; then 
-	echo "\nThe ninja install command requires root priviledges in order to function correctly."
+	echo -e "\nThe ninja install command requires root priviledges in order to function correctly."
 	echo "It is required that you run this script as root."
 	exit 1
 fi
