@@ -53,7 +53,7 @@ namespace Common
 		{
 			if (rewriter_)
 			{
-				out::Verb() << "Removing node " << currentNode_ << ":\n" << RangeToString(astContext_, range) << "\n";
+				Out::Verb() << "Removing node " << currentNode_ << ":\n" << RangeToString(astContext_, range) << "\n";
 
 				const auto printableRange = GetPrintableRange(GetPrintableRange(range, astContext_.getSourceManager()),
 					astContext_.getSourceManager());
@@ -653,7 +653,7 @@ namespace Common
 				const auto codeSnippet = RangeToString(astContext_, decl->getSourceRange());
 				const auto line = astContext_.getSourceManager().getSpellingLineNumber(decl->getBeginLoc());
 
-				out::Verb() << "Node " << codeUnitsCount << ": Type " << typeName << "\n";
+				Out::Verb() << "Node " << codeUnitsCount << ": Type " << typeName << "\n";
 
 				if (InsertMapping(id, codeSnippet, line))
 				{
@@ -677,7 +677,7 @@ namespace Common
 			}
 			else
 			{
-				out::Verb() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
+				Out::Verb() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
 			}
 		}
 
@@ -698,7 +698,7 @@ namespace Common
 				const auto codeSnippet = RangeToString(astContext_, expr->getSourceRange());
 				const auto line = astContext_.getSourceManager().getSpellingLineNumber(expr->getBeginLoc());
 
-				out::Verb() << "Node " << codeUnitsCount << ": Type " << typeName << "\n";
+				Out::Verb() << "Node " << codeUnitsCount << ": Type " << typeName << "\n";
 
 				CheckFoundDeclReferences(expr);
 
@@ -718,7 +718,7 @@ namespace Common
 			}
 			else
 			{
-				out::Verb() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
+				Out::Verb() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
 			}
 		}
 
@@ -737,7 +737,7 @@ namespace Common
 				const auto codeSnippet = RangeToString(astContext_, stmt->getSourceRange());
 				const auto line = astContext_.getSourceManager().getSpellingLineNumber(stmt->getBeginLoc());
 
-				out::Verb() << "Node " << codeUnitsCount << ": Type " << typeName << "\n";
+				Out::Verb() << "Node " << codeUnitsCount << ": Type " << typeName << "\n";
 
 				if (InsertMapping(id, codeSnippet, line))
 				{
@@ -758,7 +758,7 @@ namespace Common
 			}
 			else
 			{
-				out::Verb() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
+				Out::Verb() << "DEBUG: Attempted to visit node " << codeUnitsCount << " (already in the mapping).\n";
 			}
 		}
 

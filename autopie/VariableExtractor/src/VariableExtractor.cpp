@@ -86,7 +86,7 @@ int main(int argc, const char** argv)
 	auto inputLanguage = Language::Unknown;
 	// Run a language check inside a separate scope so that all built ASTs get freed at the end.
 	{
-		out::Verb() << "Checking the language...\n";
+		Out::Verb() << "Checking the language...\n";
 
 		std::vector<std::unique_ptr<ASTUnit>> trees;
 		tool.buildASTs(trees);
@@ -99,7 +99,7 @@ int main(int argc, const char** argv)
 
 		inputLanguage = (*trees.begin())->getInputKind().getLanguage();
 
-		out::Verb() << "File: " << (*trees.begin())->getOriginalSourceFileName() << ", language: " << LanguageToString(inputLanguage) << "\n";
+		Out::Verb() << "File: " << (*trees.begin())->getOriginalSourceFileName() << ", language: " << LanguageToString(inputLanguage) << "\n";
 	}
 
 	assert(inputLanguage != clang::Language::Unknown);
@@ -114,7 +114,7 @@ int main(int argc, const char** argv)
 	MatchFinder finder;
 	finder.addMatcher(declRefExpr(isExpansionInMainFile()).bind("declRefs"), &varHandler);
 
-	out::Verb() << "Matching variables...\n";
+	Out::Verb() << "Matching variables...\n";
 	
 	auto result = tool.run(tooling::newFrontendActionFactory(&finder).get());
 
@@ -123,7 +123,7 @@ int main(int argc, const char** argv)
 		errs() << "The tool returned a non-standard value: " << result << "\n";
 	}
 
-	out::Verb() << "Matching done.\n";
+	Out::Verb() << "Matching done.\n";
 
 	// Remove duplicates.
 	std::sort(varHandler.declRefNames.begin(), varHandler.declRefNames.end());
@@ -134,11 +134,11 @@ int main(int argc, const char** argv)
 	
 	if (ofs)
 	{
-		out::Verb() << "List of found variables:\n";
+		Out::Verb() << "List of found variables:\n";
 
 		for (auto& var : varHandler.declRefNames)
 		{
-			out::Verb() << LineNumber << ":" << var << "\n";
+			Out::Verb() << LineNumber << ":" << var << "\n";
 			
 			ofs << LineNumber << ":" << var << "\n";
 		}
@@ -149,7 +149,7 @@ int main(int argc, const char** argv)
 		return EXIT_FAILURE;
 	}
 
-	out::All() << "Variable extraction done.\n";
+	Out::All() << "Variable extraction done.\n";
 
 	return EXIT_SUCCESS;
 }

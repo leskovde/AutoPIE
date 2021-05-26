@@ -44,10 +44,10 @@ namespace Naive
 
 				if (variantsCount % 50 == 0)
 				{
-					out::All() << "Done " << variantsCount << " variants.\n";
+					Out::All() << "Done " << variantsCount << " variants.\n";
 				}
 
-				out::Verb() << "DEBUG: Processing valid bitmask " << Stringify(bitMask) << "\n";
+				Out::Verb() << "DEBUG: Processing valid bitmask " << Stringify(bitMask) << "\n";
 
 				try
 				{
@@ -58,11 +58,11 @@ namespace Naive
 				}
 				catch (...)
 				{
-					out::All() << "Could not process iteration no. " << variantsCount << " due to an internal exception.\n";
+					Out::All() << "Could not process iteration no. " << variantsCount << " due to an internal exception.\n";
 				}
 			}
 
-			out::All() << "Finished. Done " << variantsCount << " variants.\n";
+			Out::All() << "Finished. Done " << variantsCount << " variants.\n";
 		}
 
 		EpochRanges GetValidBitMasksInRange(const Unsigned startingPoint, const Unsigned numberOfVariants, const int numberOfCodeUnits, DependencyGraph* dependencies) const
@@ -103,7 +103,7 @@ namespace Naive
 		
 		void PartitionVariantsIntoBins(const int numberOfCodeUnits, DependencyGraph& dependencies) const
 		{
-			out::All() << "Binning variants...\n";
+			Out::All() << "Binning variants...\n";
 
 			const auto totalNumberOfVariants = static_cast<Unsigned>(1) << numberOfCodeUnits;
 
@@ -222,11 +222,11 @@ namespace Naive
 					return;
 				}
 
-				out::All() << "Epoch " << i + 1 << " out of " << globalContext_.deepeningContext.epochCount << ": A smaller program variant could not be found.\n";
+				Out::All() << "Epoch " << i + 1 << " out of " << globalContext_.deepeningContext.epochCount << ": A smaller program variant could not be found.\n";
 				ClearTempDirectory();
 			}
 
-			out::All() << "A reduced variant could not be found. If you've manually set the `--ratio` option, consider trying a greater value.\n";
+			Out::All() << "A reduced variant could not be found. If you've manually set the `--ratio` option, consider trying a greater value.\n";
 			
 			globalContext_.stats.exitCode = EXIT_FAILURE;
 		}

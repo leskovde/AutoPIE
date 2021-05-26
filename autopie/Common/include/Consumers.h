@@ -42,14 +42,14 @@ namespace Common
 			visitor_->Reset(bitMask, rewriter);
 			visitor_->TraverseDecl(context.getTranslationUnitDecl());
 
-			out::Verb() << "Variant after iteration:\n";
+			Out::Verb() << "Variant after iteration:\n";
 
 			if (Verbose)
 			{
 				rewriter->getEditBuffer(context.getSourceManager().getMainFileID()).write(llvm::errs());
 
 			}
-			out::Verb() << "\n";
+			Out::Verb() << "\n";
 
 			std::error_code errorCode;
 			llvm::raw_fd_ostream outFile(fileName, errorCode, llvm::sys::fs::F_None);
@@ -117,7 +117,7 @@ namespace Common
 		{
 			mappingVisitor_->TraverseDecl(context.getTranslationUnitDecl());
 
-			out::Verb() << "DEBUG: AST nodes counted: " << mappingVisitor_->codeUnitsCount << ", AST nodes actual: " <<
+			Out::Verb() << "DEBUG: AST nodes counted: " << mappingVisitor_->codeUnitsCount << ", AST nodes actual: " <<
 				nodeMapping_->size() << "\n";
 
 			if (Verbose)

@@ -12,7 +12,7 @@
  * Contains members for outputting messages in a custom manner.\n
  * The goal is to provide multiple logging levels with different levels of details.
  */
-namespace out
+namespace Out
 {
 	typedef std::ostream& (*Manipulator) (std::ostream&);
 
@@ -35,10 +35,27 @@ namespace out
 	 */
 	struct Logger
 	{
+		bool initialized;
 		std::ofstream ofs;
 
-		explicit Logger(const char* filePath) : ofs(filePath)
+		explicit Logger(const char* filePath)
 		{
+			try
+			{
+				if (LogToFile)
+				{
+					ofs.open(filePath);
+					initialized = true;
+				}
+			}
+			catch (std::ios_base::failure& e)
+			{
+				std::cerr << "The log file could not be initialized."
+					<< "If you are using the `--log` option, no output will be logged.\n"
+					<< "Error: " << e.what() << "\n";
+
+				initialized = false;
+			}
 		}
 	};
 
@@ -68,7 +85,7 @@ namespace out
 	 */
 	inline Logger& All()
 	{
-		if (LogToFile)
+		if (all_.initialized)
 		{
 			all_.ofs << std::put_time(GetTimestamp(), "%Y-%m-%d %H:%M:%S") << ":\t";
 		}
@@ -88,7 +105,7 @@ namespace out
 	{
 		if (Verbose)
 		{
-			if (LogToFile)
+			if (verb_.logger.initialized)
 			{
 				verb_.logger.ofs << std::put_time(GetTimestamp(), "%Y-%m-%d %H:%M:%S") << ":\t";
 			}
@@ -106,7 +123,7 @@ namespace out
 	{
 		std::cout << x;
 
-		if (LogToFile)
+		if (logger.initialized)
 		{			
 			logger.ofs << x;
 		}
@@ -125,7 +142,7 @@ namespace out
 		{
 			std::cout << stringRef.str();
 
-			if (LogToFile)
+			if (logger.initialized)
 			{
 				logger.ofs << stringRef.str();
 			}
@@ -143,7 +160,7 @@ namespace out
 	{
 		std::cout << manipulator;
 
-		if (LogToFile)
+		if (logger.initialized)
 		{
 			logger.ofs << manipulator;
 		}
@@ -162,7 +179,7 @@ namespace out
 		{
 			std::cout << x;
 
-			if (LogToFile)
+			if (logger.logger.initialized)
 			{
 				logger.logger.ofs << x;
 			}
@@ -182,7 +199,7 @@ namespace out
 		{
 			std::cout << stringRef.str();
 
-			if (LogToFile)
+			if (logger.logger.initialized)
 			{
 				logger.logger.ofs << stringRef.str();
 			}
@@ -202,7 +219,7 @@ namespace out
 		{
 			std::cout << manipulator;
 
-			if (LogToFile)
+			if (logger.logger.initialized)
 			{
 				logger.logger.ofs << manipulator;
 			}

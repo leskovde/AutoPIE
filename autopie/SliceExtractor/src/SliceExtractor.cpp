@@ -51,7 +51,7 @@ int main(int argc, const char** argv)
 	auto inputLanguage = Language::Unknown;
 	// Run a language check inside a separate scope so that all built ASTs get freed at the end.
 	{
-		out::Verb() << "Checking the language...\n";
+		Out::Verb() << "Checking the language...\n";
 
 		std::vector<std::unique_ptr<ASTUnit>> trees;
 		tool.buildASTs(trees);
@@ -64,7 +64,7 @@ int main(int argc, const char** argv)
 
 		inputLanguage = (*trees.begin())->getInputKind().getLanguage();
 
-		out::Verb() << "File: " << (*trees.begin())->getOriginalSourceFileName() << ", language: " << LanguageToString(inputLanguage) << "\n";
+		Out::Verb() << "File: " << (*trees.begin())->getOriginalSourceFileName() << ", language: " << LanguageToString(inputLanguage) << "\n";
 	}
 
 	assert(inputLanguage != clang::Language::Unknown);
@@ -103,7 +103,7 @@ int main(int argc, const char** argv)
 	
 	if (ifs && ofs)
 	{
-		out::Verb() << "Source code after slice extraction:\n";
+		Out::Verb() << "Source code after slice extraction:\n";
 
 		std::string line;
 		
@@ -113,7 +113,7 @@ int main(int argc, const char** argv)
 				std::count_if(line.begin(), line.end(), [](const char c) { return std::isspace(c); }) == line.size() ||
 				line.rfind("#include", 0) == 0)
 			{
-				out::Verb() << line << "\n";
+				Out::Verb() << line << "\n";
 
 				ofs << line << "\n";
 			}
@@ -145,7 +145,7 @@ int main(int argc, const char** argv)
 		return EXIT_FAILURE;
 	}
 
-	out::All() << "Slice extraction done.\n";
+	Out::All() << "Slice extraction done.\n";
 
 	return EXIT_SUCCESS;
 }

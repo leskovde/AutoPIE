@@ -58,7 +58,7 @@ int main(int argc, const char** argv)
 	auto inputLanguage = clang::Language::Unknown;
 	// Run a language check inside a separate scope so that all built ASTs get freed at the end.
 	{
-		out::Verb() << "Checking the language...\n";
+		Out::Verb() << "Checking the language...\n";
 		
 		std::vector<std::unique_ptr<clang::ASTUnit>> trees;
 		tool.buildASTs(trees);
@@ -71,7 +71,7 @@ int main(int argc, const char** argv)
 		
 		inputLanguage = (*trees.begin())->getInputKind().getLanguage();
 		
-		out::Verb() << "File: " << (*trees.begin())->getOriginalSourceFileName() << ", language: " << LanguageToString(inputLanguage) << "\n";
+		Out::Verb() << "File: " << (*trees.begin())->getOriginalSourceFileName() << ", language: " << LanguageToString(inputLanguage) << "\n";
 	}
 
 	assert(inputLanguage != clang::Language::Unknown);
@@ -101,7 +101,7 @@ int main(int argc, const char** argv)
 
 		if (iteration % 10 == 0)
 		{
-			out::All() << "Done " << iteration << " DD iterations.\n";
+			Out::All() << "Done " << iteration << " DD iterations.\n";
 		}
 
 		DeltaIterationResults iterationResult;
@@ -152,14 +152,14 @@ int main(int argc, const char** argv)
 		}
 	}
 
-	out::All() << "Finished. Done " << iteration << " DD iterations.\n";
+	Out::All() << "Finished. Done " << iteration << " DD iterations.\n";
 
 	if (currentTestCase != context.parsedInput.errorLocation.filePath)
 	{
 		const auto newFileName = TempFolder + std::string("autoPieOut") + LanguageToExtension(context.language);
 
-		out::All() << "Found the locally minimal error-inducing source file: " << currentTestCase << "\n";
-		out::All() << "Changing the file path to '" << newFileName << "'.\n";
+		Out::All() << "Found the locally minimal error-inducing source file: " << currentTestCase << "\n";
+		Out::All() << "Changing the file path to '" << newFileName << "'.\n";
 
 		std::filesystem::rename(currentTestCase, newFileName);
 
@@ -169,7 +169,7 @@ int main(int argc, const char** argv)
 		return EXIT_SUCCESS;
 	}
 
-	out::All() << "A smaller error-inducing source file could not be found.\n";
+	Out::All() << "A smaller error-inducing source file could not be found.\n";
 	
 	return EXIT_FAILURE;
 }

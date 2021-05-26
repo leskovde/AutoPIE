@@ -195,7 +195,7 @@ public:
 		
 		if (debugNodeData_.find(traversalOrderNumber) != debugNodeData_.end())
 		{
-			out::Verb() << "DEBUG: A node with the current traversal number already exists.\n";
+			Out::Verb() << "DEBUG: A node with the current traversal number already exists.\n";
 			
 			actualColor = debugNodeData_[traversalOrderNumber].dumpColor;
 
@@ -208,7 +208,7 @@ public:
 
 		if (!success)
 		{
-			out::Verb() << "DEBUG: Could not add a snippet to the mapping. The snippet:\n" << snippet << "\n";
+			Out::Verb() << "DEBUG: Could not add a snippet to the mapping. The snippet:\n" << snippet << "\n";
 		}
 	}
 
@@ -217,15 +217,15 @@ public:
 	 */
 	void PrintGraphForDebugging()
 	{
-		out::Verb() << "===------------------- Dependency graph and its code --------------------===\n";
+		Out::Verb() << "===------------------- Dependency graph and its code --------------------===\n";
 
 		for (auto it = debugNodeData_.cbegin(); it != debugNodeData_.cend(); ++it)
 		{
-			out::Verb() << "Node " << it->first << ":\n" << it->second.codeSnippet << "\n";
+			Out::Verb() << "Node " << it->first << ":\n" << it->second.codeSnippet << "\n";
 		}
 
-		out::Verb() << "Characters total: " << GetTotalCharacterCount() << "\n";
-		out::Verb() << "===----------------------------------------------------------------------===\n";
+		Out::Verb() << "Characters total: " << GetTotalCharacterCount() << "\n";
+		Out::Verb() << "===----------------------------------------------------------------------===\n";
 	}
 
 	/**
@@ -239,15 +239,15 @@ public:
 	{
 		if (!std::filesystem::exists(VisualsFolder))
 		{
-			out::Verb() << "Creating the 'visuals' directory.\n";
+			Out::Verb() << "Creating the 'visuals' directory.\n";
 			
 			if (std::filesystem::create_directory(VisualsFolder))
 			{
-				out::Verb() << "Directory creation successful.\n";
+				Out::Verb() << "Directory creation successful.\n";
 			}
 			else
 			{
-				out::Verb() << "Directory creation failed.\n";
+				Out::Verb() << "Directory creation failed.\n";
 			}
 		}
 		

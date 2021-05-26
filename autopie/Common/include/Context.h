@@ -64,7 +64,7 @@ class GlobalContext
 {
 	GlobalContext() : parsedInput(InputData("", Location("", 0), 0.0, false)), deepeningContext(1)
 	{
-		out::Verb() << "DEBUG: GlobalContext - New default constructor call.\n";
+		Out::Verb() << "DEBUG: GlobalContext - New default constructor call.\n";
 	}
 
 public:
@@ -81,7 +81,7 @@ public:
 	GlobalContext(InputData& input, const std::string& inputFile, const int epochs) : parsedInput(input),
 		deepeningContext(epochs), stats(inputFile)
 	{
-		out::Verb() << "DEBUG: GlobalContext - New non-default constructor call.\n";
+		Out::Verb() << "DEBUG: GlobalContext - New non-default constructor call.\n";
 	}
 };
 

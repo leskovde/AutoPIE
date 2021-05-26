@@ -127,9 +127,9 @@ bool ClearTempDirectory(const bool prompt)
 {
 	if (prompt && std::filesystem::exists(TempFolder))
 	{
-		out::All() << "WARNING: The path " << TempFolder << " exists and is about to be cleared! Do you want to proceed? [Y/n] ";
+		Out::All() << "WARNING: The path " << TempFolder << " exists and is about to be cleared! Do you want to proceed? [Y/n] ";
 		const auto decision = std::getchar();
-		out::All() << "\n";
+		Out::All() << "\n";
 
 		if (decision == 'n' || decision == 'N')
 		{
@@ -137,7 +137,7 @@ bool ClearTempDirectory(const bool prompt)
 		}
 	}
 
-	out::All() << "Clearing the " << TempFolder << " directory...\n";
+	Out::All() << "Clearing the " << TempFolder << " directory...\n";
 
 	std::filesystem::remove_all(TempFolder);
 	std::filesystem::create_directory(TempFolder);
@@ -462,32 +462,32 @@ bool CheckLocationValidity(const std::string& filePath, const long lineNumber, c
 
 	if (force)
 	{
-		out::All() << "===---------------- Context of the error-inducing line ------------------===\n";
+		Out::All() << "===---------------- Context of the error-inducing line ------------------===\n";
 	}
 	else
 	{
-		out::Verb() << "===---------------- Context of the error-inducing line ------------------===\n";
+		Out::Verb() << "===---------------- Context of the error-inducing line ------------------===\n";
 	}
 
 	for (auto i = contextStart; i <= contextEnd; i++)
 	{
 		if (force)
 		{
-			out::All() << (i != lineNumber ? "    " : "[*] ") << i << ": " << lines[i - 1] << "\n";
+			Out::All() << (i != lineNumber ? "    " : "[*] ") << i << ": " << lines[i - 1] << "\n";
 		}
 		else
 		{
-			out::Verb() << (i != lineNumber ? "    " : "[*] ") << i << ": " << lines[i - 1] << "\n";
+			Out::Verb() << (i != lineNumber ? "    " : "[*] ") << i << ": " << lines[i - 1] << "\n";
 		}
 	}
 
 	if (force)
 	{
-		out::All() << "===----------------------------------------------------------------------===\n";
+		Out::All() << "===----------------------------------------------------------------------===\n";
 	}
 	else
 	{
-		out::Verb() << "===----------------------------------------------------------------------===\n";
+		Out::Verb() << "===----------------------------------------------------------------------===\n";
 	}
 
 	return true;
@@ -553,7 +553,7 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 
 	const auto presumedErrorLines = globalContext.variantAdjustedErrorLocations[currentVariant];
 
-	out::Verb() << "Processing file: " << entry.path().string() << "\n";
+	Out::Verb() << "Processing file: " << entry.path().string() << "\n";
 
 	// Keep all LLDB logic written explicitly, not refactored in a function.
 	// The function could be called when the LLDBSentry is not initialized => unwanted behaviour.
@@ -576,26 +576,26 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 	launchInfo.SetLaunchFlags(lldb::eLaunchFlagExec | lldb::eLaunchFlagDebug);
 
 	const auto executable = TempFolder + entry.path().filename().replace_extension(".out").string();
-	out::Verb() << "\nLLDB Target creation for " << executable << " ...\n";
+	Out::Verb() << "\nLLDB Target creation for " << executable << " ...\n";
 
 	// Create and launch a target - represents a debugging session of a single executable.
 	// Launching creates a new process in which the executable is ran.
 	auto target = debugger.CreateTarget(executable.c_str(), llvm::sys::getDefaultTargetTriple().c_str(), "", true, error);
 
-	out::Verb() << "error.Success()              = " << static_cast<int>(error.Success()) << "\n";
-	out::Verb() << "target.IsValid()             = " << static_cast<int>(target.IsValid()) << "\n";
+	Out::Verb() << "error.Success()              = " << static_cast<int>(error.Success()) << "\n";
+	Out::Verb() << "target.IsValid()             = " << static_cast<int>(target.IsValid()) << "\n";
 
-	out::Verb() << "\nLLDB Process launch ...\n";
+	Out::Verb() << "\nLLDB Process launch ...\n";
 
 	auto process = target.Launch(launchInfo, error);
-	out::Verb() << "error.Success()              = " << static_cast<int>(error.Success()) << "\n";
-	out::Verb() << "process.IsValid()            = " << static_cast<int>(process.IsValid()) << "\n";
-	out::Verb() << "process.GetProcessID()       = " << process.GetProcessID() << "\n";
-	out::Verb() << "process.GetState()           = " << StateToString(process.GetState()) << "\n";
-	out::Verb() << "process.GetNumThreads()      = " << process.GetNumThreads() << "\n";
+	Out::Verb() << "error.Success()              = " << static_cast<int>(error.Success()) << "\n";
+	Out::Verb() << "process.IsValid()            = " << static_cast<int>(process.IsValid()) << "\n";
+	Out::Verb() << "process.GetProcessID()       = " << process.GetProcessID() << "\n";
+	Out::Verb() << "process.GetState()           = " << StateToString(process.GetState()) << "\n";
+	Out::Verb() << "process.GetNumThreads()      = " << process.GetNumThreads() << "\n";
 
 	auto listener = debugger.GetListener();
-	out::Verb() << "listener.IsValid()           = " << static_cast<int>(listener.IsValid()) << "\n";
+	Out::Verb() << "listener.IsValid()           = " << static_cast<int>(listener.IsValid()) << "\n";
 
 	auto done = false;
 	const auto timeOut = 360;
@@ -616,61 +616,61 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 
 				if (state == lldb::eStateInvalid)
 				{
-					out::Verb() << "Invalid process event: " << StateToString(state) << "\n";
+					Out::Verb() << "Invalid process event: " << StateToString(state) << "\n";
 				}
 				else
 				{
-					out::Verb() << "Process state event changed to: " << StateToString(state) << "\n";
+					Out::Verb() << "Process state event changed to: " << StateToString(state) << "\n";
 
 					if (state == lldb::eStateStopped)
 					{
 						// The debugger stopped at a breakpoint. Since no breakpoints were set, this is most likely an exception.
 						// Analyze the current stack frame to determine the status and position of the error.
 
-						out::Verb() << "Stopped at a breakpoint.\n";
-						out::Verb() << "LLDB Threading ...\n";
+						Out::Verb() << "Stopped at a breakpoint.\n";
+						Out::Verb() << "LLDB Threading ...\n";
 
 						auto thread = process.GetSelectedThread();
-						out::Verb() << "thread.IsValid()             = " << static_cast<int>(thread.IsValid()) << "\n";
-						out::Verb() << "thread.GetThreadID()         = " << thread.GetThreadID() << "\n";
-						out::Verb() << "thread.GetName()             = " << (thread.GetName() != nullptr
+						Out::Verb() << "thread.IsValid()             = " << static_cast<int>(thread.IsValid()) << "\n";
+						Out::Verb() << "thread.GetThreadID()         = " << thread.GetThreadID() << "\n";
+						Out::Verb() << "thread.GetName()             = " << (thread.GetName() != nullptr
 							? thread.GetName()
 							: "(null)") << "\n";
-						out::Verb() << "thread.GetStopReason()       = " << StopReasonToString(thread.GetStopReason()) <<
+						Out::Verb() << "thread.GetStopReason()       = " << StopReasonToString(thread.GetStopReason()) <<
 							"\n";
-						out::Verb() << "thread.IsSuspended()         = " << static_cast<int>(thread.IsSuspended()) <<
+						Out::Verb() << "thread.IsSuspended()         = " << static_cast<int>(thread.IsSuspended()) <<
 							"\n";
-						out::Verb() << "thread.IsStopped()           = " << static_cast<int>(thread.IsStopped()) << "\n";
-						out::Verb() << "process.GetState()           = " << StateToString(process.GetState()) << "\n";
+						Out::Verb() << "thread.IsStopped()           = " << static_cast<int>(thread.IsStopped()) << "\n";
+						Out::Verb() << "process.GetState()           = " << StateToString(process.GetState()) << "\n";
 
 						if (thread.GetStopReason() == lldb::StopReason::eStopReasonException)
 						{
-							out::Verb() << "An exception was hit, killing the process ...\n";
+							Out::Verb() << "An exception was hit, killing the process ...\n";
 							done = true;
 						}
 
 						auto frame = thread.GetSelectedFrame();
-						out::Verb() << "frame.IsValid()              = " << static_cast<int>(frame.IsValid()) << "\n";
+						Out::Verb() << "frame.IsValid()              = " << static_cast<int>(frame.IsValid()) << "\n";
 
 						auto function = frame.GetFunction();
 
 						if (function.IsValid())
 						{
-							out::Verb() << "function.GetDisplayName()   = " << (function.GetDisplayName() != nullptr
+							Out::Verb() << "function.GetDisplayName()   = " << (function.GetDisplayName() != nullptr
 								? function.GetDisplayName()
 								: "(null)") << "\n";
 						}
 
 						auto symbol = frame.GetSymbol();
-						out::Verb() << "symbol.IsValid()             = " << static_cast<int>(symbol.IsValid()) << "\n";
+						Out::Verb() << "symbol.IsValid()             = " << static_cast<int>(symbol.IsValid()) << "\n";
 
 						if (symbol.IsValid())
 						{
-							out::Verb() << "symbol.GetDisplayName()      = " << symbol.GetDisplayName() << "\n";
+							Out::Verb() << "symbol.GetDisplayName()      = " << symbol.GetDisplayName() << "\n";
 
 							auto symbolContext = frame.GetSymbolContext(lldb::eSymbolContextLineEntry);
 
-							out::Verb() << "symbolContext.IsValid()      = " << static_cast<int>(symbolContext.IsValid())
+							Out::Verb() << "symbolContext.IsValid()      = " << static_cast<int>(symbolContext.IsValid())
 								<< "\n";
 
 							if (symbolContext.IsValid())
@@ -678,9 +678,9 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 								const auto fileName = symbolContext.GetLineEntry().GetFileSpec().GetFilename();
 								const auto lineNumber = symbolContext.GetLineEntry().GetLine();
 
-								out::Verb() << "symbolContext.GetFilename()  = " << fileName << "\n";
-								out::Verb() << "symbolContext.GetLine()      = " << lineNumber << "\n";
-								out::Verb() << "symbolContext.GetColumn()    = " << symbolContext.GetLineEntry().GetColumn() << "\n";
+								Out::Verb() << "symbolContext.GetFilename()  = " << fileName << "\n";
+								Out::Verb() << "symbolContext.GetLine()      = " << lineNumber << "\n";
+								Out::Verb() << "symbolContext.GetColumn()    = " << symbolContext.GetLineEntry().GetColumn() << "\n";
 								
 								for (auto presumedErrorLine : presumedErrorLines)
 								{									
@@ -689,13 +689,13 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 										auto stream = lldb::SBStream();
 										thread.GetStatus(stream);
 
-										out::Verb() << "stream.IsValid()              = " << static_cast<int>(stream.IsValid()) << "\n";
+										Out::Verb() << "stream.IsValid()              = " << static_cast<int>(stream.IsValid()) << "\n";
 
 										if (stream.IsValid())
 										{
 											const auto currentMessage = stream.GetData();
 
-											out::Verb() << "stream.GetData()              = " << currentMessage << "\n";
+											Out::Verb() << "stream.GetData()              = " << currentMessage << "\n";
 
 											if (IsErrorMessageValid(currentMessage))
 											{
@@ -713,58 +713,58 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 					}
 					else if (state == lldb::eStateExited)
 					{
-						out::Verb() << "Process exited.\n";
+						Out::Verb() << "Process exited.\n";
 
 						auto description = process.GetExitDescription();
 
 						if (description != nullptr)
 						{
-							out::Verb() << "Exit status " << process.GetExitStatus() << ":" << description << "\n";
+							Out::Verb() << "Exit status " << process.GetExitStatus() << ":" << description << "\n";
 						}
 						else
 						{
-							out::Verb() << "Exit status " << process.GetExitStatus() << "\n";
+							Out::Verb() << "Exit status " << process.GetExitStatus() << "\n";
 						}
 
 						done = true;
 					}
 					else if (state == lldb::eStateCrashed)
 					{
-						out::Verb() << "Process crashed.\n";
+						Out::Verb() << "Process crashed.\n";
 						done = true;
 					}
 					else if (state == lldb::eStateDetached)
 					{
-						out::Verb() << "Process detached.\n";
+						Out::Verb() << "Process detached.\n";
 						done = true;
 					}
 					else if (state == lldb::eStateUnloaded)
 					{
-						out::Verb() << "ERROR: Process unloaded!\n";
+						Out::Verb() << "ERROR: Process unloaded!\n";
 						done = true;
 					}
 					else if (state == lldb::eStateConnected)
 					{
-						out::Verb() << "Process connected.\n";
+						Out::Verb() << "Process connected.\n";
 					}
 					else if (state == lldb::eStateAttaching)
 					{
-						out::Verb() << "Process attaching.\n";
+						Out::Verb() << "Process attaching.\n";
 					}
 					else if (state == lldb::eStateLaunching)
 					{
-						out::Verb() << "Process launching.\n";
+						Out::Verb() << "Process launching.\n";
 					}
 				}
 			}
 			else
 			{
-				out::Verb() << "Event: " << lldb::SBEvent::GetCStringFromEvent(event) << "\n";
+				Out::Verb() << "Event: " << lldb::SBEvent::GetCStringFromEvent(event) << "\n";
 			}
 		}
 		else
 		{
-			out::Verb() << "Process event has not occured in the last" << timeOut << " seconds, killing the process ...\n";
+			Out::Verb() << "Process event has not occured in the last" << timeOut << " seconds, killing the process ...\n";
 			done = true;
 		}
 	}
@@ -778,14 +778,14 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 
 void DisplayStats(Statistics& stats)
 {
-	out::All() << "===------------------------ Reduction statistics ------------------------===\n";
+	Out::All() << "===------------------------ Reduction statistics ------------------------===\n";
 
-	out::All() << "Expected iterations:          " << stats.expectedIterations << "\n";
-	out::All() << "Total iterations:             " << stats.totalIterations << "\n";
-	out::All() << "Original size [bytes]:        " << stats.inputSizeInBytes << "\n";
-	out::All() << "Size of the result [bytes]:   " << stats.outputSizeInBytes << "\n";
+	Out::All() << "Expected iterations:          " << stats.expectedIterations << "\n";
+	Out::All() << "Total iterations:             " << stats.totalIterations << "\n";
+	Out::All() << "Original size [bytes]:        " << stats.inputSizeInBytes << "\n";
+	Out::All() << "Size of the result [bytes]:   " << stats.outputSizeInBytes << "\n";
 	
-	out::All() << "===----------------------------------------------------------------------===\n";
+	Out::All() << "===----------------------------------------------------------------------===\n";
 }
 
 /**
@@ -832,11 +832,11 @@ bool ValidateResults(GlobalContext& globalContext)
 		return false;
 	}
 	
-	out::All() << "Found the smallest error-inducing source file: " << resultFound.value() << "\n";
+	Out::All() << "Found the smallest error-inducing source file: " << resultFound.value() << "\n";
 
 	const auto newFileName = TempFolder + std::string("autoPieOut") + LanguageToExtension(globalContext.language);
 
-	out::All() << "Changing the file path to '" << newFileName << "'\n";
+	Out::All() << "Changing the file path to '" << newFileName << "'\n";
 
 	std::filesystem::rename(resultFound.value(), newFileName);
 

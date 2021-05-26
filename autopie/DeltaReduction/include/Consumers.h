@@ -45,13 +45,13 @@ namespace Delta
 
 					if (ValidateVariant(globalContext_, std::filesystem::directory_entry(fileName_)))
 					{
-						out::All() << "Iteration " << iteration_ << ": smaller subset found.\n";
+						Out::All() << "Iteration " << iteration_ << ": smaller subset found.\n";
 						return true;
 					}
 				}
 				catch (...)
 				{
-					out::All() << "Could not process a subset due to an internal exception.\n";
+					Out::All() << "Could not process a subset due to an internal exception.\n";
 				}
 			}
 			
@@ -103,14 +103,14 @@ namespace Delta
 			// 6. If a variant fails, decrement n and set the file to that variant/
 			// 7. If nothing fails, set n to 2 *n.
 
-			out::Verb() << "Current iteration: " << iteration_ << ".\n";
-			out::Verb() << "Current code unit count: " << numberOfCodeUnits << ".\n";
-			out::Verb() << "Current partition count: " << partitionCount_ << ".\n"; 
+			Out::Verb() << "Current iteration: " << iteration_ << ".\n";
+			Out::Verb() << "Current code unit count: " << numberOfCodeUnits << ".\n";
+			Out::Verb() << "Current partition count: " << partitionCount_ << ".\n"; 
 
 			if (partitionCount_ > numberOfCodeUnits)
 			{
 				// Cannot be split further.
-				out::Verb() << "The current test case cannot be split further.\n";
+				Out::Verb() << "The current test case cannot be split further.\n";
 
 				result_ = DeltaIterationResults::Unsplitable;
 				return;
@@ -121,7 +121,7 @@ namespace Delta
 			const auto partitionSize = numberOfCodeUnits / partitionCount_;
 
 			// Split into `n` partition and their complements.
-			out::Verb() << "Splitting " << numberOfCodeUnits << " code units into " << partitionCount_
+			Out::Verb() << "Splitting " << numberOfCodeUnits << " code units into " << partitionCount_
 				<< " partitions of size " << partitionSize << " units...\n";
 
 			// Create even-sized splittings.
@@ -164,8 +164,8 @@ namespace Delta
 				complements.emplace_back(complement);
 			}
 
-			out::Verb() << "Splitting done.\n";
-			out::Verb() << "Validating " << partitions.size() << " partitions...\n";
+			Out::Verb() << "Splitting done.\n";
+			Out::Verb() << "Validating " << partitions.size() << " partitions...\n";
 			
 			for (auto& partition : partitions)
 			{
@@ -176,7 +176,7 @@ namespace Delta
 				}
 			}
 
-			out::Verb() << "Validating " << complements.size() << " complements...\n";
+			Out::Verb() << "Validating " << complements.size() << " complements...\n";
 			
 			for (auto& complement : complements)
 			{
@@ -187,7 +187,7 @@ namespace Delta
 				}
 			}
 
-			out::Verb() << "Iteration " << iteration_ << ": smaller subset not found.\n";
+			Out::Verb() << "Iteration " << iteration_ << ": smaller subset not found.\n";
 			result_ = DeltaIterationResults::Passing;
 		}
 	};

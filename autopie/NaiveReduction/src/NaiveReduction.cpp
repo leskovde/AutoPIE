@@ -58,7 +58,7 @@ int main(int argc, const char** argv)
 	auto inputLanguage = clang::Language::Unknown;
 	// Run a language check inside a separate scope so that all built ASTs get freed at the end.
 	{
-		out::Verb() << "Checking the language...\n";
+		Out::Verb() << "Checking the language...\n";
 		
 		std::vector<std::unique_ptr<clang::ASTUnit>> trees;
 		tool.buildASTs(trees);
@@ -71,7 +71,7 @@ int main(int argc, const char** argv)
 		
 		inputLanguage = (*trees.begin())->getInputKind().getLanguage();
 		
-		out::Verb() << "File: " << (*trees.begin())->getOriginalSourceFileName() << ", language: " << LanguageToString(inputLanguage) << "\n";
+		Out::Verb() << "File: " << (*trees.begin())->getOriginalSourceFileName() << ", language: " << LanguageToString(inputLanguage) << "\n";
 	}
 
 	assert(inputLanguage != clang::Language::Unknown);
