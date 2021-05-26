@@ -16,7 +16,7 @@
 
 namespace Naive
 {
-	std::mutex streamMutex;
+	inline std::mutex streamMutex;
 
 	/**
 	 * Unifies other consumers and uses them to describe the variant generation logic.\n

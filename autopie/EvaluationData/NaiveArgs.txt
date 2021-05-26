@@ -1,2 +1,0 @@
-unstructured0.c;10;segmentation fault;;0.75
-unstructured2.c;35;assert;;0.5

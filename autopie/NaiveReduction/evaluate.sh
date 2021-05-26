@@ -13,6 +13,6 @@ do
 	args=$(echo "--loc-line=$error_line --error-message=\"$error_message\" --arguments=\"$arguments\" --ratio=$ratio \"../EvaluationData/$source_file\" --")
 
 	echo "Launching $binary $args"
-	eval $binary $args
+	eval time $binary $args
 
-done < ../EvaluationData/NaiveArgs.txt
+done < ../EvaluationData/args.txt
