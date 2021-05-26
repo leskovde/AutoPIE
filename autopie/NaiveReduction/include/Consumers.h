@@ -16,6 +16,8 @@
 
 namespace Naive
 {
+	std::mutex streamMutex;
+
 	/**
 	 * Unifies other consumers and uses them to describe the variant generation logic.\n
 	 * Single `HandleTranslationUnit` generates all source code variants.
@@ -64,8 +66,13 @@ namespace Naive
 			Out::All() << "Finished. Done " << variantsCount << " variants.\n";
 		}
 
-		EpochRanges GetValidBitMasksInRange(const Unsigned startingPoint, const Unsigned numberOfVariants, const int numberOfCodeUnits, DependencyGraph* dependencies) const
+		EpochRanges GetValidBitMasksInRange(const Unsigned startingPoint, const Unsigned numberOfVariants, const int numberOfCodeUnits, DependencyGraph dependencies, const int id) const
 		{
+			{
+				std::lock_guard<std::mutex> lock(streamMutex);
+				Out::All() << "Thread #" << id << " started.\n";
+			}
+			
 			// Create ranges for each epoch.
 			EpochRanges bins;
 			
@@ -88,7 +95,7 @@ namespace Naive
 			{
 				Increment(bitMask);
 
-				const auto validation = IsValid(bitMask, *dependencies);
+				const auto validation = IsValid(bitMask, dependencies);
 
 				if (validation.first)
 				{
@@ -97,6 +104,11 @@ namespace Naive
 				}
 			}
 
+			{
+				std::lock_guard<std::mutex> lock(streamMutex);
+				Out::All() << "Thread #" << id << " finished.\n";
+			}
+			
 			return bins;
 		}
 		
@@ -158,7 +170,7 @@ namespace Naive
 					startingPoint = ranges[i - 1];
 				}
 
-				futures.emplace_back(std::async(std::launch::async, &VariantGeneratingConsumer::GetValidBitMasksInRange, this, startingPoint, numberOfVariants, numberOfCodeUnits, &dependencies));
+				futures.emplace_back(std::async(std::launch::async, &VariantGeneratingConsumer::GetValidBitMasksInRange, this, startingPoint, numberOfVariants, numberOfCodeUnits, dependencies, i));
 			}
 
 			auto results = std::vector<EpochRanges>();
@@ -173,6 +185,8 @@ namespace Naive
 			{
 				MergeVectorMaps(result, globalContext_.deepeningContext.bitMasks);
 			}
+
+			Out::All() << "Binning done.\n";
 		}
 
 		/**
