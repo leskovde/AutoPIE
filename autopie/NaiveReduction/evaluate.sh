@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 binary="build/bin/NaiveReduction"
 
