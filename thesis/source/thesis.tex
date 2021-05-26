@@ -240,20 +240,30 @@ Therefore, we have created a script that automizes the process.
 The build can be launched by following the described steps.
 
 \begin{enumerate}
-  \item Navigate to the *autopie* directory.
-  \item Use *chmod +x ./buildLLVM.sh* to give the script required permissions.
-  \item Run the script as root using *sudo ./buildLLVM.sh*.
+  \item Navigate to the \icode{autopie} directory.
+  \item Use \icode{chmod +x ./buildLLVM.sh} to give the script required 
+  permissions.
+  \item Run the script as root using \icode{sudo ./buildLLVM.sh}.
 \end{enumerate}
 
 The build script performs the following steps:
 
 \begin{enumerate}
-  \item It downloads the required version of the LLVM from the official GitHub repository. The specific version for this project is 11.0.0.
+  \item It downloads the required version of the LLVM from the official 
+  GitHub repository. 
+  The specific version for this project is 11.0.0.
   \item It extracts the downloaded archive into a temporary directory.
-  \item It creates a build subdirectory in the temporary path and navigates to it.
-  \item It executes the CMake command, which prepares the build configuration for the required projects. Notably, the Clang and LLVM projects are configured in x86 Release mode with libraries and scripting support.
-  \item It launches the Ninja tool, which builds the LLVM project. It then installs the necessary headers and libraries into system paths.
-  \item It exports the linker library path, which now contains */usr/local/lib/*. This export expires once the current shell is terminated.
+  \item It creates a build subdirectory in the temporary path and navigates 
+  to it.
+  \item It executes the CMake command, which prepares the build 
+  configuration for the required projects. 
+  Notably, the Clang and LLVM projects are configured in x86 Release mode 
+  with libraries and scripting support.
+  \item It launches the Ninja tool, which builds the LLVM project. 
+  It then installs the necessary headers and libraries into system paths.
+  \item It exports the linker library path, which now contains 
+  \icode{/usr/local/lib/}. 
+  This export expires once the current shell is terminated.
 \end{enumerate}
 
 If successful, the user can now use LLVM libraries when linking C++ projects.
@@ -271,8 +281,8 @@ Once built, the binaries can be found in the following directories:
 \icode{autopie\-/DeltaReduction\-/build\-/bin\-/DeltaReduction}.
 The helper utilities \icode{VariableExtractor} and \icode{SliceExtractor} can 
 be found in 
-\icode{autopie\-/VariableExtractor\-/build\-/bin\-/VariableExtractor} 
-and \icode{autopie\-/SliceExtractor\-/build\-/bin\-/SliceExtractor} 
+\icode{autopie\-/Vari\-ableExtractor\-/build\-/bin\-/VariableExtractor} 
+and \icode{autopie\-/Slice\-Extract\-or/build\-/bin\-/Slice\-Extractor} 
 respectivelly.
 
 The slicing-based approach does not need to be built since it is implemented 
@@ -290,8 +300,8 @@ The user can execute the three approaches as follows:
   \item The minimizing Delta debugging algorithm can be launched by 
   executing the \icode{DeltaReduction} program built from the earlier steps.
   \item The slicing-based approach can be launched by running 
-  \icode{python3 autopie/Scripts/SlicingReduction.py <args>}, having built 
-  all other projects from the earlier steps.
+  \icode{python3 autopie\-/Scripts\-/SlicingReduction.py <args>}, having 
+  built all other projects from the earlier steps.
 \end{itemize}
 
 Each project's required and supported arguments can be viewed using 
@@ -299,6 +309,7 @@ the \icode{--help} option available for each program and script.
 
 The user can run the evaluation dataset by navigating to a subdirectory of 
 an approach and launching \icode{evaluate.sh}. 
+
 For example: \icode{cd autopie/NaiveReduction \&\& make \&\& ./evaluate.sh}.
 
 \openright
