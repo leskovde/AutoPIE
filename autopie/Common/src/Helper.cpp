@@ -377,8 +377,6 @@ static std::string GetCompilerName(const clang::Language language)
  */
 int Compile(const std::filesystem::directory_entry& entry, const clang::Language language)
 {
-	// TODO: Change arguments based on the input language.
-
 	const auto input = entry.path().string();
 	const auto output = TempFolder + entry.path().filename().replace_extension(".out").string();
 	const auto clangPath = llvm::sys::findProgramByName(GetCompilerName(language));
@@ -430,8 +428,6 @@ int Compile(const std::filesystem::directory_entry& entry, const clang::Language
  */
 bool CheckLocationValidity(const std::string& filePath, const long lineNumber, const bool force)
 {
-	// TODO: Add unit tests for this function (out of bounds testing, locked file, etc.)
-
 	std::ifstream ifs(filePath);
 
 	if (!ifs)
@@ -788,6 +784,18 @@ void DisplayStats(Statistics& stats)
 	Out::All() << "===----------------------------------------------------------------------===\n";
 }
 
+void PrintResult(const std::string& filePath)
+{
+	const std::ifstream ifs(filePath);
+
+	if (ifs)
+	{
+		Out::All() << "===------------------------------- Result -------------------------------===\n";
+		Out::All() << ifs.rdbuf();
+		Out::All() << "===----------------------------------------------------------------------===\n";
+	}
+}
+
 /**
  * Attempts to validate results of the last epoch.\n
  * Searches the temporary directory for any files, sorts them by smallest and then validates them.\n
@@ -840,6 +848,8 @@ bool ValidateResults(GlobalContext& globalContext)
 
 	std::filesystem::rename(resultFound.value(), newFileName);
 
+	PrintResult(newFileName);
+	
 	globalContext.stats.Finalize(newFileName);
 	DisplayStats(globalContext.stats);
 	

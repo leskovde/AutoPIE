@@ -10,6 +10,9 @@ do
 	arguments=$(echo $line | cut -d\; -f4)
 	ratio=$(echo $line | cut -d\; -f5)
 
-	echo "$binary --loc-line=$error_line --error-message=\"$error_message\" --arguments=\"$arguments\" --ratio=$ratio $source_file --"
+	args=$(echo "--loc-line=$error_line --error-message=\"$error_message\" --arguments=\"$arguments\" --ratio=$ratio \"../EvaluationData/$source_file\" --")
+
+	echo "Launching $binary $args"
+	eval $binary $args
 
 done < ../EvaluationData/NaiveArgs.txt

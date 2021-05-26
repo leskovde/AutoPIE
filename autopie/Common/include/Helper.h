@@ -176,6 +176,8 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 
 void DisplayStats(Statistics& stats);
 
+void PrintResult(const std::string& filePath);
+
 bool ValidateResults(GlobalContext& context);
 
 bool CheckLocationValidity(const std::string& filePath, long lineNumber, bool force = true);

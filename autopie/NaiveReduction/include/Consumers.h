@@ -165,7 +165,7 @@ namespace Naive
 
 			for (auto& future : futures)
 			{
-				results.emplace_back(future.get());
+				results.push_back(future.get());
 			}
 			
 			// Distribute bit masks into ranges.

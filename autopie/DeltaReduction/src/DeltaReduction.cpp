@@ -163,6 +163,8 @@ int main(int argc, const char** argv)
 
 		std::filesystem::rename(currentTestCase, newFileName);
 
+		PrintResult(newFileName);
+		
 		context.stats.Finalize(newFileName);
 		DisplayStats(context.stats);
 		
