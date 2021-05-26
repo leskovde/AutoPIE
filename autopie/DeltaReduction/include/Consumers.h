@@ -4,7 +4,6 @@
 
 #include <clang/AST/ASTConsumer.h>
 
-#include "Visitors.h"
 #include "../../Common/include/Context.h"
 #include "../../Common/include/DependencyGraph.h"
 #include "../../Common/include/Streams.h"

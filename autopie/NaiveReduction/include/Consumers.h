@@ -7,7 +7,6 @@
 #include <future>
 #include <utility>
 
-#include "Visitors.h"
 #include "../../Common/include/Context.h"
 #include "../../Common/include/DependencyGraph.h"
 #include "../../Common/include/Visitors.h"
