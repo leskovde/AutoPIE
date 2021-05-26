@@ -6,6 +6,8 @@ import argparse
 from subprocess import call
 from time import sleep
 
+import shutil
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--file", required=True, type=str, help="The source file to be sliced")
 parser.add_argument("--criterion", required=True, type=str, help="The slicing criterion")
@@ -20,17 +22,7 @@ parser.set_defaults(dynamic_slicer=False)
 
 
 def slice_dg(args):
-    if args.file is None:
-        print("Invalid usage: the --file argument is empty.")
-
-        return
-
-    if args.criterion is None:
-        print("Invalid usage: the --criterion argument is empty.")
-
-        return
-
-    vol_path = os.getcwd() + "/dg-data"
+    vol_path = "dg-data"
 
     if not os.path.exists(vol_path):
         os.mkdir(vol_path)
@@ -73,17 +65,17 @@ def slice_dg(args):
     container.wait()
 
     print("Docker exited...")
-    print(container.logs().decode("utf-8"))
-
-    container.remove()
 
     print("Checking and moving the result...")
     if os.path.exists(os.path.join(vol_path, args.output)):
-        os.rename(os.path.join(vol_path, args.output), args.output)
+        print(container.logs().decode("utf-8"))
+        shutil.move(os.path.join(vol_path, args.output), args.output)
+
+    container.remove()
 
 
 def slice_giri(args):
-    vol_path = os.getcwd() + "/giri-data"
+    vol_path = "giri-data"
 
     if not os.path.exists(vol_path):
         os.mkdir(vol_path)
@@ -136,16 +128,26 @@ def slice_giri(args):
     container.wait()
 
     print("Docker exited...")
-    print(container.logs().decode("utf-8"))
-
-    container.remove()
 
     print("Checking and moving the result...")
     if os.path.exists(os.path.join(vol_path, args.output)):
-        os.rename(os.path.join(vol_path, args.output), args.output)
+        print(container.logs().decode("utf-8"))
+        shutil.move(os.path.join(vol_path, args.output), args.output)
+
+    container.remove()
 
 
 def run_slicer(args):
+    if args.file is None:
+        print("Invalid usage: the --file argument is empty.")
+
+        return
+
+    if args.criterion is None:
+        print("Invalid usage: the --criterion argument is empty.")
+
+        return
+
     if args.dynamic_slicer:
         print("RUNNING GIRI SLICER...")
         slice_giri(args)

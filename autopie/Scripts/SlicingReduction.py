@@ -89,9 +89,19 @@ def validate_paths(args):
     return valid
 
 
+def check_and_remove(file_path):
+    if os.path.exists(file_path):
+        try:
+            os.remove(file_path)
+        except OSError:
+            pass
+
+
 def run_unification(slices):
     if len(slices) < 1:
         return 1
+
+    check_and_remove(unification_output)
 
     raw_args = ["--file"]
 
@@ -109,8 +119,12 @@ def run_unification(slices):
 
 
 def run_static_slicer(args, var, iteration):
+    check_and_remove(f"./slice_input{language}")
+
     input_file = shutil.copy2(args.source_file, f"./slice_input{language}")
     output_file = f"static_slice_{iteration}.txt"
+
+    check_and_remove(output_file)
 
     criterion = var
     main_loc = 1
@@ -190,6 +204,8 @@ def run_dynamic_slicer(args, variables, iteration):
     input_file = modify_criterion(args, variables, iteration)
     output_file = f"dynamic_slice_{iteration}.txt"
 
+    check_and_remove(output_file)
+
     adjusted_line_number = str((int(args.line_number) + 1))
 
     dynamic_slicer_args = SimpleNamespace(
@@ -243,6 +259,8 @@ def run_tool(binary_path, arguments):
 
 
 def run_variable_extraction(args):
+    check_and_remove(var_extractor_output)
+
     var_extractor_args = [f"--loc-line={args.line_number}",
                           f"--verbose={args.verbose}",
                           f"--log={args.log}",
@@ -255,6 +273,9 @@ def run_variable_extraction(args):
 
 
 def run_slice_extraction(args, slice_file):
+    check_and_remove(slice_extractor_output[language])
+    check_and_remove(adjusted_line_path)
+
     slice_extractor_args = [f"--slice-file={slice_file}",
                             f"--loc-line={args.line_number}",
                             f"--verbose={args.verbose}",
@@ -268,6 +289,8 @@ def run_slice_extraction(args, slice_file):
 
 
 def run_delta(args):
+    check_and_remove(f"autoPieOut{language}")
+
     delta_args = [f"--loc-line={args.line_number}",
                   f"--error-message={args.error_message}",
                   f"--arguments={args.arguments}",
@@ -288,7 +311,7 @@ def run_naive(args):
                   f"--ratio={args.reduction_ratio}",
                   f"--dump-dot={args.dump_dot}",
                   f"--verbose={args.verbose}",
-                  f"--log={args.log}",  # TODO: Logging twice in a row will remove the previous log. Add a cool-down.
+                  f"--log={args.log}",
                   args.source_file,
                   "--"
                   ]
@@ -310,7 +333,7 @@ def get_variables_on_line(args, file_path):
     return variables
 
 
-def get_extracted_slice(args, slice_extractor_output):
+def get_extracted_slice(args):
     global language
 
     extracted_file = pathlib.Path(slice_extractor_output[language])
@@ -348,7 +371,7 @@ def update_source_from_slices(args, slices):
         print("Extracting source code for the unified slice...")
 
         if not run_slice_extraction(args, unification_output):
-            args.source_file = get_extracted_slice(args, slice_extractor_output)
+            args.source_file = get_extracted_slice(args)
             args.line_number = get_adjusted_line(args, adjusted_line_path)
 
     global created_files
@@ -383,10 +406,10 @@ def modify_criterion(args, variables, iteration):
         new_criterion += f"(void){var.split(':')[1]}; "
 
     new_criterion += "\n"
-    file_contents.insert(args.line_number, new_criterion)
+    file_contents.insert(int(args.line_number), new_criterion)
 
     exit_command = "_Exit(0);\n" if language == ".c" else "std::exit(0);\n"
-    file_contents.insert(args.line_number + 1, exit_command)
+    file_contents.insert(int(args.line_number) + 1, exit_command)
 
     file_path = f"dynamic_{iteration}{language}"
 
@@ -399,10 +422,12 @@ def modify_criterion(args, variables, iteration):
     return file_path
 
 
-def save_result(file_path):
+def save_result(args):
     output_file = pathlib.Path(variant_path[language])
 
     if not output_file.exists():
+        shutil.copy2(args.source_file, f"autoPieOut{language}")
+
         return False
 
     # Copy the result to the current directory.
@@ -444,14 +469,6 @@ def main(args):
 
         update_source_from_slices(args, [dynamic_slice])
 
-    """
-    TODO:
-    - vratit vysledek Delty, pokud Naive nic nenajde
-    - pridat do Naive plnou bitmask, aby to garantovane naslo variantu
-    - pridat do Naive hlasku "try increasing the reduction ratio, if you set it manually"
-    - odebrat z Naive ty vypisy lokace, ktere se ukazi nekolikrat behem validace
-    """
-
     if args.delta:
         exit_code = run_delta(args)
 
@@ -467,9 +484,8 @@ def main(args):
     else:
         update_source_from_reduction(args)
 
-    if not save_result(args.source_file):
-        print("The result variant could not be saved.")
-        sys.exit(1)
+    if not save_result(args):
+        print("NaiveReduction could not find a smaller variant - reverting the result of the previous step...")
 
     print("AutoPie has successfully finished.")
     sys.exit(0)
@@ -482,5 +498,8 @@ if __name__ == "__main__":
         main(args)
     finally:
         for file in created_files:
-            if os.path.exists(file):
-                os.remove(file)
+            check_and_remove(file)
+        if os.path.exists("dg-data"):
+            shutil.rmtree("dg-data")
+        if os.path.exists("giri-data"):
+            shutil.rmtree("giri-data")

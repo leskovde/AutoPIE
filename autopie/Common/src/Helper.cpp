@@ -555,11 +555,6 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 
 	out::Verb() << "Processing file: " << entry.path().string() << "\n";
 
-	for (auto presumedErrorLine : presumedErrorLines)
-	{
-		CheckLocationValidity(entry.path().string(), presumedErrorLine, false);
-	}
-
 	// Keep all LLDB logic written explicitly, not refactored in a function.
 	// The function could be called when the LLDBSentry is not initialized => unwanted behaviour.
 

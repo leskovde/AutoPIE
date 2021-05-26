@@ -126,6 +126,9 @@ namespace Naive
 			globalContext_.deepeningContext.bitMasks.insert(std::pair<double, std::vector<BitMask>>(1.0, std::vector<BitMask>()));
 			globalContext_.deepeningContext.bitMasks.insert(std::pair<double, std::vector<BitMask>>(INFINITY, std::vector<BitMask>()));
 
+			const auto originalVariant = BitMask(numberOfCodeUnits, true);
+			globalContext_.deepeningContext.bitMasks.at(1.0).push_back(originalVariant);
+
 			const auto threadCount = 12;
 			Unsigned ranges[threadCount];
 
@@ -162,7 +165,7 @@ namespace Naive
 
 			for (auto& future : futures)
 			{
-				results.push_back(future.get());
+				results.emplace_back(future.get());
 			}
 			
 			// Distribute bit masks into ranges.
@@ -223,6 +226,8 @@ namespace Naive
 				ClearTempDirectory();
 			}
 
+			out::All() << "A reduced variant could not be found. If you've manually set the `--ratio` option, consider trying a greater value.\n";
+			
 			globalContext_.stats.exitCode = EXIT_FAILURE;
 		}
 	};
