@@ -426,12 +426,18 @@ def save_result(args):
     output_file = pathlib.Path(variant_path[language])
 
     if not output_file.exists():
-        shutil.copy2(args.source_file, f"autoPieOut{language}")
+        try:
+            shutil.copy2(args.source_file, f"autoPieOut{language}")
+        except Exception as e:
+            pass
 
         return False
 
     # Copy the result to the current directory.
-    shutil.copy2(variant_path[language], ".")
+    try:
+        shutil.copy2(variant_path[language], ".")
+    except Exception as e:
+        pass
 
     return True
 
