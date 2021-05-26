@@ -160,7 +160,7 @@ namespace Naive
 			Unsigned ranges[threadCount];
 
 			// Determine the number of variants for each thread.
-			for (unsigned long long& range : ranges)
+			for (auto& range : ranges)
 			{
 				range = (totalNumberOfVariants - 1) / threadCount;
 			}

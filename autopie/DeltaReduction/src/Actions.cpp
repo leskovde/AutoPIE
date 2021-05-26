@@ -14,6 +14,7 @@ namespace Delta
 	 * @param context A reference to the global context which should be passed onto created instances.
 	 * @param iteration The number of the current DD iteration (used for file manipulation).
 	 * @param partitionCount The number of subsets to be tested.
+	 * @param result The exit status of the iteration.
 	 * @return A `DeltaDebuggingFrontendActionFactory` instance with the given context as a member.
 	 */
 	std::unique_ptr<clang::tooling::FrontendActionFactory> DeltaDebuggingFrontendActionFactory(

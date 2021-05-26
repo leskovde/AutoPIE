@@ -18,7 +18,7 @@ inline llvm::cl::extrahelp CommonHelp(clang::tooling::CommonOptionsParser::HelpM
  * Specifies the line number in the previously specified source file on which an error was found.\n
  * The value is later used for location confirmation.
  */
-inline llvm::cl::opt<int> LineNumber("loc-line",
+inline llvm::cl::opt<size_t> LineNumber("loc-line",
                                      llvm::cl::desc(
 	                                     "[NaiveReduction, DeltaReduction, VarExtractor, SliceExtractor] The line number on which the error occurred."),
                                      llvm::cl::value_desc("int"),

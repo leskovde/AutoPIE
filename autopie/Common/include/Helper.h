@@ -180,7 +180,7 @@ void PrintResult(const std::string& filePath);
 
 bool ValidateResults(GlobalContext& context);
 
-bool CheckLocationValidity(const std::string& filePath, long lineNumber, bool force = true);
+bool CheckLocationValidity(const std::string& filePath, size_t lineNumber, bool force = true);
 
 std::string StateToString(lldb::StateType state);
 

@@ -420,7 +420,7 @@ int Compile(const std::filesystem::directory_entry& entry, const clang::Language
  * @param force Specifies whether the output (the printing part) should be flushed to the All stream or not.
  * @return True if the given file and line combination is accessible, false otherwise.
  */
-bool CheckLocationValidity(const std::string& filePath, const long lineNumber, const bool force)
+bool CheckLocationValidity(const std::string& filePath, const size_t lineNumber, const bool force)
 {
 	std::ifstream ifs(filePath);
 
@@ -809,10 +809,10 @@ void PrintResult(const std::string& filePath)
  * If a valid variant is found, it is stored as `autoPieOut.<extensions based on language>` in the
  * temporary directory.
  *
- * @param globalContext The global context of the tool required for language options and line number adjustments.
+ * @param context The global context of the tool required for language options and line number adjustments.
  * @return True if the epoch produced a valid result, false otherwise.
  */
-bool ValidateResults(GlobalContext& globalContext)
+bool ValidateResults(GlobalContext& context)
 {
 	// Collect the results.
 	std::vector<std::filesystem::directory_entry> files;
@@ -833,7 +833,7 @@ bool ValidateResults(GlobalContext& globalContext)
 	// Attempt to compile each file. If successful, run it in LLDB and validate the error message and location.
 	for (const auto& entry : files)
 	{
-		if (ValidateVariant(globalContext, entry))
+		if (ValidateVariant(context, entry))
 		{
 			resultFound = entry.path().string();
 			break;
@@ -847,7 +847,7 @@ bool ValidateResults(GlobalContext& globalContext)
 
 	Out::All() << "Found the smallest error-inducing source file: " << resultFound.value() << "\n";
 
-	const auto newFileName = TempFolder + std::string("autoPieOut") + LanguageToExtension(globalContext.language);
+	const auto newFileName = TempFolder + std::string("autoPieOut") + LanguageToExtension(context.language);
 
 	Out::All() << "Changing the file path to '" << newFileName << "'\n";
 
@@ -855,8 +855,8 @@ bool ValidateResults(GlobalContext& globalContext)
 
 	PrintResult(newFileName);
 
-	globalContext.stats.Finalize(newFileName);
-	DisplayStats(globalContext.stats);
+	context.stats.Finalize(newFileName);
+	DisplayStats(context.stats);
 
 	return true;
 }

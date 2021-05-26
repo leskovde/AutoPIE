@@ -37,7 +37,7 @@ namespace Common
 
 		BitMask bitMask_;
 		int currentNode_ = 0; ///< The traversal order number.
-		std::vector<int> errorLineBackups_;
+		std::vector<size_t> errorLineBackups_;
 		RewriterRef rewriter_;
 		DependencyGraph graph_;
 		SkippedMapRef skippedNodes_;
@@ -66,11 +66,11 @@ namespace Common
 					return c == '\n';
 				});
 
-				for (auto i = 0; i < adjustedErrorLines.size(); i++)
+				for (size_t i = 0; i < adjustedErrorLines.size(); i++)
 				{
 					if (begin < errorLineBackups_[i])
 					{
-						const int decrement = errorLineBackups_[i] >= begin + lineBreaks
+						const auto decrement = errorLineBackups_[i] >= begin + lineBreaks
 							                      ? lineBreaks
 							                      : errorLineBackups_[i] - begin;
 						adjustedErrorLines[i] -= decrement;
@@ -175,9 +175,9 @@ namespace Common
 		}
 
 	public:
-		std::vector<int> adjustedErrorLines;
+		std::vector<size_t> adjustedErrorLines;
 
-		VariantPrintingASTVisitor(clang::CompilerInstance* ci, const int errorLine) : astContext_(ci->getASTContext()),
+		VariantPrintingASTVisitor(clang::CompilerInstance* ci, const size_t errorLine) : astContext_(ci->getASTContext()),
 		                                                                              errorLineBackups_({errorLine}),
 		                                                                              adjustedErrorLines({errorLine})
 		{
@@ -205,7 +205,7 @@ namespace Common
 		 * @param graph The node dependency graph based on which nodes are removed.
 		 * @param errorLines A list of potential error-inducing lines (LLDB workaround).
 		 */
-		void SetData(SkippedMapRef skippedNodes, DependencyGraph& graph, std::vector<int>& errorLines)
+		void SetData(SkippedMapRef skippedNodes, DependencyGraph& graph, std::vector<size_t>& errorLines)
 		{
 			skippedNodes_ = std::move(skippedNodes);
 			graph_ = graph;
@@ -480,10 +480,9 @@ namespace Common
 		 * to a separate container in the graph.
 		 *
 		 * @param astId The node identifier as given by the clang `node->getId()` method.
-		 * @param snippet The source code corresponding to the processed node.
 		 * @param line The line of the starting location of the corresponding source code.
 		 */
-		bool InsertMapping(const int astId, const std::string& /*snippet*/t, const int line)
+		bool InsertMapping(const int astId, const std::string& /*snippet*/, const int line)
 		{
 			if (nodeMapping_->find(astId) != nodeMapping_->end())
 			{
@@ -801,7 +800,7 @@ namespace Common
 
 	public:
 		int codeUnitsCount = 0; ///< The traversal order number.
-		std::vector<int> errorLines;
+		std::vector<size_t> errorLines;
 		DependencyGraph graph = DependencyGraph();
 
 		MappingASTVisitor(clang::CompilerInstance* ci, NodeMappingRef mapping,

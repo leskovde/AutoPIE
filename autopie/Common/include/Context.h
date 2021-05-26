@@ -76,7 +76,7 @@ public:
 	Delta::DeltaAlgorithmContext deltaContext;
 	Naive::IterativeDeepeningContext deepeningContext;
 	clang::Language language{clang::Language::Unknown};
-	std::unordered_map<int, std::vector<int>> variantAdjustedErrorLocations;
+	std::unordered_map<size_t, std::vector<size_t>> variantAdjustedErrorLocations;
 
 	GlobalContext(InputData& input, const std::string& inputFile, const int epochs) : stats(inputFile),
 	                                                                                  parsedInput(input),
