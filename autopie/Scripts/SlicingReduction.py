@@ -20,23 +20,31 @@ parser.add_argument("--arguments", type=str, default="", help="The arguments wit
                                                               "error occurred.")
 parser.add_argument("--reduction_ratio", type=float, default=1.0, help="Limits the reduction to a specific ratio "
                                                                        "between 0 and 1.")
-parser.add_argument("-d", "--dump_dot", type=bool, default=False, help="Specifies whether a GraphViz file containing "
-                                                                       "relationships of code units should be "
-                                                                       "created.")
-parser.add_argument("-v", "--verbose", type=bool, default=False, help="Specifies whether the tool should flood the "
-                                                                      "standard output with its optional messages.")
-parser.add_argument("-l", "--log", type=bool, default=False, help="Specifies whether the tool should output its "
-                                                                  "optional message (with timestamps) to an external "
-                                                                  "file.")
-parser.add_argument("--static_slice", type=bool, default=True, help="Runs a pass of the static slicer during "
-                                                                    "preprocessing. Enabled by default.")
-parser.add_argument("--dynamic_slice", type=bool, default=True, help="Runs a pass of the dynamic slicer during "
-                                                                     "preprocessing. Enabled by default.")
-parser.add_argument("--delta", type=bool, default=True, help="Uses the minimizing Delta debugging algorithm before "
-                                                             "launching naive reduction. Enabled by default.")
-parser.add_argument("--inject", type=bool, default=False, help="Instead of calling the debugged program with its "
-                                                               "arguments, the tool specifies the arguments directly "
-                                                               "in source code.")
+parser.add_argument("-d", "--dump_dot", type=lambda x: (str(x).lower() in ['true', '1', 'yes']), default=False,
+                    help="Specifies whether a GraphViz file containing "
+                         "relationships of code units should be "
+                         "created.")
+parser.add_argument("-v", "--verbose", type=lambda x: (str(x).lower() in ['true', '1', 'yes']), default=False,
+                    help="Specifies whether the tool should flood the "
+                         "standard output with its optional messages.")
+parser.add_argument("-l", "--log", type=lambda x: (str(x).lower() in ['true', '1', 'yes']), default=False,
+                    help="Specifies whether the tool should output its "
+                         "optional message (with timestamps) to an external "
+                         "file.")
+parser.add_argument("--static_slice", type=lambda x: (str(x).lower() in ['true', '1', 'yes']), default=True,
+                    help="Runs a pass of the static slicer during "
+                         "preprocessing. Enabled by default.")
+parser.add_argument("--dynamic_slice", type=lambda x: (str(x).lower() in ['true', '1', 'yes']), default=True,
+                    help="Runs a pass of the dynamic slicer during "
+                         "preprocessing. Enabled by default.")
+parser.add_argument("--delta", type=lambda x: (str(x).lower() in ['true', '1', 'yes']), default=True,
+                    help="Uses the minimizing Delta debugging algorithm before "
+                         "launching naive reduction. Enabled by default.")
+parser.add_argument("--inject", type=lambda x: (str(x).lower() in ['true', '1', 'yes']), default=False,
+                    help="Instead of calling the debugged program with its "
+                         "arguments, the tool specifies the arguments directly "
+                         "in source code.")
+
 
 delta_path = "../DeltaReduction/build/bin/DeltaReduction"
 naive_path = "../NaiveReduction/build/bin/NaiveReduction"

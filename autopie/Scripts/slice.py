@@ -3,8 +3,6 @@
 import os
 import docker
 import argparse
-from subprocess import call
-from time import sleep
 
 import shutil
 
