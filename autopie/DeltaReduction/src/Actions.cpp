@@ -1,7 +1,7 @@
 #include <clang/Tooling/Tooling.h>
 
-#include "../include/Actions.h"
 #include "../../Common/include/Context.h"
+#include "../include/Actions.h"
 
 namespace Delta
 {
@@ -29,9 +29,10 @@ namespace Delta
 		public:
 
 			DeltaDebuggingFrontendActionFactory(GlobalContext& context, const int iteration,
-			                                    const int partitionCount, DeltaIterationResults& result) : iteration_(iteration),
-			                                                                partitionCount_(partitionCount),
-			                                                                context_(context), result_(result)
+			                                    const int partitionCount,
+			                                    DeltaIterationResults& result) : iteration_(iteration),
+			                                                                     partitionCount_(partitionCount),
+			                                                                     context_(context), result_(result)
 			{
 			}
 
@@ -44,4 +45,4 @@ namespace Delta
 		return std::unique_ptr<clang::tooling::FrontendActionFactory>(
 			std::make_unique<DeltaDebuggingFrontendActionFactory>(context, iteration, partitionCount, result));
 	}
-}
+} // namespace Delta

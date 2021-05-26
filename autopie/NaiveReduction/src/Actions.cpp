@@ -1,7 +1,7 @@
 #include <clang/Tooling/Tooling.h>
 
-#include "../include/Actions.h"
 #include "../../Common/include/Context.h"
+#include "../include/Actions.h"
 
 namespace Naive
 {
@@ -14,7 +14,8 @@ namespace Naive
 	 * @param context A reference to the global context which should be passed onto created instances.
 	 * @return A `VariantGeneratingFrontendActionFactory` instance with the given context as a member.
 	 */
-	std::unique_ptr<clang::tooling::FrontendActionFactory> VariantGeneratingFrontendActionFactory(GlobalContext& context)
+	std::unique_ptr<clang::tooling::FrontendActionFactory> VariantGeneratingFrontendActionFactory(
+		GlobalContext& context)
 	{
 		class VariantGeneratingFrontendActionFactory : public clang::tooling::FrontendActionFactory
 		{
@@ -35,4 +36,4 @@ namespace Naive
 		return std::unique_ptr<clang::tooling::FrontendActionFactory>(
 			std::make_unique<VariantGeneratingFrontendActionFactory>(context));
 	}
-}
+} // namespace Naive

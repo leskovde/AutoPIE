@@ -27,16 +27,15 @@ namespace SliceExtractor
 			// Concatenate found lines.
 			auto& originalLines = sliceVisitor_->originalLines;
 			auto& collectedLines = sliceVisitor_->collectedLines;
-			
+
 			originalLines.insert(originalLines.end(), collectedLines.begin(), collectedLines.end());
 
 			// Remove duplicates.
 			std::sort(originalLines.begin(), originalLines.end());
 			const auto it = std::unique(originalLines.begin(), originalLines.end());
 			originalLines.erase(it, originalLines.end());
-			
 		}
 	};
-}
+} // namespace SliceExtractor
 
 #endif

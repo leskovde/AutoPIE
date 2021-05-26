@@ -34,4 +34,4 @@ namespace SliceExtractor
 		return std::unique_ptr<clang::tooling::FrontendActionFactory>(
 			std::make_unique<SliceExtractorFrontendActionFactory>(lines));
 	}
-}
+} // namespace SliceExtractor

@@ -1,12 +1,21 @@
+# AutoPIE Makefile.
+# Clang and LLVM is linked based on the implicit LLVM 11.0.0 install location.
+# (Assumming the target `install` has been finished when building LLVM from source)
+# 
+# The link location should be the following: `/usr/local/lib/`,
+# The include location should be the following: `/usr/local/include/`
+
+# Paths.
 COMMON_PATH = Common
 NAIVE_PATH = NaiveReduction
 DELTA_PATH = DeltaReduction
 SLICE_EXTRACTOR_PATH = SliceExtractor
 VARIABLE_EXTRACTOR_PATH = VariableExtractor
+DOCS_PATH = docs
 
 export CXX = clang++
 
-.PHONY: all common naive delta slice variables clean
+.PHONY: all common naive delta slice variables docs clean
 
 all: common naive delta slice variables
 
@@ -24,6 +33,9 @@ slice:
 
 variables:
 	$(MAKE) -C $(VARIABLE_EXTRACTOR_PATH) release
+
+docs:
+	@doxygen $(DOCS_PATH)/Doxyfile
 
 clean:
 	$(MAKE) -C $(COMMON_PATH) clean

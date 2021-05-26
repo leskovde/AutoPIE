@@ -11,7 +11,6 @@
 #include <lldb/API/SBEvent.h>
 
 #include <filesystem>
-#include <optional>
 #include <utility>
 
 /**
@@ -40,7 +39,7 @@ enum class DeltaIterationResults
 };
 
 class GlobalContext;
-class Statistics;
+struct Statistics;
 class DependencyGraph;
 
 using BitMask = std::vector<bool>;
@@ -109,10 +108,12 @@ struct InputData
 	const double reductionRatio;
 	const bool dumpDot;
 
-	InputData(std::string message, Location location, const double ratio, const bool dump) : errorMessage(std::move(message)),
-		errorLocation(std::move(location)),
-		reductionRatio(ratio),
-		dumpDot(dump)
+	InputData(std::string message, Location location, const double ratio, const bool dump) : errorMessage(
+		                                                                                         std::move(message)),
+	                                                                                         errorLocation(
+		                                                                                         std::move(location)),
+	                                                                                         reductionRatio(ratio),
+	                                                                                         dumpDot(dump)
 	{
 	}
 };
@@ -130,7 +131,6 @@ clang::SourceRange GetPrintableRange(clang::SourceRange range, const clang::Sour
 llvm::StringRef GetSourceTextRaw(clang::SourceRange range, const clang::SourceManager& sm);
 
 llvm::StringRef GetSourceText(clang::SourceRange range, const clang::SourceManager& sm);
-
 
 //===----------------------------------------------------------------------===//
 //

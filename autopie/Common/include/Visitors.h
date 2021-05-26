@@ -56,30 +56,27 @@ namespace Common
 				Out::Verb() << "Removing node " << currentNode_ << ":\n" << RangeToString(astContext_, range) << "\n";
 
 				const auto printableRange = GetPrintableRange(GetPrintableRange(range, astContext_.getSourceManager()),
-					astContext_.getSourceManager());
+				                                              astContext_.getSourceManager());
 
 				const auto begin = astContext_.getSourceManager().getSpellingLineNumber(printableRange.getBegin());
 				const auto snippet = GetSourceTextRaw(printableRange, astContext_.getSourceManager()).str();
 
 				const auto lineBreaks = std::count_if(snippet.begin(), snippet.end(), [](const char c)
-					{
-						if (c == '\n')
-						{
-							return true;
-						}
-
-						return false;
-					});
+				{
+					return c == '\n';
+				});
 
 				for (auto i = 0; i < adjustedErrorLines.size(); i++)
 				{
 					if (begin < errorLineBackups_[i])
 					{
-						const int decrement = errorLineBackups_[i] >= begin + lineBreaks ? lineBreaks : errorLineBackups_[i] - begin;
+						const int decrement = errorLineBackups_[i] >= begin + lineBreaks
+							                      ? lineBreaks
+							                      : errorLineBackups_[i] - begin;
 						adjustedErrorLines[i] -= decrement;
 					}
 				}
-				
+
 				if (replace)
 				{
 					rewriter_->ReplaceText(printableRange, ";");
@@ -180,7 +177,9 @@ namespace Common
 	public:
 		std::vector<int> adjustedErrorLines;
 
-		VariantPrintingASTVisitor(clang::CompilerInstance* ci, const int errorLine) : astContext_(ci->getASTContext()), errorLineBackups_({ errorLine }), adjustedErrorLines({ errorLine })
+		VariantPrintingASTVisitor(clang::CompilerInstance* ci, const int errorLine) : astContext_(ci->getASTContext()),
+		                                                                              errorLineBackups_({errorLine}),
+		                                                                              adjustedErrorLines({errorLine})
 		{
 		}
 
@@ -217,7 +216,7 @@ namespace Common
 		 * Overrides the parent traversal mode.\n
 		 * The traversal is changed from preorder to postorder.
 		 */
-		bool shouldTraversePostOrder() const
+		[[nodiscard]] static bool shouldTraversePostOrder()
 		{
 			return true;
 		}
@@ -234,7 +233,8 @@ namespace Common
 				return true;
 			}
 
-			if (llvm::isa<clang::TranslationUnitDecl>(decl) || llvm::isa<clang::VarDecl>(decl) || llvm::isa<clang::AccessSpecDecl>(decl))
+			if (llvm::isa<clang::TranslationUnitDecl>(decl) || llvm::isa<clang::VarDecl>(decl) || llvm::isa<clang::
+				AccessSpecDecl>(decl))
 			{
 				// Ignore the translation unit decl since it won't be manipulated with.
 				// VarDecl have a DeclStmt counterpart that is easier to work with => avoid duplicates.
@@ -426,7 +426,7 @@ namespace Common
 			return true;
 		}
 	};
-	
+
 	/**
 	 * Traverses the AST to analyze important nodes.\n
 	 * Splits the source code into code units based on the traversed nodes and their corresponding source ranges.\n
@@ -447,7 +447,6 @@ namespace Common
 		 * of the given node.
 		 */
 		NodeMappingRef nodeMapping_;
-
 
 		/**
 		 * A map of integers that serves as a recognition tool for declarations.\n
@@ -484,7 +483,7 @@ namespace Common
 		 * @param snippet The source code corresponding to the processed node.
 		 * @param line The line of the starting location of the corresponding source code.
 		 */
-		bool InsertMapping(const int astId, const std::string& snippet, const int line)
+		bool InsertMapping(const int astId, const std::string& /*snippet*/t, const int line)
 		{
 			if (nodeMapping_->find(astId) != nodeMapping_->end())
 			{
@@ -617,7 +616,7 @@ namespace Common
 					{
 						children.push_back(*it);
 					}
-					
+
 					auto recursiveChildren = GetChildrenRecursively(*it);
 					children.insert(children.end(), recursiveChildren.begin(), recursiveChildren.end());
 				}
@@ -625,7 +624,7 @@ namespace Common
 
 			return children;
 		}
-		
+
 		void CreateChildDependencies(clang::Stmt* stmt)
 		{
 			for (auto& child : GetChildrenRecursively(stmt))
@@ -805,9 +804,10 @@ namespace Common
 		std::vector<int> errorLines;
 		DependencyGraph graph = DependencyGraph();
 
-		MappingASTVisitor(clang::CompilerInstance* ci, NodeMappingRef mapping, const int errorLine) : errorLine_(errorLine),
-			astContext_(ci->getASTContext()),
-			nodeMapping_(std::move(mapping))
+		MappingASTVisitor(clang::CompilerInstance* ci, NodeMappingRef mapping,
+		                  const int errorLine) : errorLine_(errorLine),
+		                                         astContext_(ci->getASTContext()),
+		                                         nodeMapping_(std::move(mapping))
 		{
 			declNodeMapping_ = std::make_shared<NodeMapping>();
 			errorLines.push_back(errorLine);
@@ -827,7 +827,7 @@ namespace Common
 		 * Overrides the parent traversal mode.\n
 		 * The traversal is changed from preorder to postorder.
 		 */
-		bool shouldTraversePostOrder() const
+		[[nodiscard]] static bool shouldTraversePostOrder()
 		{
 			return true;
 		}
@@ -847,7 +847,8 @@ namespace Common
 				return true;
 			}
 
-			if (llvm::isa<clang::TranslationUnitDecl>(decl) || llvm::isa<clang::VarDecl>(decl) || llvm::isa<clang::AccessSpecDecl>(decl))
+			if (llvm::isa<clang::TranslationUnitDecl>(decl) || llvm::isa<clang::VarDecl>(decl) || llvm::isa<clang::
+				AccessSpecDecl>(decl))
 			{
 				// Ignore the translation unit decl since it won't be manipulated with.
 				// VarDecl have a DeclStmt counterpart that is easier to work with => avoid duplicates.
@@ -869,7 +870,8 @@ namespace Common
 
 			if (criterionFound_)
 			{
-				const auto range = GetPrintableRange(GetPrintableRange(decl->getSourceRange(), astContext_.getSourceManager()),
+				const auto range = GetPrintableRange(
+					GetPrintableRange(decl->getSourceRange(), astContext_.getSourceManager()),
 					astContext_.getSourceManager());
 
 				const auto startingLine = astContext_.getSourceManager().getSpellingLineNumber(range.getBegin());
@@ -877,11 +879,14 @@ namespace Common
 
 				if (decl->hasBody() && decl->getBody() != nullptr)
 				{
-					const auto bodyRange = GetPrintableRange(GetPrintableRange(decl->getBody()->getSourceRange(), astContext_.getSourceManager()),
+					const auto bodyRange = GetPrintableRange(
+						GetPrintableRange(decl->getBody()->getSourceRange(), astContext_.getSourceManager()),
 						astContext_.getSourceManager());
 
-					const auto bodyStartingLine = astContext_.getSourceManager().getSpellingLineNumber(bodyRange.getBegin());
-					const auto bodyEndingLine = astContext_.getSourceManager().getSpellingLineNumber(bodyRange.getEnd());
+					const auto bodyStartingLine = astContext_.getSourceManager().getSpellingLineNumber(
+						bodyRange.getBegin());
+					const auto bodyEndingLine = astContext_
+					                            .getSourceManager().getSpellingLineNumber(bodyRange.getEnd());
 
 					for (auto i = startingLine; i <= bodyStartingLine; i++)
 					{
@@ -897,12 +902,11 @@ namespace Common
 				{
 					errorLines.push_back(startingLine);
 				}
-				
+
 				criterionFound_ = false;
 			}
-			
-			return true;
 
+			return true;
 		}
 
 		/**
@@ -1014,14 +1018,14 @@ namespace Common
 
 			const auto decl = expr->getCalleeDecl();
 
-			if (decl != nullptr) 
+			if (decl != nullptr)
 			{
 				if (nodeMapping_->find(decl->getID()) != nodeMapping_->end())
 				{
 					graph.InsertVariableDependency(nodeMapping_->at(decl->getID()), codeUnitsCount - 1);
 				}
 			}
-			
+
 			return true;
 		}
 
@@ -1171,6 +1175,6 @@ namespace Common
 			return true;
 		}
 	};
-}
+}	// namespace Common
 
 #endif

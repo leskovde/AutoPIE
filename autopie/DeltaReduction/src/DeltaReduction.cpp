@@ -7,16 +7,16 @@
 
 #include <filesystem>
 
-#include "../include/Actions.h"
 #include "../../Common/include/Context.h"
 #include "../../Common/include/Helper.h"
 #include "../../Common/include/Options.h"
 #include "../../Common/include/Streams.h"
+#include "../include/Actions.h"
 
 using namespace llvm;
 using namespace Common;
 
-// TODO: Change all int instances to something consistent (int32_fast etc.).
+// TODO(Denis): Change all int instances to something consistent (int32_fast etc.).
 
 /**
  * Generates a locally minimal program variant by running Delta debugging.
@@ -35,7 +35,7 @@ int main(int argc, const char** argv)
 		errs() << "Only a single source file is supported.\n";
 		return EXIT_FAILURE;
 	}
-	
+
 	auto parsedInput = InputData(static_cast<std::basic_string<char>>(ErrorMessage),
 	                             Location(op.getSourcePathList()[0], LineNumber), ReductionRatio,
 	                             DumpDot);
@@ -48,18 +48,18 @@ int main(int argc, const char** argv)
 	}
 
 	const auto epochCount = 5;
-	
+
 	auto context = GlobalContext(parsedInput, *op.getSourcePathList().begin(), epochCount);
 	clang::tooling::ClangTool tool(op.getCompilations(), context.parsedInput.errorLocation.filePath);
 
 	auto includes = clang::tooling::getInsertArgumentAdjuster("-I/usr/local/lib/clang/11.0.0/include/");
 	tool.appendArgumentsAdjuster(includes);
-	
+
 	auto inputLanguage = clang::Language::Unknown;
 	// Run a language check inside a separate scope so that all built ASTs get freed at the end.
 	{
 		Out::Verb() << "Checking the language...\n";
-		
+
 		std::vector<std::unique_ptr<clang::ASTUnit>> trees;
 		tool.buildASTs(trees);
 
@@ -68,10 +68,11 @@ int main(int argc, const char** argv)
 			errs() << "Although only one AST was expected, " << trees.size() << " ASTs have been built.\n";
 			return EXIT_FAILURE;
 		}
-		
+
 		inputLanguage = (*trees.begin())->getInputKind().getLanguage();
-		
-		Out::Verb() << "File: " << (*trees.begin())->getOriginalSourceFileName() << ", language: " << LanguageToString(inputLanguage) << "\n";
+
+		Out::Verb() << "File: " << (*trees.begin())->getOriginalSourceFileName() << ", language: " <<
+			LanguageToString(inputLanguage) << "\n";
 	}
 
 	assert(inputLanguage != clang::Language::Unknown);
@@ -94,7 +95,7 @@ int main(int argc, const char** argv)
 
 	auto done = false;
 	auto first = true;
-	
+
 	while (!done && iteration < cutOffLimit)
 	{
 		iteration++;
@@ -110,9 +111,10 @@ int main(int argc, const char** argv)
 		newTool.appendArgumentsAdjuster(includes);
 
 		// Run all Clang AST related actions.
-		auto result = newTool.run(Delta::DeltaDebuggingFrontendActionFactory(context, iteration, partitionCount, iterationResult).get());
+		auto result = newTool.run(
+			Delta::DeltaDebuggingFrontendActionFactory(context, iteration, partitionCount, iterationResult).get());
 
-		if (result)
+		if (result != 0)
 		{
 			errs() << "The tool returned a non-standard value: " << result << "\n";
 		}
@@ -123,19 +125,23 @@ int main(int argc, const char** argv)
 			context.stats.expectedIterations = k * k + 3 * k;
 			first = false;
 		}
-		
+
 		switch (iterationResult)
 		{
 		case DeltaIterationResults::FailingPartition:
 			partitionCount = 2;
-			currentTestCase = TempFolder + std::to_string(iteration) + "_" + GetFileName(context.parsedInput.errorLocation.filePath) + LanguageToExtension(context.language);
+			currentTestCase = TempFolder + std::to_string(iteration) + "_" + GetFileName(
+				context.parsedInput.errorLocation.filePath) + LanguageToExtension(context.language);
 			break;
 		case DeltaIterationResults::FailingComplement:
 			partitionCount -= 1;
-			currentTestCase = TempFolder + std::to_string(iteration) + "_" + GetFileName(context.parsedInput.errorLocation.filePath) + LanguageToExtension(context.language);
+			currentTestCase = TempFolder + std::to_string(iteration) + "_" + GetFileName(
+				context.parsedInput.errorLocation.filePath) + LanguageToExtension(context.language);
 			break;
 		case DeltaIterationResults::Passing:
-			if (partitionCount * 2 < context.deltaContext.latestCodeUnitCount || partitionCount == context.deltaContext.latestCodeUnitCount)
+			if (partitionCount * 2 < context.deltaContext.latestCodeUnitCount || partitionCount == context
+			                                                                                       .deltaContext.
+			                                                                                       latestCodeUnitCount)
 			{
 				partitionCount *= 2;
 			}
@@ -164,14 +170,14 @@ int main(int argc, const char** argv)
 		std::filesystem::rename(currentTestCase, newFileName);
 
 		PrintResult(newFileName);
-		
+
 		context.stats.Finalize(newFileName);
 		DisplayStats(context.stats);
-		
+
 		return EXIT_SUCCESS;
 	}
 
 	Out::All() << "A smaller error-inducing source file could not be found.\n";
-	
+
 	return EXIT_FAILURE;
 }

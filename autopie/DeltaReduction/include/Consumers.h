@@ -4,11 +4,11 @@
 
 #include <clang/AST/ASTConsumer.h>
 
+#include "../../Common/include/Consumers.h"
 #include "../../Common/include/Context.h"
 #include "../../Common/include/DependencyGraph.h"
-#include "../../Common/include/Streams.h"
-#include "../../Common/include/Consumers.h"
 #include "../../Common/include/Helper.h"
+#include "../../Common/include/Streams.h"
 
 namespace Delta
 {
@@ -26,7 +26,8 @@ namespace Delta
 		GlobalContext& globalContext_;
 		DeltaIterationResults& result_;
 
-		bool IsFailureInducingSubset(clang::ASTContext& context, const BitMask& bitmask, DependencyGraph& dependencyGraph) const
+		bool IsFailureInducingSubset(clang::ASTContext& context, const BitMask& bitmask,
+		                             DependencyGraph& dependencyGraph) const
 		{
 			if (IsValid(bitmask, dependencyGraph, false).first)
 			{
@@ -38,9 +39,10 @@ namespace Delta
 					{
 						std::filesystem::remove(fileName_);
 					}
-					
+
 					printingConsumer_.HandleTranslationUnit(context, fileName_, bitmask);
-					globalContext_.variantAdjustedErrorLocations[iteration_] = printingConsumer_.GetAdjustedErrorLines();
+					globalContext_.variantAdjustedErrorLocations[iteration_] = printingConsumer_.
+						GetAdjustedErrorLines();
 
 					if (ValidateVariant(globalContext_, std::filesystem::directory_entry(fileName_)))
 					{
@@ -53,20 +55,34 @@ namespace Delta
 					Out::All() << "Could not process a subset due to an internal exception.\n";
 				}
 			}
-			
+
 			return false;
 		}
-		
+
 	public:
 		DeltaDebuggingConsumer(clang::CompilerInstance* ci, GlobalContext& context, const int iteration,
-		                       const int partitionCount, DeltaIterationResults& result) : mappingConsumer_(ci, context, iteration),
-			printingConsumer_(ci, context.parsedInput.errorLocation.lineNumber),
-			iteration_(iteration), partitionCount_(partitionCount),
-			fileName_(
-				TempFolder + std::to_string(iteration_) + "_" + GetFileName(
-					context.parsedInput.errorLocation.filePath) + LanguageToExtension(context.language)), globalContext_(context),
-			result_(result)
-		
+		                       const int partitionCount, DeltaIterationResults& result) : mappingConsumer_(ci, context,
+		                                                                                                   iteration),
+		                                                                                  printingConsumer_(
+			                                                                                  ci, context
+			                                                                                      .parsedInput.
+			                                                                                      errorLocation.
+			                                                                                      lineNumber),
+		                                                                                  iteration_(iteration),
+		                                                                                  partitionCount_(
+			                                                                                  partitionCount),
+		                                                                                  fileName_(
+			                                                                                  TempFolder + std::
+			                                                                                  to_string(iteration_) +
+			                                                                                  "_" + GetFileName(
+				                                                                                  context.parsedInput.
+				                                                                                          errorLocation.
+				                                                                                          filePath) +
+			                                                                                  LanguageToExtension(
+				                                                                                  context.language)),
+		                                                                                  globalContext_(context),
+		                                                                                  result_(result)
+
 		{
 		}
 
@@ -83,17 +99,18 @@ namespace Delta
 		 * @param context The AST context.
 		 */
 		void HandleTranslationUnit(clang::ASTContext& context) override
-		{		
+		{
 			mappingConsumer_.HandleTranslationUnit(context);
 			const auto numberOfCodeUnits = mappingConsumer_.GetCodeUnitsCount();
 
 			globalContext_.deltaContext.latestCodeUnitCount = numberOfCodeUnits;
 			globalContext_.variantAdjustedErrorLocations.clear();
 
-			printingConsumer_.SetData(mappingConsumer_.GetSkippedNodes(), mappingConsumer_.GetDependencyGraph(), mappingConsumer_.GetPotentialErrorLines());
+			printingConsumer_.SetData(mappingConsumer_.GetSkippedNodes(), mappingConsumer_.GetDependencyGraph(),
+			                          mappingConsumer_.GetPotentialErrorLines());
 
 			auto dependencies = mappingConsumer_.GetDependencyGraph();
-			
+
 			// 1. Split into a container of equal sized bins.
 			// 2. Get a container of complements.
 			// 3. Loop over the first container and test each bin (generate variant and execute).
@@ -104,7 +121,7 @@ namespace Delta
 
 			Out::Verb() << "Current iteration: " << iteration_ << ".\n";
 			Out::Verb() << "Current code unit count: " << numberOfCodeUnits << ".\n";
-			Out::Verb() << "Current partition count: " << partitionCount_ << ".\n"; 
+			Out::Verb() << "Current partition count: " << partitionCount_ << ".\n";
 
 			if (partitionCount_ > numberOfCodeUnits)
 			{
@@ -114,7 +131,7 @@ namespace Delta
 				result_ = DeltaIterationResults::Unsplitable;
 				return;
 			}
-			
+
 			std::vector<BitMask> partitions;
 			std::vector<BitMask> complements;
 			const auto partitionSize = numberOfCodeUnits / partitionCount_;
@@ -141,7 +158,7 @@ namespace Delta
 			{
 				auto partition = BitMask(numberOfCodeUnits);
 				auto complement = BitMask(numberOfCodeUnits);
-				
+
 				// Determine whether each code unit belongs to the current partition.
 				for (auto j = 0; j < numberOfCodeUnits; j++)
 				{
@@ -165,7 +182,7 @@ namespace Delta
 
 			Out::Verb() << "Splitting done.\n";
 			Out::Verb() << "Validating " << partitions.size() << " partitions...\n";
-			
+
 			for (auto& partition : partitions)
 			{
 				if (IsFailureInducingSubset(context, partition, dependencies))
@@ -176,7 +193,7 @@ namespace Delta
 			}
 
 			Out::Verb() << "Validating " << complements.size() << " complements...\n";
-			
+
 			for (auto& complement : complements)
 			{
 				if (IsFailureInducingSubset(context, complement, dependencies))
@@ -190,6 +207,6 @@ namespace Delta
 			result_ = DeltaIterationResults::Passing;
 		}
 	};
-}
+} // namespace Delta
 
 #endif

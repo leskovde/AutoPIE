@@ -1,20 +1,15 @@
-#include <iostream>
-#include <filesystem>
-#include <fstream>
-// Declares clang::SyntaxOnlyAction.
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
-// Declares llvm::cl::extrahelp.
-#include "llvm/Support/CommandLine.h"
-
 #include "clang/AST/AST.h"
-#include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Rewrite/Core/Rewriter.h"
-#include "clang/ASTMatchers/ASTMatchers.h"
-#include "clang/ASTMatchers/ASTMatchFinder.h"
+
+#include <filesystem>
+#include <fstream>
 
 #include "../../Common/include/Helper.h"
 #include "../../Common/include/Streams.h"
@@ -31,25 +26,22 @@ public:
 	std::vector<std::string> declRefNames;
 
 	DeclRefHandler()
-	{
-	}
+	= default;
 
 	void run(const MatchFinder::MatchResult& result) override
 	{
 		if (const auto expr = result.Nodes.getNodeAs<DeclRefExpr>("declRefs"))
-		{	
-			//expr->dump();
-
+		{
 			if (expr->getDecl()->isFunctionOrFunctionTemplate())
 			{
 				return;
 			}
-			
-			const auto range = GetPrintableRange(GetPrintableRange(expr->getSourceRange(), *result.SourceManager),
-				*result.SourceManager);
 
-			for (auto i = result.SourceManager->getSpellingLineNumber(range.getBegin()); 
-				i <= result.SourceManager->getSpellingLineNumber(range.getEnd()); i++)
+			const auto range = GetPrintableRange(GetPrintableRange(expr->getSourceRange(), *result.SourceManager),
+			                                     *result.SourceManager);
+
+			for (auto i = result.SourceManager->getSpellingLineNumber(range.getBegin());
+			     i <= result.SourceManager->getSpellingLineNumber(range.getEnd()); i++)
 			{
 				if (i == LineNumber)
 				{
@@ -99,7 +91,8 @@ int main(int argc, const char** argv)
 
 		inputLanguage = (*trees.begin())->getInputKind().getLanguage();
 
-		Out::Verb() << "File: " << (*trees.begin())->getOriginalSourceFileName() << ", language: " << LanguageToString(inputLanguage) << "\n";
+		Out::Verb() << "File: " << (*trees.begin())->getOriginalSourceFileName() << ", language: " <<
+			LanguageToString(inputLanguage) << "\n";
 	}
 
 	assert(inputLanguage != clang::Language::Unknown);
@@ -115,10 +108,10 @@ int main(int argc, const char** argv)
 	finder.addMatcher(declRefExpr(isExpansionInMainFile()).bind("declRefs"), &varHandler);
 
 	Out::Verb() << "Matching variables...\n";
-	
+
 	auto result = tool.run(tooling::newFrontendActionFactory(&finder).get());
 
-	if (result)
+	if (result != 0)
 	{
 		errs() << "The tool returned a non-standard value: " << result << "\n";
 	}
@@ -129,9 +122,9 @@ int main(int argc, const char** argv)
 	std::sort(varHandler.declRefNames.begin(), varHandler.declRefNames.end());
 	const auto it = std::unique(varHandler.declRefNames.begin(), varHandler.declRefNames.end());
 	varHandler.declRefNames.erase(it, varHandler.declRefNames.end());
-	
+
 	std::ofstream ofs(OutputFile);
-	
+
 	if (ofs)
 	{
 		Out::Verb() << "List of found variables:\n";
@@ -139,7 +132,7 @@ int main(int argc, const char** argv)
 		for (auto& var : varHandler.declRefNames)
 		{
 			Out::Verb() << LineNumber << ":" << var << "\n";
-			
+
 			ofs << LineNumber << ":" << var << "\n";
 		}
 	}

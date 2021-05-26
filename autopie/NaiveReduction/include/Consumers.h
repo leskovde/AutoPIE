@@ -7,12 +7,12 @@
 #include <future>
 #include <utility>
 
+#include "../../Common/include/Consumers.h"
 #include "../../Common/include/Context.h"
 #include "../../Common/include/DependencyGraph.h"
-#include "../../Common/include/Visitors.h"
-#include "../../Common/include/Streams.h"
-#include "../../Common/include/Consumers.h"
 #include "../../Common/include/Helper.h"
+#include "../../Common/include/Streams.h"
+#include "../../Common/include/Visitors.h"
 
 namespace Naive
 {
@@ -30,8 +30,12 @@ namespace Naive
 
 	public:
 		VariantGeneratingConsumer(clang::CompilerInstance* ci, GlobalContext& context) : mappingConsumer_(ci, context),
-			printingConsumer_(ci, context.parsedInput.errorLocation.lineNumber),
-			globalContext_(context)
+		                                                                                 printingConsumer_(
+			                                                                                 ci, context
+			                                                                                     .parsedInput.
+			                                                                                     errorLocation.
+			                                                                                     lineNumber),
+		                                                                                 globalContext_(context)
 		{
 		}
 
@@ -52,41 +56,47 @@ namespace Naive
 
 				try
 				{
-					auto fileName = TempFolder + std::to_string(variantsCount) + "_" + GetFileName(globalContext_.parsedInput.errorLocation.filePath) + LanguageToExtension(globalContext_.language);
+					auto fileName = TempFolder + std::to_string(variantsCount) + "_" + GetFileName(
+						globalContext_.parsedInput.errorLocation.filePath) + LanguageToExtension(
+						globalContext_.language);
 					printingConsumer_.HandleTranslationUnit(context, fileName, bitMask);
 
-					globalContext_.variantAdjustedErrorLocations[variantsCount] = printingConsumer_.GetAdjustedErrorLines();
+					globalContext_.variantAdjustedErrorLocations[variantsCount] = printingConsumer_.
+						GetAdjustedErrorLines();
 				}
 				catch (...)
 				{
-					Out::All() << "Could not process iteration no. " << variantsCount << " due to an internal exception.\n";
+					Out::All() << "Could not process iteration no. " << variantsCount <<
+						" due to an internal exception.\n";
 				}
 			}
 
 			Out::All() << "Finished. Done " << variantsCount << " variants.\n";
 		}
 
-		EpochRanges GetValidBitMasksInRange(const Unsigned startingPoint, const Unsigned numberOfVariants, const int numberOfCodeUnits, DependencyGraph dependencies, const int id) const
+		[[nodiscard]] EpochRanges GetValidBitMasksInRange(const Unsigned startingPoint, const Unsigned numberOfVariants,
+		                                                  const int numberOfCodeUnits, DependencyGraph dependencies,
+		                                                  const int id) const
 		{
 			{
 				std::lock_guard<std::mutex> lock(streamMutex);
 				Out::All() << "Thread #" << id << " started.\n";
 			}
-			
+
 			// Create ranges for each epoch.
 			EpochRanges bins;
-			
+
 			for (auto i = 0; i < globalContext_.deepeningContext.epochCount; i++)
 			{
 				bins.insert(
 					std::pair<double, std::vector<BitMask>>((i + 1) * globalContext_.deepeningContext.epochStep,
-						std::vector<BitMask>()));
+					                                        std::vector<BitMask>()));
 			}
 
 			// Add the last range (of invalid bit masks).
 			bins.insert(std::pair<double, std::vector<BitMask>>(1.0, std::vector<BitMask>()));
 			bins.insert(std::pair<double, std::vector<BitMask>>(INFINITY, std::vector<BitMask>()));
-			
+
 			auto bitMask = BitMask(numberOfCodeUnits);
 			InitializeBitMask(bitMask, startingPoint);
 
@@ -108,10 +118,10 @@ namespace Naive
 				std::lock_guard<std::mutex> lock(streamMutex);
 				Out::All() << "Thread #" << id << " finished.\n";
 			}
-			
+
 			return bins;
 		}
-		
+
 		void PartitionVariantsIntoBins(const int numberOfCodeUnits, DependencyGraph& dependencies) const
 		{
 			Out::All() << "Binning variants...\n";
@@ -124,31 +134,35 @@ namespace Naive
 					<< "It is not wise to run the algorithm on such a large input. Exiting...\n";
 				return;
 			}
-			
+
 			// Create ranges for each epoch.
 			for (auto i = 0; i < globalContext_.deepeningContext.epochCount; i++)
 			{
 				globalContext_.deepeningContext.bitMasks.insert(
-					std::pair<double, std::vector<BitMask>>((i + 1) * globalContext_.deepeningContext.epochStep,
-					                                        std::vector<BitMask>()));
+					std::pair<double, std::vector<BitMask>>(
+						(i + 1) * globalContext_.deepeningContext.epochStep,
+						std::vector<BitMask>()));
 			}
-			
+
 			const auto originalVariant = BitMask(numberOfCodeUnits, true);
-			globalContext_.deepeningContext.bitMasks.at(globalContext_.deepeningContext.epochCount * globalContext_.deepeningContext.epochStep).push_back(originalVariant);
+			globalContext_.deepeningContext.bitMasks.at(
+				               globalContext_.deepeningContext.epochCount * globalContext_.deepeningContext.epochStep).
+			               push_back(originalVariant);
 
 			// Add the last range (of invalid bit masks).
-			globalContext_.deepeningContext.bitMasks.insert(std::pair<double, std::vector<BitMask>>(1.0, std::vector<BitMask>()));
-			globalContext_.deepeningContext.bitMasks.insert(std::pair<double, std::vector<BitMask>>(INFINITY, std::vector<BitMask>()));
-
+			globalContext_.deepeningContext.bitMasks.insert(
+				std::pair<double, std::vector<BitMask>>(1.0, std::vector<BitMask>()));
+			globalContext_.deepeningContext.bitMasks.insert(
+				std::pair<double, std::vector<BitMask>>(INFINITY, std::vector<BitMask>()));
 
 			// The thread count must be specified in code, since it must have the const qualifier.
 			const auto threadCount = 12;
 			Unsigned ranges[threadCount];
 
 			// Determine the number of variants for each thread.
-			for (auto i = 0; i < threadCount; i++)
+			for (unsigned long long& range : ranges)
 			{
-				ranges[i] = (totalNumberOfVariants - 1) / threadCount;
+				range = (totalNumberOfVariants - 1) / threadCount;
 			}
 
 			for (Unsigned i = 0; i < (totalNumberOfVariants - 1) % threadCount; i++)
@@ -157,13 +171,13 @@ namespace Naive
 			}
 
 			auto futures = std::vector<std::future<EpochRanges>>();
-			
+
 			// Launch all threads.
 			for (auto i = 0; i < threadCount; i++)
 			{
 				const auto numberOfVariants = ranges[i];
 				Unsigned startingPoint = 0;
-				
+
 				// Determine the starting point of each thread by summing up the previous counts.
 				if (i > 0)
 				{
@@ -171,7 +185,9 @@ namespace Naive
 					startingPoint = ranges[i - 1];
 				}
 
-				futures.emplace_back(std::async(std::launch::async, &VariantGeneratingConsumer::GetValidBitMasksInRange, this, startingPoint, numberOfVariants, numberOfCodeUnits, dependencies, i));
+				futures.emplace_back(std::async(std::launch::async, &VariantGeneratingConsumer::GetValidBitMasksInRange,
+				                                this, startingPoint, numberOfVariants, numberOfCodeUnits, dependencies,
+				                                i));
 			}
 
 			auto results = std::vector<EpochRanges>();
@@ -180,7 +196,7 @@ namespace Naive
 			{
 				results.push_back(future.get());
 			}
-			
+
 			// Distribute bit masks into ranges.
 			for (auto& result : results)
 			{
@@ -208,7 +224,8 @@ namespace Naive
 			const auto numberOfCodeUnits = mappingConsumer_.GetCodeUnitsCount();
 
 			globalContext_.variantAdjustedErrorLocations.clear();
-			printingConsumer_.SetData(mappingConsumer_.GetSkippedNodes(), mappingConsumer_.GetDependencyGraph(), mappingConsumer_.GetPotentialErrorLines());
+			printingConsumer_.SetData(mappingConsumer_.GetSkippedNodes(), mappingConsumer_.GetDependencyGraph(),
+			                          mappingConsumer_.GetPotentialErrorLines());
 
 			auto dependencies = mappingConsumer_.GetDependencyGraph();
 
@@ -224,10 +241,14 @@ namespace Naive
 				globalContext_.stats.exitCode = EXIT_FAILURE;
 				return;
 			}
-			
+
 			for (auto i = 0; i < globalContext_.deepeningContext.epochCount; i++)
-			{			
-				auto& bitMasks = globalContext_.deepeningContext.bitMasks.lower_bound((i+ 1) * globalContext_.deepeningContext.epochStep - globalContext_.deepeningContext.epochStep / 2)->second;
+			{
+				auto& bitMasks = globalContext_.deepeningContext.bitMasks.lower_bound(
+					(i + 1) * globalContext_.deepeningContext.epochStep - globalContext_
+					                                                      .deepeningContext
+					                                                      .epochStep /
+					2)->second;
 
 				GenerateVariantsForABin(context, bitMasks);
 
@@ -237,15 +258,17 @@ namespace Naive
 					return;
 				}
 
-				Out::All() << "Epoch " << i + 1 << " out of " << globalContext_.deepeningContext.epochCount << ": A smaller program variant could not be found.\n";
+				Out::All() << "Epoch " << i + 1 << " out of " << globalContext_.deepeningContext.epochCount <<
+					": A smaller program variant could not be found.\n";
 				ClearTempDirectory();
 			}
 
-			Out::All() << "A reduced variant could not be found. If you've manually set the `--ratio` option, consider trying a greater value.\n";
-			
+			Out::All() <<
+				"A reduced variant could not be found. If you've manually set the `--ratio` option, consider trying a greater value.\n";
+
 			globalContext_.stats.exitCode = EXIT_FAILURE;
 		}
 	};
-}
+} // namespace Naive
 
 #endif

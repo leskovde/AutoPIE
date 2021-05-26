@@ -1,24 +1,17 @@
-#include <iostream>
-#include <filesystem>
-#include <fstream>
-// Declares clang::SyntaxOnlyAction.
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
-// Declares llvm::cl::extrahelp.
-#include "llvm/Support/CommandLine.h"
-
-#include "clang/AST/AST.h"
-#include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Rewrite/Core/Rewriter.h"
-#include "clang/ASTMatchers/ASTMatchers.h"
-#include "clang/ASTMatchers/ASTMatchFinder.h"
 
-#include "../include/Actions.h"
+#include <filesystem>
+#include <fstream>
+
 #include "../../Common/include/Helper.h"
 #include "../../Common/include/Streams.h"
+#include "../include/Actions.h"
 
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 
@@ -36,7 +29,7 @@ int main(int argc, const char** argv)
 {
 	// Parse the command-line args passed to the tool.
 	tooling::CommonOptionsParser op(argc, argv, AutoPieArgs);
-	
+
 	if (op.getSourcePathList().size() > 1)
 	{
 		errs() << "Only a single source file is supported.\n";
@@ -64,7 +57,8 @@ int main(int argc, const char** argv)
 
 		inputLanguage = (*trees.begin())->getInputKind().getLanguage();
 
-		Out::Verb() << "File: " << (*trees.begin())->getOriginalSourceFileName() << ", language: " << LanguageToString(inputLanguage) << "\n";
+		Out::Verb() << "File: " << (*trees.begin())->getOriginalSourceFileName() << ", language: " <<
+			LanguageToString(inputLanguage) << "\n";
 	}
 
 	assert(inputLanguage != clang::Language::Unknown);
@@ -74,7 +68,7 @@ int main(int argc, const char** argv)
 		errs() << "The specified error location is invalid!\nSource path: " << op.getSourcePathList()[0]
 			<< ", line: " << LineNumber << " could not be found.\n";
 	}
-	
+
 	// Get all lines of the slice.
 	std::vector<int> sliceLines;
 	std::ifstream ifs(SliceFile);
@@ -87,11 +81,11 @@ int main(int argc, const char** argv)
 
 	auto result = tool.run(SliceExtractor::SliceExtractorFrontendActionFactory(sliceLines).get());
 
-	if (result)
+	if (result != 0)
 	{
 		errs() << "The tool returned a non-standard value: " << result << "\n";
 	}
-	
+
 	// Keep the relevant lines only.
 	ifs.close();
 	ifs.open(op.getSourcePathList()[0]);
@@ -100,17 +94,20 @@ int main(int argc, const char** argv)
 	std::ofstream ofs(outputFileWithCorrectExtension);
 
 	int adjustedErrorLine = LineNumber;
-	
+
 	if (ifs && ofs)
 	{
 		Out::Verb() << "Source code after slice extraction:\n";
 
 		std::string line;
-		
+
 		for (auto i = 1; std::getline(ifs, line); i++)
 		{
 			if (std::find(sliceLines.begin(), sliceLines.end(), i) != sliceLines.end() ||
-				std::count_if(line.begin(), line.end(), [](const char c) { return std::isspace(c); }) == line.size() ||
+				std::count_if(line.begin(), line.end(), [](const char c)
+				{
+					return std::isspace(c);
+				}) == line.size() ||
 				line.rfind("#include", 0) == 0)
 			{
 				Out::Verb() << line << "\n";

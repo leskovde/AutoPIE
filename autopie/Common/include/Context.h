@@ -19,11 +19,12 @@ namespace Naive
 		EpochRanges bitMasks;
 
 		explicit IterativeDeepeningContext(const int epochs) : epochCount(epochs),
-		                                                       epochStep(static_cast<double>(ReductionRatio) / epochCount)
+		                                                       epochStep(
+			                                                       static_cast<double>(ReductionRatio) / epochCount)
 		{
 		}
 	};
-}
+} // namespace Naive
 
 namespace Delta
 {
@@ -31,7 +32,7 @@ namespace Delta
 	{
 		int latestCodeUnitCount{0};
 	};
-}
+} // namespace Delta
 
 struct Statistics
 {
@@ -42,9 +43,8 @@ struct Statistics
 	int exitCode = EXIT_FAILURE;
 
 	Statistics()
-	{
-	}
-	
+	= default;
+
 	explicit Statistics(const std::string& inputFile)
 	{
 		inputSizeInBytes = file_size(std::filesystem::path(inputFile));
@@ -71,15 +71,16 @@ public:
 
 	// Variant generation properties.
 	Statistics stats;
-	int currentEpoch{ 0 };
+	int currentEpoch{0};
 	InputData parsedInput;
 	Delta::DeltaAlgorithmContext deltaContext;
 	Naive::IterativeDeepeningContext deepeningContext;
-	clang::Language language{ clang::Language::Unknown };
+	clang::Language language{clang::Language::Unknown};
 	std::unordered_map<int, std::vector<int>> variantAdjustedErrorLocations;
 
-	GlobalContext(InputData& input, const std::string& inputFile, const int epochs) : parsedInput(input),
-		deepeningContext(epochs), stats(inputFile)
+	GlobalContext(InputData& input, const std::string& inputFile, const int epochs) : stats(inputFile),
+	                                                                                  parsedInput(input),
+	                                                                                  deepeningContext(epochs)
 	{
 		Out::Verb() << "DEBUG: GlobalContext - New non-default constructor call.\n";
 	}

@@ -1,10 +1,3 @@
-//===----------------------------------------------------------------------===//
-//
-/// Defines functions that would otherwise be static.
-/// Contributes to smaller .cpp files.
-//
-//===----------------------------------------------------------------------===//
-
 #include <clang/AST/ASTContext.h>
 #include <clang/Basic/Diagnostic.h>
 #include <clang/Basic/DiagnosticOptions.h>
@@ -71,7 +64,7 @@ clang::SourceRange GetPrintableRange(const clang::SourceRange range, const clang
 	const auto startLoc = sm.getSpellingLoc(range.getBegin());
 	const auto lastTokenLoc = sm.getSpellingLoc(range.getEnd());
 	const auto endLoc = clang::Lexer::getLocForEndOfToken(lastTokenLoc, 0, sm, lo);
-	return clang::SourceRange{ startLoc, endLoc };
+	return clang::SourceRange{startLoc, endLoc};
 }
 
 /**
@@ -127,7 +120,8 @@ bool ClearTempDirectory(const bool prompt)
 {
 	if (prompt && std::filesystem::exists(TempFolder))
 	{
-		Out::All() << "WARNING: The path " << TempFolder << " exists and is about to be cleared! Do you want to proceed? [Y/n] ";
+		Out::All() << "WARNING: The path " << TempFolder <<
+			" exists and is about to be cleared! Do you want to proceed? [Y/n] ";
 		const auto decision = std::getchar();
 		Out::All() << "\n";
 
@@ -265,9 +259,9 @@ void Increment(BitMask& bitMask)
 }
 
 void InitializeBitMask(BitMask& bitMask, Unsigned number)
-{	
+{
 	for (auto i = bitMask.size(); number != 0; i--)
-	{		
+	{
 		if (number & 1)
 		{
 			bitMask[i - 1] = true;
@@ -276,22 +270,22 @@ void InitializeBitMask(BitMask& bitMask, Unsigned number)
 		{
 			bitMask[i - 1] = false;
 		}
-		
+
 		number >>= 1;
 	}
 }
 
 void MergeVectorMaps(EpochRanges& from, EpochRanges& to)
 {
-	for (auto it = from.begin(); it != from.end(); ++it) 
+	for (auto it = from.begin(); it != from.end(); ++it)
 	{
 		const auto toIt = to.insert(*it);
-		
-		if (!toIt.second) 
-		{  
-			auto fromElement = &(it->second);
-			auto toElement = &(toIt.first->second);
-			
+
+		if (!toIt.second)
+		{
+			auto fromElement = &it->second;
+			auto toElement = &toIt.first->second;
+
 			toElement->insert(toElement->end(), fromElement->begin(), fromElement->end());
 		}
 	}
@@ -325,7 +319,7 @@ std::pair<bool, double> IsValid(const BitMask& bitMask, DependencyGraph& depende
 				// Criterion nodes should be present.
 				return std::pair<bool, double>(false, 0);
 			}
-			
+
 			if (heuristics)
 			{
 				for (auto child : dependencies.GetDependentNodes(i))
@@ -340,7 +334,7 @@ std::pair<bool, double> IsValid(const BitMask& bitMask, DependencyGraph& depende
 		}
 	}
 
-	return  std::pair<bool, double>(true, static_cast<double>(characterCount) / dependencies.GetTotalCharacterCount());
+	return std::pair<bool, double>(true, static_cast<double>(characterCount) / dependencies.GetTotalCharacterCount());
 }
 
 //===----------------------------------------------------------------------===//
@@ -390,7 +384,7 @@ int Compile(const std::filesystem::directory_entry& entry, const clang::Language
 	llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diagIDs;
 
 	auto diagnosticsEngine = std::make_unique<clang::DiagnosticsEngine>(diagIDs, &diagnosticOptions,
-		textDiagnosticPrinter.get());
+	                                                                    textDiagnosticPrinter.get());
 
 	clang::driver::Driver driver(arguments[0], llvm::sys::getDefaultTargetTriple(), *diagnosticsEngine.release());
 
@@ -490,7 +484,8 @@ bool CheckLocationValidity(const std::string& filePath, const long lineNumber, c
 }
 
 template <typename Out>
-void SplitToWords(const std::string& s, const char delimiter, Out result) {
+void SplitToWords(const std::string& s, const char delimiter, Out result)
+{
 	std::istringstream iss(s);
 	std::string word;
 
@@ -500,9 +495,10 @@ void SplitToWords(const std::string& s, const char delimiter, Out result) {
 	}
 }
 
-std::vector<std::string> SplitToWords(const std::string& s, const char delimiter) {
+std::vector<std::string> SplitToWords(const std::string& s, const char delimiter)
+{
 	std::vector<std::string> words;
-	
+
 	SplitToWords(s, delimiter, std::back_inserter(words));
 
 	return words;
@@ -513,24 +509,26 @@ static bool IsErrorMessageValid(const std::string& currentMessage)
 	auto original = std::string(ErrorMessage);
 	auto actual = std::string(currentMessage);
 
-	std::for_each(original.begin(), original.end(), [](char& c) {
+	std::for_each(original.begin(), original.end(), [](char& c)
+	{
 		c = std::toupper(c);
 	});
 
-	std::for_each(actual.begin(), actual.end(), [](char& c) {
+	std::for_each(actual.begin(), actual.end(), [](char& c)
+	{
 		c = std::toupper(c);
 	});
 
 	auto messageParts = SplitToWords(original, ' ');
 
-	for (auto& part :messageParts)
+	for (auto& part : messageParts)
 	{
 		if (actual.find(part) != std::string::npos)
 		{
 			return true;
 		}
 	}
-	
+
 	return false;
 }
 
@@ -563,7 +561,7 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 		exit(EXIT_FAILURE);
 	}
 
-	const char* argv[] = { Arguments.c_str(), nullptr };
+	const char* argv[] = {Arguments.c_str(), nullptr};
 
 	lldb::SBError error;
 	lldb::SBLaunchInfo launchInfo(argv);
@@ -576,7 +574,8 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 
 	// Create and launch a target - represents a debugging session of a single executable.
 	// Launching creates a new process in which the executable is ran.
-	auto target = debugger.CreateTarget(executable.c_str(), llvm::sys::getDefaultTargetTriple().c_str(), "", true, error);
+	auto target = debugger.CreateTarget(executable.c_str(), llvm::sys::getDefaultTargetTriple().c_str(), "", true,
+	                                    error);
 
 	Out::Verb() << "error.Success()              = " << static_cast<int>(error.Success()) << "\n";
 	Out::Verb() << "target.IsValid()             = " << static_cast<int>(target.IsValid()) << "\n";
@@ -630,13 +629,15 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 						Out::Verb() << "thread.IsValid()             = " << static_cast<int>(thread.IsValid()) << "\n";
 						Out::Verb() << "thread.GetThreadID()         = " << thread.GetThreadID() << "\n";
 						Out::Verb() << "thread.GetName()             = " << (thread.GetName() != nullptr
-							? thread.GetName()
-							: "(null)") << "\n";
-						Out::Verb() << "thread.GetStopReason()       = " << StopReasonToString(thread.GetStopReason()) <<
+							                                                     ? thread.GetName()
+							                                                     : "(null)") << "\n";
+						Out::Verb() << "thread.GetStopReason()       = " << StopReasonToString(thread.GetStopReason())
+							<<
 							"\n";
 						Out::Verb() << "thread.IsSuspended()         = " << static_cast<int>(thread.IsSuspended()) <<
 							"\n";
-						Out::Verb() << "thread.IsStopped()           = " << static_cast<int>(thread.IsStopped()) << "\n";
+						Out::Verb() << "thread.IsStopped()           = " << static_cast<int>(thread.IsStopped()) <<
+							"\n";
 						Out::Verb() << "process.GetState()           = " << StateToString(process.GetState()) << "\n";
 
 						if (thread.GetStopReason() == lldb::StopReason::eStopReasonException)
@@ -653,8 +654,8 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 						if (function.IsValid())
 						{
 							Out::Verb() << "function.GetDisplayName()   = " << (function.GetDisplayName() != nullptr
-								? function.GetDisplayName()
-								: "(null)") << "\n";
+								                                                    ? function.GetDisplayName()
+								                                                    : "(null)") << "\n";
 						}
 
 						auto symbol = frame.GetSymbol();
@@ -666,7 +667,8 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 
 							auto symbolContext = frame.GetSymbolContext(lldb::eSymbolContextLineEntry);
 
-							Out::Verb() << "symbolContext.IsValid()      = " << static_cast<int>(symbolContext.IsValid())
+							Out::Verb() << "symbolContext.IsValid()      = " << static_cast<int>(symbolContext.IsValid()
+								)
 								<< "\n";
 
 							if (symbolContext.IsValid())
@@ -676,16 +678,18 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 
 								Out::Verb() << "symbolContext.GetFilename()  = " << fileName << "\n";
 								Out::Verb() << "symbolContext.GetLine()      = " << lineNumber << "\n";
-								Out::Verb() << "symbolContext.GetColumn()    = " << symbolContext.GetLineEntry().GetColumn() << "\n";
-								
+								Out::Verb() << "symbolContext.GetColumn()    = " << symbolContext
+								                                                    .GetLineEntry().GetColumn() << "\n";
+
 								for (auto presumedErrorLine : presumedErrorLines)
-								{									
+								{
 									if (lineNumber == presumedErrorLine)
-									{										
+									{
 										auto stream = lldb::SBStream();
 										thread.GetStatus(stream);
 
-										Out::Verb() << "stream.IsValid()              = " << static_cast<int>(stream.IsValid()) << "\n";
+										Out::Verb() << "stream.IsValid()              = " << static_cast<int>(stream.
+											IsValid()) << "\n";
 
 										if (stream.IsValid())
 										{
@@ -760,7 +764,8 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 		}
 		else
 		{
-			Out::Verb() << "Process event has not occured in the last" << timeOut << " seconds, killing the process ...\n";
+			Out::Verb() << "Process event has not occured in the last" << timeOut <<
+				" seconds, killing the process ...\n";
 			done = true;
 		}
 	}
@@ -780,7 +785,7 @@ void DisplayStats(Statistics& stats)
 	Out::All() << "Total iterations:             " << stats.totalIterations << "\n";
 	Out::All() << "Original size [bytes]:        " << stats.inputSizeInBytes << "\n";
 	Out::All() << "Size of the result [bytes]:   " << stats.outputSizeInBytes << "\n";
-	
+
 	Out::All() << "===----------------------------------------------------------------------===\n";
 }
 
@@ -818,10 +823,10 @@ bool ValidateResults(GlobalContext& globalContext)
 
 	// Sort the output by size and iterate it from the smallest to the largest file. The first valid file is the minimal version.
 	std::sort(files.begin(), files.end(),
-		[](const std::filesystem::directory_entry& a, const std::filesystem::directory_entry& b) -> bool
-		{
-			return a.file_size() < b.file_size();
-		});
+	          [](const std::filesystem::directory_entry& a, const std::filesystem::directory_entry& b) -> bool
+	          {
+		          return a.file_size() < b.file_size();
+	          });
 
 	std::optional<std::string> resultFound{};
 
@@ -839,7 +844,7 @@ bool ValidateResults(GlobalContext& globalContext)
 	{
 		return false;
 	}
-	
+
 	Out::All() << "Found the smallest error-inducing source file: " << resultFound.value() << "\n";
 
 	const auto newFileName = TempFolder + std::string("autoPieOut") + LanguageToExtension(globalContext.language);
@@ -849,10 +854,10 @@ bool ValidateResults(GlobalContext& globalContext)
 	std::filesystem::rename(resultFound.value(), newFileName);
 
 	PrintResult(newFileName);
-	
+
 	globalContext.stats.Finalize(newFileName);
 	DisplayStats(globalContext.stats);
-	
+
 	return true;
 }
 
