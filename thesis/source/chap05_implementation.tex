@@ -8,6 +8,8 @@ More straightforward approaches such as the naive reduction and
 the minimizing Delta debugging algorithm deserve their implementation. 
 However, implementing more complicated techniques - static and dynamic 
 slicing - is simply out of scope for this project.
+Therefore we use existing third-party 
+applications~\citep{Chalupa20}~\citep{Sahoo13} to perform slicing.
 This chapter will explain the structure of the project and the implementation 
 process of the naive reduction and the minimizing Delta debugging algorithm. 
 Moreover, it will introduce the reader to all used technologies and existing 
@@ -702,7 +704,8 @@ However, due to compatibility reasons, the slicers cannot be easily shipped
 and executed with the current implementation of the rest of the project. 
 Therefore, we run both slicers in their available Docker containers.
 
-\paragraph{DG.} We chose DG as it is the best LLVM-based static slicer found. 
+\paragraph{DG.} We chose DG~\citep{Chalupa20} as it is the most reliable 
+LLVM-based static slicer found. 
 It slices LLVM bitcode and therefore requires the input in the compiled form. 
 This requirement imposes the first obstacle - compiling the given source file 
 to the LLVM intermediate representation. 
@@ -729,7 +732,7 @@ The repository can be found at \url{https://github.com/mchalupa/dg}.
 
 \paragraph{Giri.}
 
-Giri is an LLVM-based backward dynamic slicer. 
+Giri~\citep{Sahoo13} is an LLVM-based backward dynamic slicer. 
 The project started its development during the Google Summer of Code in 2013, 
 and it has not received many updates since. 
 It runs on a deprecated version of LLVM that cannot be installed on modern 
