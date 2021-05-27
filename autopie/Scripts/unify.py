@@ -14,8 +14,13 @@ parser.add_argument("-o", "--output", action="store", type=argparse.FileType('w'
 
 
 def unify(args):
+    # Reads all input files, stores their content
+    # (line numbers) into a set and dumps the set
+    # into a single output file.
+
     print(f"Unifying {len(args.file)} slices...")
 
+    # Use set to avoid duplicities.
     lines = set()
 
     for ifs in args.file:
