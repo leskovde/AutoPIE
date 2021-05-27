@@ -23,26 +23,10 @@ the same optimality properties as the global minimum.
 
 Relevant preprocessing techniques were presented, and their performance impact 
 was measured. 
-Running static and dynamic slicing reduced the source code's size 
-significantly while preserving the desired runtime error. 
-Furthermore, both slicers also conserved the cause of the error.
-This thesis shows that combining the mentioned preprocessing techniques with 
-the presented algorithms yields good reduction results in average use cases. 
-Such cases include unstructured, structured, and object-oriented source code. 
-Unstructured programs saw the best results; we suppose that might be due to 
-the nature of our implementation. 
-The execution time is dramatically reduced compared to naive minimization. 
-Introduced heuristics shaved off an immense number of validations in 
-the average case. 
-Though, the complexity for generating optimal results remains exponential in 
-the worst case.
-
-The premise of this project was to find a sophisticated way of minimizing 
-a program while preserving the desired runtime error. 
-We found out the slicing-based technique worked the best on all but trivial 
-inputs. 
-This result has confirmed and validated our beliefs held while formulating 
-this technique.
+The results of executed benchmarks indicate that our assumptions were 
+correct. 
+The slicing-based technique is undoubtedly the most practical minimization 
+approach.
 
 \section{Future work}
 

@@ -65,12 +65,6 @@
    <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Automated Program Minimization With Preserving of Runtime Errors</rdf:li></rdf:Alt></dc:title>
    <dc:creator><rdf:Seq><rdf:li>Denis Leskovar</rdf:li></rdf:Seq></dc:creator>
    <dc:publisher><rdf:Bag><rdf:li>Charles University</rdf:li></rdf:Bag></dc:publisher>
-   <dc:description><rdf:Alt><rdf:li xml:lang="x-default">Debugging large programs is a complex and time-consuming task, which has not been fully automated yet. Given a runtime error, the developer must first reproduce it. He then has to find the root cause of the error and create a proper bug fix. Automation can make this process significantly more efficient by reducing the amount of code the developer has to look through. The goal of this thesis is to propose and discuss automated techniques for reducing a given failing program into its minimal runnable subset. We introduce three methodologies that are practical for program reduction. The automatically minimized program must result in the same runtime error as the original program. The process of minimization focuses on producing optimal results for the domain of small and simple applications. All three techniques are implemented using Clang LibTooling, a library for standalone Clang tools. In the thesis, we explain the inner workings of each implementation and discuss their limitations. Implementations are benchmarked on a set of C and C++ source files. Performance is evaluated with respect to the size of the generated output and the algorithm's running time. </rdf:li></rdf:Alt></dc:description>
-   <dc:subject><rdf:Bag><rdf:li>automated debugging</rdf:li>
-     <rdf:li>code analysis</rdf:li>
-     <rdf:li>syntax tree</rdf:li>
-     <rdf:li>statement reduction</rdf:li>
-     <rdf:li>clang libtooling</rdf:li></rdf:Bag></dc:subject>
   </rdf:Description> 
   <rdf:Description rdf:about="" xmlns:prism="http://prismstandard.org/namespaces/basic/2.2/"> 
   </rdf:Description> 
@@ -82,15 +76,15 @@
   </rdf:Description> 
   <rdf:Description rdf:about="" xmlns:xmp="http://ns.adobe.com/xap/1.0/"> 
    <xmp:CreatorTool>LaTeX with hyperref</xmp:CreatorTool> 
-   <xmp:ModifyDate>2021-05-27T21:25:17+02:00</xmp:ModifyDate> 
-   <xmp:CreateDate>2021-05-27T21:25:17+02:00</xmp:CreateDate> 
-   <xmp:MetadataDate>2021-05-27T21:25:17+02:00</xmp:MetadataDate> 
+   <xmp:ModifyDate>2021-05-27T22:30:36+02:00</xmp:ModifyDate> 
+   <xmp:CreateDate>2021-05-27T22:30:36+02:00</xmp:CreateDate> 
+   <xmp:MetadataDate>2021-05-27T22:30:36+02:00</xmp:MetadataDate> 
   </rdf:Description> 
   <rdf:Description rdf:about="" xmlns:xmpRights = "http://ns.adobe.com/xap/1.0/rights/"> 
   </rdf:Description> 
   <rdf:Description rdf:about="" xmlns:xmpMM="http://ns.adobe.com/xap/1.0/mm/"> 
-   <xmpMM:DocumentID>uuid:C8CFC28F-88E1-7995-E9AD-F6D12EAD346B</xmpMM:DocumentID> 
-   <xmpMM:InstanceID>uuid:604CF76F-3C7A-EC77-3CE6-0F18715B628A</xmpMM:InstanceID> 
+   <xmpMM:DocumentID>uuid:F54ADBA2-FBB8-545A-6119-7AD7ADB5FE53</xmpMM:DocumentID> 
+   <xmpMM:InstanceID>uuid:FA26C710-71CA-3749-BCBD-31044B465CA4</xmpMM:InstanceID> 
   </rdf:Description> 
  </rdf:RDF> 
 </x:xmpmeta> 

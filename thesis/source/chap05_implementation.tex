@@ -19,6 +19,12 @@ highlighting the necessary steps for its inclusion in this project.
 The chapter concludes with a discussion on some of the design choices and 
 the project's limitations.
 
+The following text references source files of the implementation. 
+The implementation - named AutoPIE (Automated Problem-Investigating 
+Execution) - is a part of Attachments~\ref{chap:attachments}. 
+More details on those files and their structure can be found in 
+Attachment~\ref{chap:tree}.
+
 \section{Technologies}
 
 This project heavily depends on existing compiler and debugger frameworks. 
@@ -53,8 +59,8 @@ LLDB is an open-source debugger that ships as a part of the LLVM project.
 The user needs to build LLDB with its scripting bridge API.
 This can be achieved by adding LLDB to the LLVM project list when invoking 
 CMake.
-The Python API and its C++ scripting bridge can also be included by 
-specifying a few other arguments.
+The Python API, which requires Python 3, and its C++ scripting bridge can 
+also be included by specifying a few other arguments.
 By default, LLVM builds for all available platforms, including ARM and 
 PowerPC.
 However, only a single platform is required/supported for this project.
@@ -70,8 +76,8 @@ An easy and reliable way of preserving older LibTooling environments is by
 storing them in a Docker container.
 
 Docker is another dependency of this project.
-It is required to run slicing implementations as well as support the entire 
-minimization process on Windows.
+It is required to run slicer implementations and is invoked from Python.
+This usage indicates the fact that the user must also have Docker's Python API installed.
 
 Technologies and their system requirements are described in more detail 
 in Attachment~\ref{chap:userdoc}.
@@ -260,6 +266,11 @@ Notably, it can retrieve data for the following structures:
   where each node is represented using its traversal order number. 
   Nodes in the graph might also contain additional information used for 
   debugging, such as their type and the code snippet they represent.
+  The class \icode{DependencyGraph} supports visualization of the current 
+  input. 
+  The user can view how the source file is structured. 
+  Moreover, the visualization also showcases the dependencies of individual 
+  code snippets - both in terms of nesting and simple data flow.
   \item Skipped nodes - this container serves as a list of nodes not worth 
   visiting. 
   These nodes might be too granular or solely implicit.
@@ -769,8 +780,13 @@ Hence, we have decided to omit using the slicer in the slicing-based approach
 whenever an input written in C++ is present. 
 We believe that in this case, Giri can be substituted by DG using argument 
 injection.
+Moreover, the slicer also does not handle failing programs. 
+The tool does not generate slices for programs resulting in runtime errors. 
+We have made a workaround for this issue in the form statement injection. 
+We place an \icode{exit} call just before the error-inducing statement, 
+terminating before any errors are thrown.
 
-Giri's repository can be found on GitHub on the following address: 
+Giri's GitHub repository can be found at
 \url{https://github.com/liuml07/giri}.
 
 \section{Systematic approach}
