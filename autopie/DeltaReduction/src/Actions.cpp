@@ -6,7 +6,7 @@
 namespace Delta
 {
 	/**
-	 * Creates a `DeltaDebuggingFrontendActionFactory` with a given `GlobalContext` member.\n
+	 * Creates a `DeltaDebuggingFrontendActionFactory` with given members for data transfers.\n
 	 * Any `DeltaDebuggingFrontendAction`s created by the factory then have the `GlobalContext` member as well.\n
 	 * This extra step is required due to the default `FrontendActionFactory` not having support for custom constructors
 	 * and passing data to created instances.

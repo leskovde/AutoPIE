@@ -26,9 +26,20 @@ namespace Delta
 		GlobalContext& globalContext_;
 		DeltaIterationResults& result_;
 
+		/**
+		 * Validates the current bit mask by generating source code, compiling it and
+		 * executing it.
+		 *
+		 * @param context ASTContext of the current traversal.
+		 * @param bitmask The bit mask on which the source code variant should be based.
+		 * @param dependencyGraph The graph for heuristics and printing-safety.
+		 * @return True if the variant represented by the given bit mask was correct,
+		 * false otherwise.
+		 */
 		bool IsFailureInducingSubset(clang::ASTContext& context, const BitMask& bitmask,
 		                             DependencyGraph& dependencyGraph) const
 		{
+			// Check whether the bit mask is worth generating into source code.
 			if (IsValid(bitmask, dependencyGraph, false).first)
 			{
 				globalContext_.stats.totalIterations++;
@@ -40,10 +51,12 @@ namespace Delta
 						std::filesystem::remove(fileName_);
 					}
 
+					// Convert the bit mask into source code, update the adjusted locations.
 					printingConsumer_.HandleTranslationUnit(context, fileName_, bitmask);
 					globalContext_.variantAdjustedErrorLocations[iteration_] = printingConsumer_.
 						GetAdjustedErrorLines();
 
+					// Compile and execute the generated source code.
 					if (ValidateVariant(globalContext_, std::filesystem::directory_entry(fileName_)))
 					{
 						Out::All() << "Iteration " << iteration_ << ": smaller subset found.\n";
@@ -87,19 +100,22 @@ namespace Delta
 		}
 
 		/**
-		 * Runs two consumer steps to generate all possible variants.\n
-		 * Firstly, a mapping consumer is called to analyze AST nodes and create a traversal order.\n
-		 * Secondly, a bitmask based on the number of found code units is created.
-		 * Each bit in the bitmask represents a node based on the traversal order.
-		 * Setting a bit to true translates to the corresponding node being present in the output.
-		 * Setting a bit to false results in the deletion of the corresponding node.\n
-		 * Lastly, all possible bitmask variants are generated and the variant printing consumer is called
-		 * for each bitmask variant.
-		 *
+		 * Runs the iteration body of the minimizing Delta debugging algorithm.\n
+		 * Performs the following steps:\n
+		 * 1. Split into a container of equal sized bins.\n
+		 * 2. Get a container of complements.\n
+		 * 3. Loop over the first container and test each bin (generate and execute).\n
+		 * 4. If a variant fails (i.e., the desired outcome), set granularity to 2 and the file
+		 * to that variant.\n
+		 * 5. Loop over the second container and test analogically.\n
+		 * 6. If a variant fails, decrement granularity and set the file to that variant \n
+		 * 7. If nothing fails, multiply granularity by 2.\n
+		 * Granularity is set elsewhere, the function only propagates the result of the iteration.
 		 * @param context The AST context.
 		 */
 		void HandleTranslationUnit(clang::ASTContext& context) override
 		{
+			// Map the current file - must be done, since the file changes in each iteration.
 			mappingConsumer_.HandleTranslationUnit(context);
 			const auto numberOfCodeUnits = mappingConsumer_.GetCodeUnitsCount();
 
@@ -110,14 +126,6 @@ namespace Delta
 			                          mappingConsumer_.GetPotentialErrorLines());
 
 			auto dependencies = mappingConsumer_.GetDependencyGraph();
-
-			// 1. Split into a container of equal sized bins.
-			// 2. Get a container of complements.
-			// 3. Loop over the first container and test each bin (generate variant and execute).
-			// 4. If a variant fails, set n to 2 and the file to that variant.
-			// 5. Loop over the second container and test --||--.
-			// 6. If a variant fails, decrement n and set the file to that variant/
-			// 7. If nothing fails, set n to 2 *n.
 
 			Out::Verb() << "Current iteration: " << iteration_ << ".\n";
 			Out::Verb() << "Current code unit count: " << numberOfCodeUnits << ".\n";
@@ -153,6 +161,7 @@ namespace Delta
 				ranges[i]++;
 			}
 
+			// Assign bits into partitions.
 			auto sum = 0;
 			for (auto i = 0; i < partitionCount_; i++)
 			{
@@ -183,6 +192,7 @@ namespace Delta
 			Out::Verb() << "Splitting done.\n";
 			Out::Verb() << "Validating " << partitions.size() << " partitions...\n";
 
+			// Iterate over all partitions - the small kind of input.
 			for (auto& partition : partitions)
 			{
 				if (IsFailureInducingSubset(context, partition, dependencies))
@@ -194,6 +204,7 @@ namespace Delta
 
 			Out::Verb() << "Validating " << complements.size() << " complements...\n";
 
+			// Iterate over all complements - the larger kind of input.
 			for (auto& complement : complements)
 			{
 				if (IsFailureInducingSubset(context, complement, dependencies))
@@ -203,6 +214,7 @@ namespace Delta
 				}
 			}
 
+			// The iteration didn't find any valid subsets.
 			Out::Verb() << "Iteration " << iteration_ << ": smaller subset not found.\n";
 			result_ = DeltaIterationResults::Passing;
 		}

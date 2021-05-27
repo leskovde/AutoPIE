@@ -33,8 +33,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//TODO: Rework range <---> source functions to work with StringRef instead of std::string.
-
 /**
  * Extracts the underlying source code from source range.\n
  * Uses other helper methods to extract text accurately.\n
@@ -258,6 +256,14 @@ void Increment(BitMask& bitMask)
 	}
 }
 
+/**
+ * Sets the given bit mask's bits to those representing the given number.\n
+ * The initialization is done so that the last bit in the bit mask
+ * (.size() -1) represents the least significant bit in the number.
+ *
+ * @param bitMask The bit mask to be modified.
+ * @param number The unsigned integers whose bits will be copied.
+ */
 void InitializeBitMask(BitMask& bitMask, Unsigned number)
 {
 	for (auto i = bitMask.size(); number != 0; i--)
@@ -275,6 +281,13 @@ void InitializeBitMask(BitMask& bitMask, Unsigned number)
 	}
 }
 
+/**
+ * Merges two maps of bit mask containers.
+ * Results are saved to the latter map.
+ *
+ * @param from The map from which data is taken.
+ * @param to The map to which data is saved.
+ */
 void MergeVectorMaps(EpochRanges& from, EpochRanges& to)
 {
 	for (auto it = from.begin(); it != from.end(); ++it)
@@ -343,6 +356,12 @@ std::pair<bool, double> IsValid(const BitMask& bitMask, DependencyGraph& depende
 //
 //===----------------------------------------------------------------------===//
 
+/**
+ * Determines the compiler based on the given language.\n
+ *
+ * @param language The language for which the compiler should be used.
+ * @return A string with the name of compiler that can be used for finding it later.
+ */
 static std::string GetCompilerName(const clang::Language language)
 {
 	switch (language)
@@ -371,14 +390,17 @@ static std::string GetCompilerName(const clang::Language language)
  */
 int Compile(const std::filesystem::directory_entry& entry, const clang::Language language)
 {
+	// Create the paths necessary for the compiler driver.
 	const auto input = entry.path().string();
 	const auto output = TempFolder + entry.path().filename().replace_extension(".out").string();
 	const auto clangPath = llvm::sys::findProgramByName(GetCompilerName(language));
 
+	// Compile using debug symbols - trivial arguments, a relaxation of the fully-fledged solution.
 	const auto arguments = std::vector<const char*>{
 		clangPath->c_str(), /*"-v",*/ "-O0", "-g", "-o", output.c_str(), input.c_str()
 	};
 
+	// Create the driver's components.
 	clang::DiagnosticOptions diagnosticOptions;
 	const auto textDiagnosticPrinter = std::make_unique<clang::TextDiagnosticPrinter>(llvm::outs(), &diagnosticOptions);
 	llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diagIDs;
@@ -386,22 +408,23 @@ int Compile(const std::filesystem::directory_entry& entry, const clang::Language
 	auto diagnosticsEngine = std::make_unique<clang::DiagnosticsEngine>(diagIDs, &diagnosticOptions,
 	                                                                    textDiagnosticPrinter.get());
 
+	// Create the driver and assign the compilation to it.
 	clang::driver::Driver driver(arguments[0], llvm::sys::getDefaultTargetTriple(), *diagnosticsEngine.release());
 
 	const auto compilation = std::unique_ptr<clang::driver::Compilation>(driver.BuildCompilation(arguments));
-
-	//driver.PrintActions(*compilation);
 
 	auto result = 1; // Set the initial value to invalid, since we don't need that lame energy in our lives.
 	llvm::SmallVector<std::pair<int, const clang::driver::Command*>, 16> failingCommands;
 
 	if (compilation)
 	{
+		// If valid, run the compilation.
 		result = driver.ExecuteCompilation(*compilation, failingCommands);
 	}
 
 	llvm::outs() << "\n";
 
+	// Determine the result based on whether the output binary exists.
 	if (!std::filesystem::exists(output))
 	{
 		result |= 1;
@@ -495,6 +518,12 @@ void SplitToWords(const std::string& s, const char delimiter, Out result)
 	}
 }
 
+/**
+ * Separates a given string into a container strings based on a given delimiter.
+ *
+ * @param s The string to be split.
+ * @param delimiter The character that is taken into consideration when splitting.
+ */
 std::vector<std::string> SplitToWords(const std::string& s, const char delimiter)
 {
 	std::vector<std::string> words;
@@ -504,23 +533,35 @@ std::vector<std::string> SplitToWords(const std::string& s, const char delimiter
 	return words;
 }
 
+/**
+ * Checks whether a given message roughly corresponds to the error message
+ * specified in the program's options.\n
+ * The validation is done by checking whether the current message contains
+ * parts of the original. Any part suffices.
+ *
+ * @param currentMessage The message in which we search for parts of
+ * the original.
+ * @return True if at least a part of the original was found, false otherwise.
+ */
 static bool IsErrorMessageValid(const std::string& currentMessage)
 {
 	auto original = std::string(ErrorMessage);
 	auto actual = std::string(currentMessage);
 
+	// Convert both to the same case
 	std::for_each(original.begin(), original.end(), [](char& c)
 	{
-		c = std::toupper(c);
+		c = std::tolower(c);
 	});
 
 	std::for_each(actual.begin(), actual.end(), [](char& c)
 	{
-		c = std::toupper(c);
+		c = std::tolower(c);
 	});
 
 	auto messageParts = SplitToWords(original, ' ');
 
+	// Check the parts of the original message.
 	for (auto& part : messageParts)
 	{
 		if (actual.find(part) != std::string::npos)
@@ -532,6 +573,20 @@ static bool IsErrorMessageValid(const std::string& currentMessage)
 	return false;
 }
 
+/**
+ * Runs the compiler and the LLDB debugger in order to validate a given source file.
+ * If the compilation success, the LLDB proceeds to execute the generated binary
+ * and checks how it executes.\n
+ * Every time the execution stops, we check the location of the current symbol and
+ * the generated message.\n
+ * If both correspond, we terminate positively.
+ * Otherwise, the search is inconclusive.
+ * Note that the LLDB runtime has a set timeout that can only be changed inside the code.
+ *
+ * @param globalContext The algorithm's context used for extracting adjusted line numbers.
+ * @param entry The filesystem's file entry.
+ * @return True if the source code can be compiled and ends in the desired runtime error, false otherwise.
+ */
 bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::directory_entry& entry)
 {
 	const auto compilationExitCode = Compile(entry, globalContext.language);
@@ -551,6 +606,7 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 
 	// Keep all LLDB logic written explicitly, not refactored in a function.
 	// The function could be called when the LLDBSentry is not initialized => unwanted behaviour.
+	// Having this function is a risk already...
 
 	// Create a debugger object - represents an instance of LLDB.
 	auto debugger(lldb::SBDebugger::Create());
@@ -593,7 +649,8 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 	Out::Verb() << "listener.IsValid()           = " << static_cast<int>(listener.IsValid()) << "\n";
 
 	auto done = false;
-	const auto timeOut = 10;
+	// The timeout is currently set to 30 seconds for EACH event, not the entire run.
+	const auto timeOut = 30;
 
 	// The debugger is set to run asynchronously (debugger.GetAsync() => true).
 	// The communication is done via events. Listen for events broadcast by the forked process.
@@ -681,6 +738,8 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 								Out::Verb() << "symbolContext.GetColumn()    = " << symbolContext
 								                                                    .GetLineEntry().GetColumn() << "\n";
 
+								// Iterate over all possible error-inducing lines (the original, plus function decl body)
+								// and determine whether the current location is correct.
 								for (auto presumedErrorLine : presumedErrorLines)
 								{
 									if (lineNumber == presumedErrorLine)
@@ -691,6 +750,8 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 										Out::Verb() << "stream.IsValid()              = " << static_cast<int>(stream.
 											IsValid()) << "\n";
 
+										// The location was correct, validate the message - the runtime error must
+										// be the same.
 										if (stream.IsValid())
 										{
 											const auto currentMessage = stream.GetData();
@@ -770,6 +831,7 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 		}
 	}
 
+	// Clean up.
 	process.Kill();
 	debugger.DeleteTarget(target);
 	lldb::SBDebugger::Destroy(debugger);
@@ -777,18 +839,29 @@ bool ValidateVariant(GlobalContext& globalContext, const std::filesystem::direct
 	return false;
 }
 
+/**
+ * Prints the expected number of iterations, the actual number of iterations,
+ * the original size of the input file and the size of the output file.
+ *
+ * @param stats The instance of the structure keeping track of the current run.
+ */
 void DisplayStats(Statistics& stats)
 {
 	Out::All() << "===------------------------ Reduction statistics ------------------------===\n";
 
 	Out::All() << "Expected iterations:          " << stats.expectedIterations << "\n";
-	Out::All() << "Total iterations:             " << stats.totalIterations << "\n";
+	Out::All() << "Actual iterations:             " << stats.totalIterations << "\n";
 	Out::All() << "Original size [bytes]:        " << stats.inputSizeInBytes << "\n";
 	Out::All() << "Size of the result [bytes]:   " << stats.outputSizeInBytes << "\n";
 
 	Out::All() << "===----------------------------------------------------------------------===\n";
 }
 
+/**
+ * Dumps the content of a given file to the standard output.
+ *
+ * @param filePath The file to be read and dumped to stdout.
+ */
 void PrintResult(const std::string& filePath)
 {
 	const std::ifstream ifs(filePath);
@@ -937,6 +1010,13 @@ std::string StopReasonToString(const lldb::StopReason reason)
 	}
 }
 
+/**
+ * Converts Clang's language enum into a readable string form.\n
+ * Used for pretty printing the language messages.
+ *
+ * @param lang The language to be converted.
+ * @return The human-readable string corresponding to the given language.
+ */
 std::string LanguageToString(const clang::Language lang)
 {
 	switch (lang)
@@ -967,6 +1047,13 @@ std::string LanguageToString(const clang::Language lang)
 	}
 }
 
+/**
+ * Converts supported languages into their mainstream file extensions.\n
+ * Note that only a single extension could be used => no .cc for C++ files.
+ *
+ * @param lang The language whose extension should be extracted.
+ * @return The extension of the language's source files, starting with a dot.
+ */
 std::string LanguageToExtension(const clang::Language lang)
 {
 	switch (lang)
