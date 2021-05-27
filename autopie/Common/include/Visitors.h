@@ -37,14 +37,31 @@ namespace Common
 
 		BitMask bitMask_;
 		int currentNode_ = 0; ///< The traversal order number.
-		std::vector<size_t> errorLineBackups_;
 		RewriterRef rewriter_;
+
+		/**
+		 * Keeps the original, non-adjusted container of lines.\n
+		 * It is used to restore the state after each iteration.
+		 */
+		std::vector<size_t> errorLineBackups_;
+
+		/**
+		 * The graph is used for printing-safety.\n
+		 * Namely checking if a snippet of code is not about to be removed for
+		 * the second time.
+		 */
 		DependencyGraph graph_;
+
+		/**
+		 * Keeps note of which nodes should be skipped during traversal.\n
+		 * If a node is a duplicate of an already processed node, it is added to this map.
+		 */
 		SkippedMapRef skippedNodes_;
 
 		/**
 		 * Removes source code in a given range in the current rewriter.\n
-		 * The range is only removed if the rewriter instance is valid.
+		 * The range is only removed if the Rewriter instance is valid and
+		 * the dependency graph allows it.
 		 *
 		 * @param range The source range to be removed.
 		 * @param replace Specifies whether the range should be replaced with a single semicolon.
@@ -124,18 +141,6 @@ namespace Common
 			return false;
 		}
 
-		void ProcessRelevantExpression(clang::Expr* expr)
-		{
-			if (skippedNodes_->find(currentNode_) == skippedNodes_->end() && ShouldBeRemoved())
-			{
-				const auto range = expr->getSourceRange();
-
-				RemoveFromSource(range);
-			}
-
-			currentNode_++;
-		}
-
 		/**
 		 * Check whether the current processed file is an included one.\n
 		 * In case it is, the traversal of the declaration node is skipped.
@@ -174,7 +179,27 @@ namespace Common
 			return false;
 		}
 
+		/**
+		 * The common body of all relevant expressions.
+		 */
+		void ProcessRelevantExpression(clang::Expr* expr)
+		{
+			if (skippedNodes_->find(currentNode_) == skippedNodes_->end() && ShouldBeRemoved())
+			{
+				const auto range = expr->getSourceRange();
+
+				RemoveFromSource(range);
+			}
+
+			currentNode_++;
+		}
+
 	public:
+		/**
+		 * Rewrites and adjusts the original container of lines.\n
+		 * As the source file is reduced, some line locations move and
+		 * we must adjust them.
+		 */
 		std::vector<size_t> adjustedErrorLines;
 
 		VariantPrintingASTVisitor(clang::CompilerInstance* ci, const size_t errorLine) : astContext_(ci->getASTContext()),
@@ -256,6 +281,10 @@ namespace Common
 
 #pragma region Expressions
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Removes a valid ternary operator.
+		 */
 		bool VisitAbstractConditionalOperator(clang::AbstractConditionalOperator* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -270,7 +299,7 @@ namespace Common
 
 		/**
 		 * Overrides the parent visit method.\n
-		 * Removes valid nodes based on the provided bit mask and dependency graph.
+		 * Removes a valid function call.
 		 */
 		bool VisitCallExpr(clang::CallExpr* expr)
 		{
@@ -284,6 +313,11 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Removes a valid binary operator - currently, this concerns
+		 * only assignment operators.
+		 */
 		bool VisitBinaryOperator(clang::BinaryOperator* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -301,6 +335,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Removes a valid assignment operator.
+		 */
 		bool VisitCompoundAssignOperator(clang::CompoundAssignOperator* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -313,6 +351,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Removes a valid ternary operator.
+		 */
 		bool VisitChooseExpr(clang::ChooseExpr* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -325,6 +367,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Removes a valid deallocation operator.
+		 */
 		bool VisitCXXDeleteExpr(clang::CXXDeleteExpr* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -337,6 +383,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Removes a valid allocation call.
+		 */
 		bool VisitCXXNewExpr(clang::CXXNewExpr* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -349,6 +399,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Removes a valid lambda function.
+		 */
 		bool VisitLambdaExpr(clang::LambdaExpr* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -361,6 +415,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Removes a valid expression.
+		 */
 		bool VisitStmtExpr(clang::StmtExpr* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -373,6 +431,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Removes a valid unary operator.
+		 */
 		bool VisitUnaryOperator(clang::UnaryOperator* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -471,6 +533,11 @@ namespace Common
 		 */
 		SkippedMapRef skippedNodes_ = std::make_shared<std::unordered_map<int, bool>>();
 
+		/**
+		 * Keeps track of nodes that might be children of other nodes.\n
+		 * The parent nodes, in this case, were not visited yet.\n
+		 * The bool value is irrelevant.
+		 */
 		std::unordered_map<int, bool> childStatements_;
 
 		/**
@@ -603,6 +670,12 @@ namespace Common
 			declReferences_ = toBeKept;
 		}
 
+		/**
+		 * Traverses the given subtree and returns all its statements.
+		 *
+		 * @param stmt The root of the subtree.
+		 * @return A container of all nodes in the subtree.
+		 */
 		std::vector<clang::Stmt*> GetChildrenRecursively(clang::Stmt* stmt) const
 		{
 			auto children = std::vector<clang::Stmt*>();
@@ -624,6 +697,12 @@ namespace Common
 			return children;
 		}
 
+		/**
+		 * Handles any potential unmapped children.\n
+		 * The children are mapped to the given statement node.
+		 *
+		 * @param stmt The node to which the children should be mapped, if valid.
+		 */
 		void CreateChildDependencies(clang::Stmt* stmt)
 		{
 			for (auto& child : GetChildrenRecursively(stmt))
@@ -771,8 +850,6 @@ namespace Common
 		{
 			// Skip included files.
 			if (!astContext_.getSourceManager().isInMainFile(decl->getBeginLoc()))
-				//const auto loc = clang::FullSourceLoc(decl->getBeginLoc(), astContext_.getSourceManager());
-				//if (loc.isValid() && loc.isInSystemHeader())
 			{
 				return true;
 			}
@@ -790,8 +867,6 @@ namespace Common
 		{
 			// Skip included files.
 			if (!astContext_.getSourceManager().isInMainFile(stmt->getBeginLoc()))
-				//const auto loc = clang::FullSourceLoc(stmt->getBeginLoc(), astContext_.getSourceManager());
-				//if (loc.isValid() && loc.isInSystemHeader())
 			{
 				return true;
 			}
@@ -860,6 +935,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Records the declaration location of the criterion's function.
+		 */
 		bool VisitFunctionDecl(clang::FunctionDecl* decl)
 		{
 			if (SkipIncludeDecl(decl))
@@ -867,8 +946,11 @@ namespace Common
 				return true;
 			}
 
+			// Check whether the criterion was already processed.
+			// This body is only a one-time event.
 			if (criterionFound_)
 			{
+				// The criterion's function has not been mapped yet - map it.
 				const auto range = GetPrintableRange(
 					GetPrintableRange(decl->getSourceRange(), astContext_.getSourceManager()),
 					astContext_.getSourceManager());
@@ -933,6 +1015,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Maps class/struct members as dependencies of a class/struct.
+		 */
 		bool VisitCXXRecordDecl(clang::CXXRecordDecl* decl)
 		{
 			if (SkipIncludeDecl(decl))
@@ -990,6 +1076,10 @@ namespace Common
 
 #pragma region Expressions
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Processes a valid ternary operator.
+		 */
 		bool VisitAbstractConditionalOperator(clang::AbstractConditionalOperator* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -1004,7 +1094,7 @@ namespace Common
 
 		/**
 		 * Overrides the parent visit method.\n
-		 * Determines whether the node is worth visiting and creates an ID to traversal order number mapping for the node.\n
+		 * Processes a valid function call.
 		 */
 		bool VisitCallExpr(clang::CallExpr* expr)
 		{
@@ -1028,6 +1118,11 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Processes a valid binary operator - currently, this concerns
+		 * only assignment operators.
+		 */
 		bool VisitBinaryOperator(clang::BinaryOperator* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -1045,6 +1140,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Processes a valid assignment operator.
+		 */
 		bool VisitCompoundAssignOperator(clang::CompoundAssignOperator* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -1057,6 +1156,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Processes a valid ternary operator.
+		 */
 		bool VisitChooseExpr(clang::ChooseExpr* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -1069,6 +1172,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Processes a valid deallocation operator.
+		 */
 		bool VisitCXXDeleteExpr(clang::CXXDeleteExpr* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -1081,6 +1188,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Processes a valid allocation call.
+		 */
 		bool VisitCXXNewExpr(clang::CXXNewExpr* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -1112,6 +1223,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Processes a valid lambda function.
+		 */
 		bool VisitLambdaExpr(clang::LambdaExpr* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -1124,6 +1239,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Processes a valid expression.
+		 */
 		bool VisitStmtExpr(clang::StmtExpr* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -1136,6 +1255,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Processes a valid unary operator.
+		 */
 		bool VisitUnaryOperator(clang::UnaryOperator* expr)
 		{
 			if (SkipIncludeStmt(expr))

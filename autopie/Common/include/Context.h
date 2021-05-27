@@ -34,6 +34,9 @@ namespace Delta
 	};
 } // namespace Delta
 
+/**
+ * Keeps track of the current run's statistics - the algorithm's efficiency.
+ */
 struct Statistics
 {
 	double expectedIterations = 0;

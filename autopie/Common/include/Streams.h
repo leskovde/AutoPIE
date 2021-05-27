@@ -35,7 +35,7 @@ namespace Out
 	 */
 	struct Logger
 	{
-		bool initialized;
+		bool initialized = false;
 		std::ofstream ofs;
 
 		explicit Logger(const char* filePath)

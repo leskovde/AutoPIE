@@ -256,7 +256,6 @@ public:
 			}
 		}
 
-		// TODO(Denis): Trim file names (they include full path instead of just the name).
 		auto ofs = std::ofstream(fileName);
 
 		if (!ofs)
@@ -318,7 +317,9 @@ public:
 	}
 
 	/**
-	 * Searches in a BFS manner for all descendants of a given node. This includes both statement and variable dependencies.
+	 * Searches in a BFS manner for all descendants of a given node.
+	 * This includes both statement and variable dependencies.\n
+	 * Frequently accessed results are cached.
 	 *
 	 * @param startingNode The node whose descendants are considered.
 	 * @return A container of nodes (specified by their traversal order number) that are dependent on
