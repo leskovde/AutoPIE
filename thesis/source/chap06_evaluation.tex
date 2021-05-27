@@ -151,7 +151,7 @@ Metrics introduced in Section~\ref{chap:metrics} are denoted as follows:
 \end{itemize}
 
 \begin{table}[b!]\centering
-\begin{tabular}{SSrSSS} \toprule
+\begin{tabular}{rSrSSS} \toprule
 	 \multicolumn{6}{c}{Naive} \\
 	 \cmidrule(l){1-6}
     {$Test$} & {$\mathcal{I}_e$} & {$\mathcal{I}_{a}$}  & {$\mathcal{R}_{m}$} & {$\mathcal{R}_{p}$} & {$\Delta_{t}$} \\ \midrule
@@ -184,14 +184,15 @@ Metrics introduced in Section~\ref{chap:metrics} are denoted as follows:
     27 & {$2^{0}$} & 93 & 0.0 & 0.0 & 0.0s \\
     28 & {$2^{0}$} & 75 & 0.0 & 0.0 & 0.0s \\
     29 & {$2^{0}$} & 140 & 21.8 & 0.0 & 0.0s \\
-    30 & {$2^{0}$} & 168 & 0.0 & 0.0 & 0.0s \\ \bottomrule
+    30 & {$2^{0}$} & 168 & 0.0 & 0.0 & 0.0s \\	\midrule
+	{$Mean$} & {$2^{0}$} & 168 & 0.0 & 0.0 & 0.0s \\	\bottomrule
 \end{tabular}
 \caption{Results of all benchmarks executed using the naive approach.}
 \label{tab:resultsnaive}
 \end{table}
 
 \begin{table}[b!]\centering
-\begin{tabular}{SSrSSS} \toprule
+\begin{tabular}{rSrSSS} \toprule
 	 \multicolumn{6}{c}{Delta} \\
 	 \cmidrule(l){1-6}
     {$Test$} & {$\mathcal{I}_e$} & {$\mathcal{I}_{a}$}  & {$\mathcal{R}_{m}$} & {$\mathcal{R}_{p}$} & {$\Delta_{t}$} \\ \midrule
@@ -224,14 +225,15 @@ Metrics introduced in Section~\ref{chap:metrics} are denoted as follows:
     27 & {$2^{0}$} & 93 & 0.0 & 0.0 & 0.0s \\
     28 & {$2^{0}$} & 75 & 0.0 & 0.0 & 0.0s \\
     29 & {$2^{0}$} & 140 & 21.8 & 0.0 & 0.0s \\
-    30 & {$2^{0}$} & 168 & 0.0 & 0.0 & 0.0s \\ \bottomrule
+    30 & {$2^{0}$} & 168 & 0.0 & 0.0 & 0.0s \\	\midrule
+	{$Mean$} & {$2^{0}$} & 168 & 0.0 & 0.0 & 0.0s \\	\bottomrule
 \end{tabular}
 \caption{Results of all benchmarks executed using Delta debugging.}
 \label{tab:resultsdelta}
 \end{table}
 
 \begin{table}[b!]\centering
-\begin{tabular}{SSrSSS} \toprule
+\begin{tabular}{rSrSSS} \toprule
 	 \multicolumn{6}{c}{Slicing} \\
 	 \cmidrule(l){1-6}
     {$Test$} & {$\mathcal{I}_e$} & {$\mathcal{I}_{a}$}  & {$\mathcal{R}_{m}$} & {$\mathcal{R}_{p}$} & {$\Delta_{t}$} \\ \midrule
@@ -264,14 +266,15 @@ Metrics introduced in Section~\ref{chap:metrics} are denoted as follows:
     27 & {$2^{0}$} & 93 & 0.0 & 0.0 & 0.0s \\
     28 & {$2^{0}$} & 75 & 0.0 & 0.0 & 0.0s \\
     29 & {$2^{0}$} & 140 & 21.8 & 0.0 & 0.0s \\
-    30 & {$2^{0}$} & 168 & 0.0 & 0.0 & 0.0s \\ \bottomrule
+    30 & {$2^{0}$} & 168 & 0.0 & 0.0 & 0.0s \\	\midrule
+	{$Mean$} & {$2^{0}$} & 168 & 0.0 & 0.0 & 0.0s \\	\bottomrule
 \end{tabular}
 \caption{Results of all benchmarks executed using the slicing pipeline.}
 \label{tab:resultsslicing}
 \end{table}
 
 \begin{table}[b!]\centering
-\begin{tabular}{SSSSSSSSSS} \toprule
+\begin{tabular}{rSSSSSSSSS} \toprule
 	 & \multicolumn{3}{c}{Naive} & \multicolumn{3}{c}{Delta} & \multicolumn{3}{c}{Slicing} \\
 	 \cmidrule(l){2-4} \cmidrule(l){5-7} \cmidrule(l){8-10}
     {$Test$} & {$\mathcal{R}_{m}$} & {$\mathcal{R}_{p}$} & {$\Delta_{t}$} & {$\mathcal{R}_{m}$} & {$\mathcal{R}_{p}$} & {$\Delta_{t}$} & {$\mathcal{R}_{m}$} & {$\mathcal{R}_{p}$} & {$\Delta_{t}$} \\ \midrule
@@ -304,7 +307,8 @@ Metrics introduced in Section~\ref{chap:metrics} are denoted as follows:
     27  & 0.0 & 0.0 & 0.0s & 0.0 & 0.0 & 0.0s & 0.0 & 0.0 & 0.0s \\
     28  & 0.0 & 0.0 & 0.0s & 0.0 & 0.0 & 0.0s & 0.0 & 0.0 & 0.0s \\
     29  & 0.0 & 0.0 & 0.0s & 0.0 & 0.0 & 0.0s & 0.0 & 0.0 & 0.0s \\
-    30  & 0.0 & 0.0 & 0.0s & 0.0 & 0.0 & 0.0s & 0.0 & 0.0 & 0.0s \\ \bottomrule
+    30  & 0.0 & 0.0 & 0.0s & 0.0 & 0.0 & 0.0s & 0.0 & 0.0 & 0.0s \\ \midrule
+	{$Mean$}  & 0.0 & 0.0 & 0.0s & 0.0 & 0.0 & 0.0s & 0.0 & 0.0 & 0.0s \\	\bottomrule
 \end{tabular}
 \caption{Results of all benchmarks executed using the slicing pipeline.}
 \label{tab:resultsslicing}

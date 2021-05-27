@@ -89,7 +89,10 @@
 % An optional dedication: you can thank whomever you wish (your supervisor,
 % consultant, a person who lent the software, etc.)
 \def\Dedication{%
-Dedication.
+I would like to thank my supervisor, doc. RNDr. Pavel Parízek, Ph.D., for
+his guidance and solid advice. 
+I am also grateful to my family, friends, and relatives for their 
+unconditional support.
 }
 
 % Abstract (recommended length around 80-200 words; this is not a copy of your thesis assignment!)
@@ -99,24 +102,21 @@ been fully automated yet.
 Given a runtime error, the developer must first reproduce it. 
 He then has to find the root cause of the error and create a proper bug fix. 
 Automation can make this process significantly more efficient by reducing 
-the amount of code the developer has to look through. 
-This thesis introduces three methodologies of automatically reducing a given 
-failing program into its minimal runnable subset. 
-The techniques are based on existing findings in the field of debugging. 
-The automatically minimized program must result in the same runtime error 
-as the original program. 
-The minimization focuses on optimal results in a domain of small and simple 
-applications. 
-
-The goal of this thesis is to discuss techniques that are practical for 
-program reduction. 
-These techniques are implemented using Clang LibTooling, a library for 
+the amount of code the developer has to look through. \\
+The goal of this thesis is to propose and discuss automated techniques for 
+reducing a given failing program into its minimal runnable subset. 
+We introduce three methodologies that are practical for program reduction. 
+The automatically minimized program must result in the same runtime error as 
+the original program. 
+The process of minimization focuses on producing optimal results for 
+the domain of small and simple applications. \\
+All three techniques are implemented using Clang LibTooling, a library for 
 standalone Clang tools. 
-The inner workings of each implementation are explained, and their limitations 
-are exposed. 
-The implementations are benchmarked on a set of C and C++ source files.  
-Performance is measured based on the size of the generated output and 
-the running time of the algorithm.
+In the thesis, we explain the inner workings of each implementation and 
+discuss their limitations. 
+Implementations are benchmarked on a set of C and C++ source files. 
+Performance is evaluated with respect to the size of the generated output and 
+the algorithm's running time. 
 }
 
 % 3 to 5 keywords (recommended), each enclosed in curly braces
