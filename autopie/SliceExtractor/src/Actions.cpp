@@ -5,13 +5,12 @@
 namespace SliceExtractor
 {
 	/**
-	 * Creates a `VariantGeneratingFrontendActionFactory` with a given `GlobalContext` member.\n
-	 * Any `VariantGeneratingFrontendAction`s created by the factory then have the `GlobalContext` member as well.\n
+	 * Creates a `SliceExtractorFrontendActionFactory` with a given container for collecting line numbers.\n
 	 * This extra step is required due to the default `FrontendActionFactory` not having support for custom constructors
 	 * and passing data to created instances.
 	 *
 	 * @param lines A container of lines of the slice.
-	 * @return A `VariantGeneratingFrontendActionFactory` instance with the given context as a member.
+	 * @return A `SliceExtractorFrontendActionFactory` instance with the given context as a member.
 	 */
 	std::unique_ptr<clang::tooling::FrontendActionFactory> SliceExtractorFrontendActionFactory(std::vector<int>& lines)
 	{
@@ -34,4 +33,4 @@ namespace SliceExtractor
 		return std::unique_ptr<clang::tooling::FrontendActionFactory>(
 			std::make_unique<SliceExtractorFrontendActionFactory>(lines));
 	}
-}
+} // namespace SliceExtractor

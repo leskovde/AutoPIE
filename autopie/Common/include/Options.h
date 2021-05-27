@@ -18,8 +18,9 @@ inline llvm::cl::extrahelp CommonHelp(clang::tooling::CommonOptionsParser::HelpM
  * Specifies the line number in the previously specified source file on which an error was found.\n
  * The value is later used for location confirmation.
  */
-inline llvm::cl::opt<int> LineNumber("loc-line",
-                                     llvm::cl::desc("[NaiveReduction, DeltaReduction, VarExtractor, SliceExtractor] The line number on which the error occurred."),
+inline llvm::cl::opt<size_t> LineNumber("loc-line",
+                                     llvm::cl::desc(
+	                                     "[NaiveReduction, DeltaReduction, VarExtractor, SliceExtractor] The line number on which the error occurred."),
                                      llvm::cl::value_desc("int"),
                                      llvm::cl::cat(AutoPieArgs));
 
@@ -40,10 +41,11 @@ inline llvm::cl::opt<std::string> ErrorMessage("error-message",
  * The value is later used for execution during validation.
  */
 inline llvm::cl::opt<std::string> Arguments("arguments",
-    llvm::cl::desc("[NaiveReduction, DeltaReduction] The arguments with which the program was run when the error occurred."),
-    llvm::cl::init(""),
-    llvm::cl::value_desc("string"),
-    llvm::cl::cat(AutoPieArgs));
+                                            llvm::cl::desc(
+	                                            "[NaiveReduction, DeltaReduction] The arguments with which the program was run when the error occurred."),
+                                            llvm::cl::init(""),
+                                            llvm::cl::value_desc("string"),
+                                            llvm::cl::cat(AutoPieArgs));
 
 /**
  * Specifies the desired best-possible size of the output. Values are between 0 and 1, with 0 being an empty
@@ -53,7 +55,8 @@ inline llvm::cl::opt<std::string> Arguments("arguments",
  * its size in bytes, with three quarters being removed.
  */
 inline llvm::cl::opt<double> ReductionRatio("ratio",
-                                            llvm::cl::desc("[NaiveReduction] Limits the reduction to a specific ratio between 0 and 1."),
+                                            llvm::cl::desc(
+	                                            "[NaiveReduction] Limits the reduction to a specific ratio between 0 and 1."),
                                             llvm::cl::init(1.0),
                                             llvm::cl::value_desc("double"),
                                             llvm::cl::cat(AutoPieArgs));
@@ -113,21 +116,23 @@ inline llvm::cl::alias LogToFileAlias("l",
  * Specifies the output file to which the extracted result should be dumped.
  */
 inline llvm::cl::opt<std::string> OutputFile("out-file",
-    llvm::cl::desc("[VarExtractor, SliceExtractor] The name of the file to which the result should be dumped."),
-    llvm::cl::value_desc("filename"),
-    llvm::cl::init("output.txt"),
-    llvm::cl::cat(AutoPieArgs));
+                                             llvm::cl::desc(
+	                                             "[VarExtractor, SliceExtractor] The name of the file to which the result should be dumped."),
+                                             llvm::cl::value_desc("filename"),
+                                             llvm::cl::init("output.txt"),
+                                             llvm::cl::cat(AutoPieArgs));
 
 inline llvm::cl::alias OutputFileAlias("o",
-    llvm::cl::desc("The name of the file to which the result should be dumped."),
-    llvm::cl::aliasopt(OutputFile));
+                                       llvm::cl::desc("The name of the file to which the result should be dumped."),
+                                       llvm::cl::aliasopt(OutputFile));
 
 /**
  * Specifies the path to the text file containing line numbers of the slice.
  */
 inline llvm::cl::opt<std::string> SliceFile("slice-file",
-    llvm::cl::desc("[SliceExtractor] The name of the file containing line numbers of the slice."),
-    llvm::cl::value_desc("filename"),
-    llvm::cl::cat(AutoPieArgs));
+                                            llvm::cl::desc(
+	                                            "[SliceExtractor] The name of the file containing line numbers of the slice."),
+                                            llvm::cl::value_desc("filename"),
+                                            llvm::cl::cat(AutoPieArgs));
 
 #endif

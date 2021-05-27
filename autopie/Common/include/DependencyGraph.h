@@ -6,10 +6,13 @@
 #include <queue>
 #include <utility>
 
-#include "Streams.h"
 #include "Helper.h"
+#include "Streams.h"
 
-namespace Common {}
+namespace Common
+{
+}
+
 using namespace Common;
 
 /**
@@ -25,15 +28,15 @@ struct Node
 	std::string codeSnippet;
 	std::string nodeTypeName;
 
-	Node() : 
-	dumpColor ("black"),
-	codeSnippet (""),
-	nodeTypeName ("")
+	Node() : dumpColor("black"),
+	         codeSnippet(""),
+	         nodeTypeName("")
 	{
 	}
-	
+
 	Node(const int astId, const int traversalOrderNumber, const int length, std::string color, std::string code,
-	     std::string type) : astId(astId), number(traversalOrderNumber), characterCount(length), dumpColor(std::move(color)),
+	     std::string type) : astId(astId), number(traversalOrderNumber), characterCount(length),
+	                         dumpColor(std::move(color)),
 	                         codeSnippet(std::move(code)), nodeTypeName(std::move(type))
 	{
 	}
@@ -62,7 +65,8 @@ class DependencyGraph
 	 * @param startingNode The node whose children should be searched.
 	 * @param container The unordered map in which the search should be conducted.
 	 */
-	static std::vector<int> GetDependentNodesFromContainer(const int startingNode, const std::unordered_map<int, std::vector<int>>& container)
+	static std::vector<int> GetDependentNodesFromContainer(const int startingNode,
+	                                                       const std::unordered_map<int, std::vector<int>>& container)
 	{
 		auto nodeQ = std::queue<int>();
 		auto allDependencies = std::vector<int>();
@@ -88,7 +92,7 @@ class DependencyGraph
 
 		return allDependencies;
 	}
-	
+
 public:
 
 	/**
@@ -128,7 +132,7 @@ public:
 			// The dependency has already been made, no need to reintroduce it.
 			return;
 		}
-		
+
 		it->second.push_back(child);
 
 		it = statementInverseEdges_.find(child);
@@ -164,9 +168,9 @@ public:
 		if (std::find(it->second.begin(), it->second.end(), child) != it->second.end())
 		{
 			// The dependency has already been made, no need to reintroduce it.
-			return;	
+			return;
 		}
-		
+
 		it->second.push_back(child);
 
 		it = variableInverseEdges_.find(child);
@@ -192,18 +196,19 @@ public:
 	                                const std::string& type, const std::string& color)
 	{
 		auto actualColor = color;
-		
+
 		if (debugNodeData_.find(traversalOrderNumber) != debugNodeData_.end())
 		{
 			Out::Verb() << "DEBUG: A node with the current traversal number already exists.\n";
-			
+
 			actualColor = debugNodeData_[traversalOrderNumber].dumpColor;
 
 			debugNodeData_.erase(traversalOrderNumber);
 		}
-		
+
 		const auto success = debugNodeData_.insert(std::pair<int, Node>(traversalOrderNumber,
-		                                                                Node(astId, traversalOrderNumber, snippet.size(), actualColor,
+		                                                                Node(astId, traversalOrderNumber,
+		                                                                     snippet.size(), actualColor,
 		                                                                     snippet, type))).second;
 
 		if (!success)
@@ -240,7 +245,7 @@ public:
 		if (!std::filesystem::exists(VisualsFolder))
 		{
 			Out::Verb() << "Creating the 'visuals' directory.\n";
-			
+
 			if (std::filesystem::create_directory(VisualsFolder))
 			{
 				Out::Verb() << "Directory creation successful.\n";
@@ -250,8 +255,7 @@ public:
 				Out::Verb() << "Directory creation failed.\n";
 			}
 		}
-		
-		// TODO(Denis): Trim file names (they include full path instead of just the name).
+
 		auto ofs = std::ofstream(fileName);
 
 		if (!ofs)
@@ -259,7 +263,7 @@ public:
 			llvm::errs() << "The GraphViz output file stream could not be opened. Path: " << fileName << "\n";
 			return;
 		}
-		
+
 		ofs << "digraph g {\nforcelabels=true;\nrankdir=TD;\n";
 
 		for (auto it = debugNodeData_.cbegin(); it != debugNodeData_.cend(); ++it)
@@ -311,9 +315,11 @@ public:
 	{
 		return GetDependentNodesFromContainer(startingNode, variableEdges_);
 	}
-	
+
 	/**
-	 * Searches in a BFS manner for all descendants of a given node. This includes both statement and variable dependencies.
+	 * Searches in a BFS manner for all descendants of a given node.
+	 * This includes both statement and variable dependencies.\n
+	 * Frequently accessed results are cached.
 	 *
 	 * @param startingNode The node whose descendants are considered.
 	 * @return A container of nodes (specified by their traversal order number) that are dependent on
@@ -328,8 +334,9 @@ public:
 
 		auto allDependencies = GetStatementDependentNodes(startingNode);
 		auto varDependencies = GetVariableDependentNodes(startingNode);
-		allDependencies.insert(allDependencies.end(), std::make_move_iterator(varDependencies.begin()), std::make_move_iterator(varDependencies.end()));
-		
+		allDependencies.insert(allDependencies.end(), std::make_move_iterator(varDependencies.begin()),
+		                       std::make_move_iterator(varDependencies.end()));
+
 		dependentNodesCache_.insert(std::pair<int, std::vector<int>>(startingNode, allDependencies));
 
 		return allDependencies;
@@ -383,11 +390,11 @@ public:
 		if (totalCharacters_ == 0)
 		{
 			std::unordered_map<int, int> correctedCounts;
-			
+
 			for (auto it = statementEdges_.begin(); it != statementEdges_.end(); ++it)
 			{
 				auto currentCount = GetNodeInfo(it->first).characterCount;
-								
+
 				for (auto dependency : it->second)
 				{
 					currentCount -= GetNodeInfo(dependency).characterCount;

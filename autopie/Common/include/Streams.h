@@ -14,7 +14,7 @@
  */
 namespace Out
 {
-	typedef std::ostream& (*Manipulator) (std::ostream&);
+	typedef std::ostream& (*Manipulator)(std::ostream&);
 
 	/**
 	 * Retrieves the current time (Greenwich Mean Time).
@@ -24,7 +24,7 @@ namespace Out
 	static tm* GetTimestamp()
 	{
 		const auto timeStamp = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-		
+
 		return std::gmtime(&timeStamp);
 	}
 
@@ -35,7 +35,7 @@ namespace Out
 	 */
 	struct Logger
 	{
-		bool initialized;
+		bool initialized = false;
 		std::ofstream ofs;
 
 		explicit Logger(const char* filePath)
@@ -110,7 +110,7 @@ namespace Out
 				verb_.logger.ofs << std::put_time(GetTimestamp(), "%Y-%m-%d %H:%M:%S") << ":\t";
 			}
 		}
-		
+
 		return verb_;
 	}
 
@@ -119,12 +119,13 @@ namespace Out
 	 * If the `Log` option is specified, the output is written both to the standard output and to
 	 * the default .log file.
 	 */
-	template <class T> Logger& operator<< (Logger& logger, const T& x)
+	template <class T>
+	Logger& operator<<(Logger& logger, const T& x)
 	{
 		std::cout << x;
 
 		if (logger.initialized)
-		{			
+		{
 			logger.ofs << x;
 		}
 
@@ -136,7 +137,7 @@ namespace Out
 	 * If the `Log` option is specified, the output is written both to the standard output and to
 	 * the default .log file.
 	 */
-	inline Logger& operator<< (Logger& logger, const llvm::StringRef stringRef)
+	inline Logger& operator<<(Logger& logger, const llvm::StringRef stringRef)
 	{
 		if (Verbose)
 		{
@@ -156,7 +157,7 @@ namespace Out
 	 * If the `Log` option is specified, the output is written both to the standard output and to
 	 * the default .log file.
 	 */
-	inline Logger& operator<< (Logger& logger, const Manipulator manipulator)
+	inline Logger& operator<<(Logger& logger, const Manipulator manipulator)
 	{
 		std::cout << manipulator;
 
@@ -173,7 +174,8 @@ namespace Out
 	 * If both the `Verbose` and `Log` options are specified, the output is written
 	 * both to the standard output and to the default .log file.
 	 */
-	template <class T> FilteredLogger& operator<< (FilteredLogger& logger, const T& x)
+	template <class T>
+	FilteredLogger& operator<<(FilteredLogger& logger, const T& x)
 	{
 		if (Verbose)
 		{
@@ -184,7 +186,7 @@ namespace Out
 				logger.logger.ofs << x;
 			}
 		}
-		
+
 		return logger;
 	}
 
@@ -193,7 +195,7 @@ namespace Out
 	 * If both the `Verbose` and `Log` options are specified, the output is written
 	 * both to the standard output and to the default .log file.
 	 */
-	inline FilteredLogger& operator<< (FilteredLogger& logger, const llvm::StringRef stringRef)
+	inline FilteredLogger& operator<<(FilteredLogger& logger, const llvm::StringRef stringRef)
 	{
 		if (Verbose)
 		{
@@ -213,7 +215,7 @@ namespace Out
 	 * If both the `Verbose` and `Log` options are specified, the output is written
 	 * both to the standard output and to the default .log file.
 	 */
-	inline FilteredLogger& operator<< (FilteredLogger& logger, const Manipulator manipulator)
+	inline FilteredLogger& operator<<(FilteredLogger& logger, const Manipulator manipulator)
 	{
 		if (Verbose)
 		{
@@ -224,7 +226,7 @@ namespace Out
 				logger.logger.ofs << manipulator;
 			}
 		}
-		
+
 		return logger;
 	}
 }

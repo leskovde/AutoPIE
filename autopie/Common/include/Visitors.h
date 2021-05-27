@@ -37,14 +37,31 @@ namespace Common
 
 		BitMask bitMask_;
 		int currentNode_ = 0; ///< The traversal order number.
-		std::vector<int> errorLineBackups_;
 		RewriterRef rewriter_;
+
+		/**
+		 * Keeps the original, non-adjusted container of lines.\n
+		 * It is used to restore the state after each iteration.
+		 */
+		std::vector<size_t> errorLineBackups_;
+
+		/**
+		 * The graph is used for printing-safety.\n
+		 * Namely checking if a snippet of code is not about to be removed for
+		 * the second time.
+		 */
 		DependencyGraph graph_;
+
+		/**
+		 * Keeps note of which nodes should be skipped during traversal.\n
+		 * If a node is a duplicate of an already processed node, it is added to this map.
+		 */
 		SkippedMapRef skippedNodes_;
 
 		/**
 		 * Removes source code in a given range in the current rewriter.\n
-		 * The range is only removed if the rewriter instance is valid.
+		 * The range is only removed if the Rewriter instance is valid and
+		 * the dependency graph allows it.
 		 *
 		 * @param range The source range to be removed.
 		 * @param replace Specifies whether the range should be replaced with a single semicolon.
@@ -56,30 +73,27 @@ namespace Common
 				Out::Verb() << "Removing node " << currentNode_ << ":\n" << RangeToString(astContext_, range) << "\n";
 
 				const auto printableRange = GetPrintableRange(GetPrintableRange(range, astContext_.getSourceManager()),
-					astContext_.getSourceManager());
+				                                              astContext_.getSourceManager());
 
 				const auto begin = astContext_.getSourceManager().getSpellingLineNumber(printableRange.getBegin());
 				const auto snippet = GetSourceTextRaw(printableRange, astContext_.getSourceManager()).str();
 
 				const auto lineBreaks = std::count_if(snippet.begin(), snippet.end(), [](const char c)
-					{
-						if (c == '\n')
-						{
-							return true;
-						}
+				{
+					return c == '\n';
+				});
 
-						return false;
-					});
-
-				for (auto i = 0; i < adjustedErrorLines.size(); i++)
+				for (size_t i = 0; i < adjustedErrorLines.size(); i++)
 				{
 					if (begin < errorLineBackups_[i])
 					{
-						const int decrement = errorLineBackups_[i] >= begin + lineBreaks ? lineBreaks : errorLineBackups_[i] - begin;
+						const auto decrement = errorLineBackups_[i] >= begin + lineBreaks
+							                      ? lineBreaks
+							                      : errorLineBackups_[i] - begin;
 						adjustedErrorLines[i] -= decrement;
 					}
 				}
-				
+
 				if (replace)
 				{
 					rewriter_->ReplaceText(printableRange, ";");
@@ -127,18 +141,6 @@ namespace Common
 			return false;
 		}
 
-		void ProcessRelevantExpression(clang::Expr* expr)
-		{
-			if (skippedNodes_->find(currentNode_) == skippedNodes_->end() && ShouldBeRemoved())
-			{
-				const auto range = expr->getSourceRange();
-
-				RemoveFromSource(range);
-			}
-
-			currentNode_++;
-		}
-
 		/**
 		 * Check whether the current processed file is an included one.\n
 		 * In case it is, the traversal of the declaration node is skipped.
@@ -177,10 +179,32 @@ namespace Common
 			return false;
 		}
 
-	public:
-		std::vector<int> adjustedErrorLines;
+		/**
+		 * The common body of all relevant expressions.
+		 */
+		void ProcessRelevantExpression(clang::Expr* expr)
+		{
+			if (skippedNodes_->find(currentNode_) == skippedNodes_->end() && ShouldBeRemoved())
+			{
+				const auto range = expr->getSourceRange();
 
-		VariantPrintingASTVisitor(clang::CompilerInstance* ci, const int errorLine) : astContext_(ci->getASTContext()), errorLineBackups_({ errorLine }), adjustedErrorLines({ errorLine })
+				RemoveFromSource(range);
+			}
+
+			currentNode_++;
+		}
+
+	public:
+		/**
+		 * Rewrites and adjusts the original container of lines.\n
+		 * As the source file is reduced, some line locations move and
+		 * we must adjust them.
+		 */
+		std::vector<size_t> adjustedErrorLines;
+
+		VariantPrintingASTVisitor(clang::CompilerInstance* ci, const size_t errorLine) : astContext_(ci->getASTContext()),
+		                                                                              errorLineBackups_({errorLine}),
+		                                                                              adjustedErrorLines({errorLine})
 		{
 		}
 
@@ -206,7 +230,7 @@ namespace Common
 		 * @param graph The node dependency graph based on which nodes are removed.
 		 * @param errorLines A list of potential error-inducing lines (LLDB workaround).
 		 */
-		void SetData(SkippedMapRef skippedNodes, DependencyGraph& graph, std::vector<int>& errorLines)
+		void SetData(SkippedMapRef skippedNodes, DependencyGraph& graph, std::vector<size_t>& errorLines)
 		{
 			skippedNodes_ = std::move(skippedNodes);
 			graph_ = graph;
@@ -217,7 +241,7 @@ namespace Common
 		 * Overrides the parent traversal mode.\n
 		 * The traversal is changed from preorder to postorder.
 		 */
-		bool shouldTraversePostOrder() const
+		[[nodiscard]] static bool shouldTraversePostOrder()
 		{
 			return true;
 		}
@@ -234,7 +258,8 @@ namespace Common
 				return true;
 			}
 
-			if (llvm::isa<clang::TranslationUnitDecl>(decl) || llvm::isa<clang::VarDecl>(decl) || llvm::isa<clang::AccessSpecDecl>(decl))
+			if (llvm::isa<clang::TranslationUnitDecl>(decl) || llvm::isa<clang::VarDecl>(decl) || llvm::isa<clang::
+				AccessSpecDecl>(decl))
 			{
 				// Ignore the translation unit decl since it won't be manipulated with.
 				// VarDecl have a DeclStmt counterpart that is easier to work with => avoid duplicates.
@@ -256,6 +281,10 @@ namespace Common
 
 #pragma region Expressions
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Removes a valid ternary operator.
+		 */
 		bool VisitAbstractConditionalOperator(clang::AbstractConditionalOperator* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -270,7 +299,7 @@ namespace Common
 
 		/**
 		 * Overrides the parent visit method.\n
-		 * Removes valid nodes based on the provided bit mask and dependency graph.
+		 * Removes a valid function call.
 		 */
 		bool VisitCallExpr(clang::CallExpr* expr)
 		{
@@ -284,6 +313,11 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Removes a valid binary operator - currently, this concerns
+		 * only assignment operators.
+		 */
 		bool VisitBinaryOperator(clang::BinaryOperator* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -301,6 +335,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Removes a valid assignment operator.
+		 */
 		bool VisitCompoundAssignOperator(clang::CompoundAssignOperator* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -313,6 +351,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Removes a valid ternary operator.
+		 */
 		bool VisitChooseExpr(clang::ChooseExpr* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -325,6 +367,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Removes a valid deallocation operator.
+		 */
 		bool VisitCXXDeleteExpr(clang::CXXDeleteExpr* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -337,6 +383,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Removes a valid allocation call.
+		 */
 		bool VisitCXXNewExpr(clang::CXXNewExpr* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -349,6 +399,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Removes a valid lambda function.
+		 */
 		bool VisitLambdaExpr(clang::LambdaExpr* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -361,6 +415,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Removes a valid expression.
+		 */
 		bool VisitStmtExpr(clang::StmtExpr* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -373,6 +431,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Removes a valid unary operator.
+		 */
 		bool VisitUnaryOperator(clang::UnaryOperator* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -426,7 +488,7 @@ namespace Common
 			return true;
 		}
 	};
-	
+
 	/**
 	 * Traverses the AST to analyze important nodes.\n
 	 * Splits the source code into code units based on the traversed nodes and their corresponding source ranges.\n
@@ -447,7 +509,6 @@ namespace Common
 		 * of the given node.
 		 */
 		NodeMappingRef nodeMapping_;
-
 
 		/**
 		 * A map of integers that serves as a recognition tool for declarations.\n
@@ -472,6 +533,11 @@ namespace Common
 		 */
 		SkippedMapRef skippedNodes_ = std::make_shared<std::unordered_map<int, bool>>();
 
+		/**
+		 * Keeps track of nodes that might be children of other nodes.\n
+		 * The parent nodes, in this case, were not visited yet.\n
+		 * The bool value is irrelevant.
+		 */
 		std::unordered_map<int, bool> childStatements_;
 
 		/**
@@ -481,10 +547,9 @@ namespace Common
 		 * to a separate container in the graph.
 		 *
 		 * @param astId The node identifier as given by the clang `node->getId()` method.
-		 * @param snippet The source code corresponding to the processed node.
 		 * @param line The line of the starting location of the corresponding source code.
 		 */
-		bool InsertMapping(const int astId, const std::string& snippet, const int line)
+		bool InsertMapping(const int astId, const std::string& /*snippet*/, const int line)
 		{
 			if (nodeMapping_->find(astId) != nodeMapping_->end())
 			{
@@ -605,6 +670,12 @@ namespace Common
 			declReferences_ = toBeKept;
 		}
 
+		/**
+		 * Traverses the given subtree and returns all its statements.
+		 *
+		 * @param stmt The root of the subtree.
+		 * @return A container of all nodes in the subtree.
+		 */
 		std::vector<clang::Stmt*> GetChildrenRecursively(clang::Stmt* stmt) const
 		{
 			auto children = std::vector<clang::Stmt*>();
@@ -617,7 +688,7 @@ namespace Common
 					{
 						children.push_back(*it);
 					}
-					
+
 					auto recursiveChildren = GetChildrenRecursively(*it);
 					children.insert(children.end(), recursiveChildren.begin(), recursiveChildren.end());
 				}
@@ -625,7 +696,13 @@ namespace Common
 
 			return children;
 		}
-		
+
+		/**
+		 * Handles any potential unmapped children.\n
+		 * The children are mapped to the given statement node.
+		 *
+		 * @param stmt The node to which the children should be mapped, if valid.
+		 */
 		void CreateChildDependencies(clang::Stmt* stmt)
 		{
 			for (auto& child : GetChildrenRecursively(stmt))
@@ -773,8 +850,6 @@ namespace Common
 		{
 			// Skip included files.
 			if (!astContext_.getSourceManager().isInMainFile(decl->getBeginLoc()))
-				//const auto loc = clang::FullSourceLoc(decl->getBeginLoc(), astContext_.getSourceManager());
-				//if (loc.isValid() && loc.isInSystemHeader())
 			{
 				return true;
 			}
@@ -792,8 +867,6 @@ namespace Common
 		{
 			// Skip included files.
 			if (!astContext_.getSourceManager().isInMainFile(stmt->getBeginLoc()))
-				//const auto loc = clang::FullSourceLoc(stmt->getBeginLoc(), astContext_.getSourceManager());
-				//if (loc.isValid() && loc.isInSystemHeader())
 			{
 				return true;
 			}
@@ -802,12 +875,13 @@ namespace Common
 
 	public:
 		int codeUnitsCount = 0; ///< The traversal order number.
-		std::vector<int> errorLines;
+		std::vector<size_t> errorLines;
 		DependencyGraph graph = DependencyGraph();
 
-		MappingASTVisitor(clang::CompilerInstance* ci, NodeMappingRef mapping, const int errorLine) : errorLine_(errorLine),
-			astContext_(ci->getASTContext()),
-			nodeMapping_(std::move(mapping))
+		MappingASTVisitor(clang::CompilerInstance* ci, NodeMappingRef mapping,
+		                  const int errorLine) : errorLine_(errorLine),
+		                                         astContext_(ci->getASTContext()),
+		                                         nodeMapping_(std::move(mapping))
 		{
 			declNodeMapping_ = std::make_shared<NodeMapping>();
 			errorLines.push_back(errorLine);
@@ -827,7 +901,7 @@ namespace Common
 		 * Overrides the parent traversal mode.\n
 		 * The traversal is changed from preorder to postorder.
 		 */
-		bool shouldTraversePostOrder() const
+		[[nodiscard]] static bool shouldTraversePostOrder()
 		{
 			return true;
 		}
@@ -847,7 +921,8 @@ namespace Common
 				return true;
 			}
 
-			if (llvm::isa<clang::TranslationUnitDecl>(decl) || llvm::isa<clang::VarDecl>(decl) || llvm::isa<clang::AccessSpecDecl>(decl))
+			if (llvm::isa<clang::TranslationUnitDecl>(decl) || llvm::isa<clang::VarDecl>(decl) || llvm::isa<clang::
+				AccessSpecDecl>(decl))
 			{
 				// Ignore the translation unit decl since it won't be manipulated with.
 				// VarDecl have a DeclStmt counterpart that is easier to work with => avoid duplicates.
@@ -860,6 +935,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Records the declaration location of the criterion's function.
+		 */
 		bool VisitFunctionDecl(clang::FunctionDecl* decl)
 		{
 			if (SkipIncludeDecl(decl))
@@ -867,9 +946,13 @@ namespace Common
 				return true;
 			}
 
+			// Check whether the criterion was already processed.
+			// This body is only a one-time event.
 			if (criterionFound_)
 			{
-				const auto range = GetPrintableRange(GetPrintableRange(decl->getSourceRange(), astContext_.getSourceManager()),
+				// The criterion's function has not been mapped yet - map it.
+				const auto range = GetPrintableRange(
+					GetPrintableRange(decl->getSourceRange(), astContext_.getSourceManager()),
 					astContext_.getSourceManager());
 
 				const auto startingLine = astContext_.getSourceManager().getSpellingLineNumber(range.getBegin());
@@ -877,11 +960,14 @@ namespace Common
 
 				if (decl->hasBody() && decl->getBody() != nullptr)
 				{
-					const auto bodyRange = GetPrintableRange(GetPrintableRange(decl->getBody()->getSourceRange(), astContext_.getSourceManager()),
+					const auto bodyRange = GetPrintableRange(
+						GetPrintableRange(decl->getBody()->getSourceRange(), astContext_.getSourceManager()),
 						astContext_.getSourceManager());
 
-					const auto bodyStartingLine = astContext_.getSourceManager().getSpellingLineNumber(bodyRange.getBegin());
-					const auto bodyEndingLine = astContext_.getSourceManager().getSpellingLineNumber(bodyRange.getEnd());
+					const auto bodyStartingLine = astContext_.getSourceManager().getSpellingLineNumber(
+						bodyRange.getBegin());
+					const auto bodyEndingLine = astContext_
+					                            .getSourceManager().getSpellingLineNumber(bodyRange.getEnd());
 
 					for (auto i = startingLine; i <= bodyStartingLine; i++)
 					{
@@ -897,12 +983,11 @@ namespace Common
 				{
 					errorLines.push_back(startingLine);
 				}
-				
+
 				criterionFound_ = false;
 			}
-			
-			return true;
 
+			return true;
 		}
 
 		/**
@@ -930,6 +1015,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Maps class/struct members as dependencies of a class/struct.
+		 */
 		bool VisitCXXRecordDecl(clang::CXXRecordDecl* decl)
 		{
 			if (SkipIncludeDecl(decl))
@@ -987,6 +1076,10 @@ namespace Common
 
 #pragma region Expressions
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Processes a valid ternary operator.
+		 */
 		bool VisitAbstractConditionalOperator(clang::AbstractConditionalOperator* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -1001,7 +1094,7 @@ namespace Common
 
 		/**
 		 * Overrides the parent visit method.\n
-		 * Determines whether the node is worth visiting and creates an ID to traversal order number mapping for the node.\n
+		 * Processes a valid function call.
 		 */
 		bool VisitCallExpr(clang::CallExpr* expr)
 		{
@@ -1014,17 +1107,22 @@ namespace Common
 
 			const auto decl = expr->getCalleeDecl();
 
-			if (decl != nullptr) 
+			if (decl != nullptr)
 			{
 				if (nodeMapping_->find(decl->getID()) != nodeMapping_->end())
 				{
 					graph.InsertVariableDependency(nodeMapping_->at(decl->getID()), codeUnitsCount - 1);
 				}
 			}
-			
+
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Processes a valid binary operator - currently, this concerns
+		 * only assignment operators.
+		 */
 		bool VisitBinaryOperator(clang::BinaryOperator* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -1042,6 +1140,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Processes a valid assignment operator.
+		 */
 		bool VisitCompoundAssignOperator(clang::CompoundAssignOperator* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -1054,6 +1156,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Processes a valid ternary operator.
+		 */
 		bool VisitChooseExpr(clang::ChooseExpr* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -1066,6 +1172,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Processes a valid deallocation operator.
+		 */
 		bool VisitCXXDeleteExpr(clang::CXXDeleteExpr* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -1078,6 +1188,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Processes a valid allocation call.
+		 */
 		bool VisitCXXNewExpr(clang::CXXNewExpr* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -1109,6 +1223,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Processes a valid lambda function.
+		 */
 		bool VisitLambdaExpr(clang::LambdaExpr* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -1121,6 +1239,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Processes a valid expression.
+		 */
 		bool VisitStmtExpr(clang::StmtExpr* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -1133,6 +1255,10 @@ namespace Common
 			return true;
 		}
 
+		/**
+		 * Overrides the parent visit method.\n
+		 * Processes a valid unary operator.
+		 */
 		bool VisitUnaryOperator(clang::UnaryOperator* expr)
 		{
 			if (SkipIncludeStmt(expr))
@@ -1171,6 +1297,6 @@ namespace Common
 			return true;
 		}
 	};
-}
+}	// namespace Common
 
 #endif

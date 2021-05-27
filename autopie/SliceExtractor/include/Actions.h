@@ -15,8 +15,8 @@ namespace SliceExtractor
 	std::unique_ptr<clang::tooling::FrontendActionFactory> SliceExtractorFrontendActionFactory(std::vector<int>& lines);
 
 	/**
-	 * Specifies the frontend action for generating source file variants.\n
-	 * Currently creates a unifying consumer.
+	 * Specifies the frontend action for collecting relevant line numbers in a file.\n
+	 * Currently creates the unifying consumer.
 	 */
 	class SliceExtractorAction final : public clang::ASTFrontendAction
 	{

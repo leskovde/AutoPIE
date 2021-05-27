@@ -11,7 +11,6 @@
 #include <lldb/API/SBEvent.h>
 
 #include <filesystem>
-#include <optional>
 #include <utility>
 
 /**
@@ -40,11 +39,10 @@ enum class DeltaIterationResults
 };
 
 class GlobalContext;
-class Statistics;
+struct Statistics;
 class DependencyGraph;
 
 using BitMask = std::vector<bool>;
-using Unsigned = unsigned long long;
 using EpochRanges = std::map<double, std::vector<BitMask>>;
 
 //===----------------------------------------------------------------------===//
@@ -109,10 +107,12 @@ struct InputData
 	const double reductionRatio;
 	const bool dumpDot;
 
-	InputData(std::string message, Location location, const double ratio, const bool dump) : errorMessage(std::move(message)),
-		errorLocation(std::move(location)),
-		reductionRatio(ratio),
-		dumpDot(dump)
+	InputData(std::string message, Location location, const double ratio, const bool dump) : errorMessage(
+		                                                                                         std::move(message)),
+	                                                                                         errorLocation(
+		                                                                                         std::move(location)),
+	                                                                                         reductionRatio(ratio),
+	                                                                                         dumpDot(dump)
 	{
 	}
 };
@@ -130,7 +130,6 @@ clang::SourceRange GetPrintableRange(clang::SourceRange range, const clang::Sour
 llvm::StringRef GetSourceTextRaw(clang::SourceRange range, const clang::SourceManager& sm);
 
 llvm::StringRef GetSourceText(clang::SourceRange range, const clang::SourceManager& sm);
-
 
 //===----------------------------------------------------------------------===//
 //
@@ -158,7 +157,7 @@ bool IsFull(BitMask& bitMask);
 
 void Increment(BitMask& bitMask);
 
-void InitializeBitMask(BitMask& bitMask, Unsigned number);
+void InitializeBitMask(BitMask& bitMask, size_t number);
 
 void MergeVectorMaps(EpochRanges& from, EpochRanges& to);
 
@@ -180,7 +179,7 @@ void PrintResult(const std::string& filePath);
 
 bool ValidateResults(GlobalContext& context);
 
-bool CheckLocationValidity(const std::string& filePath, long lineNumber, bool force = true);
+bool CheckLocationValidity(const std::string& filePath, size_t lineNumber, bool force = true);
 
 std::string StateToString(lldb::StateType state);
 

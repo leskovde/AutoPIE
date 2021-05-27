@@ -140,6 +140,7 @@
       <AdditionalIncludeDirectories>C:\Users\Denis\llvm\llvm-project\clang\include;C:\Users\Denis\llvm\llvm-project\llvm\include;C:\Users\Denis\llvm\llvm-project\lldb\include;C:\Users\Denis\llvm\llvm-project\build-x64\include;C:\Users\Denis\llvm\llvm-project\build-x64\tools\clang\include;C:\Users\Denis\llvm\llvm-project\build-x64\tools\lldb\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4146</DisableSpecificWarnings>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/bigobj</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

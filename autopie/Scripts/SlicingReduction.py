@@ -45,16 +45,19 @@ parser.add_argument("--inject", type=lambda x: (str(x).lower() in ['true', '1', 
                          "arguments, the tool specifies the arguments directly "
                          "in source code.")
 
+# Define relative paths to all components.
 
 delta_path = "../DeltaReduction/build/bin/DeltaReduction"
 naive_path = "../NaiveReduction/build/bin/NaiveReduction"
 var_extractor_path = "../VariableExtractor/build/bin/VariableExtractor"
 slice_extractor_path = "../SliceExtractor/build/bin/SliceExtractor"
+
+# Define paths to output files
+
 variant_path = {
     ".c": "temp/autoPieOut.c",
     ".cpp": "temp/autoPieOut.cpp"
 }
-
 unification_output = "unification.txt"
 var_extractor_output = "criteria.txt"
 slice_extractor_output = {
@@ -63,11 +66,19 @@ slice_extractor_output = {
 }
 adjusted_line_path = "adjustedLineNumber.txt"
 
+# The language in which the source code is written-
+# determined based on the file extension.
 language = ""
+
+# A list of created resource for further cleanup.
 created_files = []
 
 
 def validate_paths(args):
+    # Checks whether all required paths are present.
+    # Returns False if any path is missing.
+    # Additionally, initializes the `language` variable.
+
     valid = True
 
     if not os.path.exists(args.source_file):
@@ -98,6 +109,9 @@ def validate_paths(args):
 
 
 def check_and_remove(file_path):
+    # Safely and silently removes a file
+    # from a provided file path.
+
     if os.path.exists(file_path):
         try:
             os.remove(file_path)
@@ -106,6 +120,12 @@ def check_and_remove(file_path):
 
 
 def run_unification(slices):
+    # Executes the unification script with
+    # the generated slice files (containing
+    # line numbers).
+    # Saves the output in the path specified
+    # in global variables.
+
     if len(slices) < 1:
         return 1
 
@@ -127,6 +147,12 @@ def run_unification(slices):
 
 
 def run_static_slicer(args, var, iteration):
+    # Executes the static slicer script for
+    # a given criterion.
+    # The result is saved in file with
+    # the following name:
+    # static_slice_`iteration`.txt
+
     check_and_remove(f"./slice_input{language}")
 
     input_file = shutil.copy2(args.source_file, f"./slice_input{language}")
@@ -137,7 +163,12 @@ def run_static_slicer(args, var, iteration):
     criterion = var
     main_loc = 1
 
+    # Handle argument injection.
     if args.inject and args.arguments != "":
+        # Find the start of the main function,
+        # insert two lines that specify argv and
+        # argc, and adjust all modified line locations.
+
         parts = criterion.split(":")
         adjusted_line = int(parts[0])
 
@@ -156,9 +187,13 @@ def run_static_slicer(args, var, iteration):
                         break
                     found = True
 
+        # Add two lines into the file.
+
         inject_arguments(args.arguments, input_file, main_loc)
 
         adjusted_line += (0 if adjusted_line <= main_loc else 2)
+
+        # Adjust the criterion.
 
         criterion = f"{adjusted_line}:{parts[1]}"
 
@@ -166,11 +201,14 @@ def run_static_slicer(args, var, iteration):
         file=input_file,
         criterion=criterion,
         output=output_file,
+        cpp="" if language == ".c" else "++",
         dynamic_slicer=False
     )
 
     run_slicer(static_slicer_args)
 
+    # If the injection took place, some
+    # line numbers need adjustments.
     if args.inject:
         adjust_slice(output_file, main_loc)
 
@@ -182,6 +220,12 @@ def run_static_slicer(args, var, iteration):
 
 
 def inject_arguments(arguments, file_path, location):
+    # Inserts two lines with argv and argc
+    # into the content of a specified file.
+    # The file is then dumped into a specified
+    # location, the original file remains
+    # unmodified.
+
     with open(file_path, "r") as ifs:
         file_contents = ifs.readlines()
 
@@ -189,6 +233,7 @@ def inject_arguments(arguments, file_path, location):
 
     argv = 'const char* n_argv[] = { "program", '
 
+    # Append all arguments.
     for word in words:
         argv += f'"{word}", '
 
@@ -235,6 +280,11 @@ def run_dynamic_slicer(args, variables, iteration):
 
 
 def adjust_slice(output_file, start):
+    # Adjust all line numbers after
+    # a given line number by two.
+    # This is a helper function
+    # for argument injection.
+
     lines = []
     if os.path.exists(output_file):
         with open(output_file, "r") as ifs:
@@ -252,6 +302,12 @@ def adjust_slice(output_file, start):
 
 
 def run_tool(binary_path, arguments):
+    # Runs a generic tool by executing
+    # a subprocess.
+    # Requires the path to the binary
+    # and a list of its arguments.
+    # Returns the exit code of tool.
+
     if not os.path.exists(binary_path):
         print(f"The tool '{binary_path}' could not be found!")
         print("Make sure to build all components using a Makefile before running the script.")
@@ -267,6 +323,13 @@ def run_tool(binary_path, arguments):
 
 
 def run_variable_extraction(args):
+    # Runs the VariableExtractor component.
+    # Variables are extracted based on
+    # the current values in args.
+    # The result is saved to the path
+    # specified in the global variables.
+    # Returns the exit code of tool.
+
     check_and_remove(var_extractor_output)
 
     var_extractor_args = [f"--loc-line={args.line_number}",
@@ -281,6 +344,14 @@ def run_variable_extraction(args):
 
 
 def run_slice_extraction(args, slice_file):
+    # Runs the SliceExtractor component.
+    # Slices are extracted based on the values
+    # in args and on the specified file
+    # of line numbers.
+    # The result is saved to two paths
+    # specified in the global variables.
+    # Returns the exit code of tool.
+
     check_and_remove(slice_extractor_output[language])
     check_and_remove(adjusted_line_path)
 
@@ -297,6 +368,13 @@ def run_slice_extraction(args, slice_file):
 
 
 def run_delta(args):
+    # Runs the DeltaReduction component.
+    # Values in args are passed directly
+    # to the component.
+    # The result is saved to the path
+    # specified in the global variables.
+    # Returns the exit code of tool.
+
     check_and_remove(f"autoPieOut{language}")
 
     delta_args = [f"--loc-line={args.line_number}",
@@ -313,6 +391,13 @@ def run_delta(args):
 
 
 def run_naive(args):
+    # Runs the NaiveReduction component.
+    # Values in args are passed directly
+    # to the component.
+    # The result is saved to the path
+    # specified in the global variables.
+    # Returns the exit code of tool.
+
     naive_args = [f"--loc-line={args.line_number}",
                   f"--error-message={args.error_message}",
                   f"--arguments={args.arguments}",
@@ -328,6 +413,12 @@ def run_naive(args):
 
 
 def get_variables_on_line(args, file_path):
+    # Wrapper for executing
+    # the VariableExtractor component
+    # and loading its result into
+    # memory.
+    # Returns a list of criteria.
+
     variables = []
 
     if not run_variable_extraction(args):
@@ -342,6 +433,13 @@ def get_variables_on_line(args, file_path):
 
 
 def get_extracted_slice(args):
+    # Wrapper for executing
+    # the SliceExtractor component
+    # and loading its result into
+    # memory.
+    # Returns a path to the slice
+    # source file.
+
     global language
 
     extracted_file = pathlib.Path(slice_extractor_output[language])
@@ -357,6 +455,13 @@ def get_extracted_slice(args):
 
 
 def get_adjusted_line(args, file_path):
+    # Reads the adjusted line from
+    # the SliceExtractor tool.
+    # If successful, returns
+    # the read line as int.
+    # Otherwise, returns
+    # the existing line number.
+
     with open(file_path, "r") as ifs:
         line = ifs.read().strip()
 
@@ -370,6 +475,14 @@ def get_adjusted_line(args, file_path):
 
 
 def update_source_from_slices(args, slices):
+    # Updates the args.source_file
+    # value based on the output of
+    # slicers.
+    # Handles the case in which
+    # slicers, unification, or
+    # slice extraction fails
+    # by keeping the old value.
+
     available_slices = []
     for slice in slices:
         if os.path.exists(slice):
@@ -388,6 +501,13 @@ def update_source_from_slices(args, slices):
 
 
 def update_source_from_reduction(args):
+    # Updates the args.source_file
+    # value based on the output of
+    # Naive or Delta Reductions.
+    # Handles the case in which
+    # the reduction fails
+    # by keeping the old value.
+
     reduced_file = pathlib.Path(variant_path[language])
 
     if not reduced_file.exists():
@@ -402,6 +522,18 @@ def update_source_from_reduction(args):
 
 
 def modify_criterion(args, variables, iteration):
+    # Due to dynamic slicer's limitations,
+    # this functions inserts code that
+    # prevents the debugged program
+    # from failing on a given line.
+    # It does so by inserting
+    # a void cast for all variables
+    # in the criterion (thus preserving
+    # the criterion) and calling
+    # _Exit(0).
+    # Appropriate includes are
+    # also inserted.
+
     with open(args.source_file, "r") as ifs:
         file_contents = ifs.readlines()
 
@@ -431,6 +563,12 @@ def modify_criterion(args, variables, iteration):
 
 
 def save_result(args):
+    # Copies the results of
+    # the entire script to
+    # the standard output
+    # location:
+    # ./autoPieOut`language`
+
     output_file = pathlib.Path(variant_path[language])
 
     if not output_file.exists():
@@ -462,6 +600,9 @@ def main(args):
     print(f"Extracting variables...")
     variables = get_variables_on_line(args, var_extractor_output)
 
+    # Run the static slicer first, unify its results,
+    # update the current debugged file.
+
     if args.static_slice:
         static_slices = []
         i = 0
@@ -474,6 +615,9 @@ def main(args):
 
         update_source_from_slices(args, static_slices)
 
+    # The attempt to run the dynamic slicer, unify
+    # its results, update the current debugged file.
+
     if args.dynamic_slice:
         i = 0
 
@@ -483,6 +627,9 @@ def main(args):
 
         update_source_from_slices(args, [dynamic_slice])
 
+    # Run Delta on the current intermediate result.
+    # If successful, update the intermediate result.
+
     if args.delta:
         exit_code = run_delta(args)
 
@@ -491,12 +638,18 @@ def main(args):
         else:
             update_source_from_reduction(args)
 
+    # Finally, run Naive on the current intermediate
+    # result.
+    # If successful, update the intermediate result.
+
     exit_code = run_naive(args)
 
     if exit_code != 0:
         print("NaiveReduction returned a non-standard exit code. The reduction failed.")
     else:
         update_source_from_reduction(args)
+
+    # Save whatever intermediate result there is.
 
     if not save_result(args):
         print("NaiveReduction could not find a smaller variant - reverting the result of the previous step...")

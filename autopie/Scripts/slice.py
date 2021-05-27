@@ -19,6 +19,14 @@ parser.set_defaults(dynamic_slicer=False)
 
 
 def slice_dg(args):
+    # Runs the DG slicer using a Docker container.
+    # During the process, a temporary directory is
+    # created and mounted to the container.
+    # The result is checked and moved from the docker
+    # temp path to the desired output path.
+
+    # Create the temp path and copy the input to it.
+
     if not os.path.exists("./dg-data"):
         os.mkdir("./dg-data")
 
@@ -31,9 +39,10 @@ def slice_dg(args):
     client = docker.from_env()
 
     print("Running the docker...")
-    # call("docker run -it -P -v ~/dg-data:/data mchalupa/dg")
 
-    compiler_cmd = "clang -emit-llvm -c -g /data-mapped/" + args.file + " -o _code.bc"
+    # Prepare the commands to be executed in the docker.
+
+    compiler_cmd = f"clang{args.cpp} -emit-llvm -c -g /data-mapped/" + args.file + " -o _code.bc"
 
     slicer_path = "/opt/dg/tools/llvm-slicer"
     slicer_cmd = slicer_path + " -c " + args.criterion + " _code.bc"
@@ -45,12 +54,16 @@ def slice_dg(args):
         compiler_cmd + " && " + slicer_cmd + " && " + source_converter_cmd
     ]
 
+    # Map the temp path.
+
     volumes = {
         vol_path: {
             "bind": "/data-mapped",
             "mode": "rw",
         },
     }
+
+    # Run the container.
 
     container = client.containers.run(
         image="mchalupa/dg",
@@ -63,6 +76,8 @@ def slice_dg(args):
 
     print("Docker exited...")
 
+    # Process the results.
+
     print("Checking and moving the result...")
     if os.path.exists(os.path.join(vol_path, args.output)):
         shutil.move(os.path.join(vol_path, args.output), args.output)
@@ -72,6 +87,14 @@ def slice_dg(args):
 
 
 def slice_giri(args):
+    # Runs the DG slicer using a Docker container.
+    # During the process, a temporary directory is
+    # created and mounted to the container.
+    # The result is checked and moved from the docker
+    # temp path to the desired output path.
+
+    # Create the temp path and copy the input to it.
+
     if not os.path.exists("./giri-data"):
         os.mkdir("./giri-data")
 
@@ -84,6 +107,8 @@ def slice_giri(args):
     client = docker.from_env()
 
     print("Running the docker...")
+
+    # Prepare the commands to be executed in the docker.
 
     directory = "/giri/test/UnitTests/temp/"
 
@@ -105,8 +130,9 @@ def slice_giri(args):
         "/bin/bash",
         "-c",
         slicer_create_makefile_cmd + " && " + slicer_cmd + " && " + source_converter_cmd
-        # "mkdir /giri/temp && ls /giri > /data-mapped/test.txt"
     ]
+
+    # Map the temp path.
 
     volumes = {
         vol_path: {
@@ -114,6 +140,8 @@ def slice_giri(args):
             "mode": "rw",
         },
     }
+
+    # Run the container.
 
     container = client.containers.run(
         image="liuml07/giri",
@@ -125,6 +153,8 @@ def slice_giri(args):
     container.wait()
 
     print("Docker exited...")
+
+    # Process the results.
 
     print("Checking and moving the result...")
     if os.path.exists(os.path.join(vol_path, args.output)):
