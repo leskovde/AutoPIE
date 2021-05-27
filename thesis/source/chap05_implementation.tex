@@ -58,7 +58,7 @@ specifying a few other arguments.
 By default, LLVM builds for all available platforms, including ARM and 
 PowerPC.
 However, only a single platform is required/supported for this project.
-The target platform with which LLVM should be built is x86 64 bits.
+The target platform with which LLVM should be built is x86-64.
 
 LibTooling changes with every release.
 Projects dependent on an older version of LibTooling might not work with 
@@ -77,8 +77,8 @@ minimization process on Windows.
 
 Since this project compares several techniques, some of which are composed in 
 a pipeline, we decided on using a modular design. 
-Each reduction approach described in Section~\ref{chap:minimization} consists 
-of one or more components. 
+The implementation of each reduction approach described in 
+Section~\ref{chap:minimization} consists of one or more components. 
 
 These components can be shared and reused across multiple minimizing 
 algorithms. 
@@ -337,7 +337,7 @@ This catch would eventually lead to an error.
 The error can be avoided by only removing children while keeping their 
 parents.
 
-Removing code units tends to shift lines down. 
+Removing code units tends to shift lines up. 
 This phenomenon might lead to the statements on the original error line 
 changing their location. 
 The number of the error-inducing line must be adjusted. 
@@ -695,7 +695,8 @@ The mentioned classes can be found in the following files:
 
 As was already mentioned at the beginning of this chapter, implementing 
 a slicer is out of this project's scope. 
-We have turned to existing implementations of static and dynamic slicers. 
+We have turned to existing implementations of static and dynamic slicers, 
+DG and Giri, respectively. 
 We know that these implementations will be more reliable and accurate. 
 Below are the details concerning the two chosen slicer implementations. 
 We were searching for LLVM-based slicers in the hope of running them natively 
@@ -768,11 +769,12 @@ Giri's repository can be found on GitHub on the following address:
 \section{Systematic approach}
 
 The systematic approach is a pipeline comprised of multiple steps. 
-The steps are represented by components, some of which are shared with 
-the previous implementation. 
-The entire pipeline consists of a variable extraction tool, static and 
-dynamic slicers, a slice unification tool, a slice extraction tool, 
-the minimizing Delta debugging algorithm, and the naive approach. 
+Each step is represented by a component. 
+Some components are shared with the previous implementation. 
+The entire pipeline, shown in Figure~\ref{img:components}, consists of 
+a variable extraction tool, static and dynamic slicers, a slice unification 
+tool, a slice extraction tool, the minimizing Delta debugging algorithm, 
+and the naive approach. 
 The motivation behind these steps and an overview of the algorithm can be 
 found in Section~\ref{chap:systematic}.
 

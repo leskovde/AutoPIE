@@ -313,6 +313,18 @@ The build script performs the following steps:
   This export expires once the current shell is terminated.
 \end{enumerate}
 
+Confirm that the installation has finished correctly by checking the output 
+of \icode{ls /usr/local/lib}. 
+If the output contains libraries starting with \icode{libLLVM} and 
+\icode{libclang}, the installation script has most likely performed all of 
+its actions correctly. 
+The linker now needs to know where to find the shared libraries. 
+The user needs to ensure that the \icode{LD\_LIBRARY\_PATH} variable contains 
+the path to \icode{/usr/local/lib}. 
+In case it does not, the path can be added by executing the following command:
+
+\icode{export LD\_LIBRARY\_PATH=\$LD\_LIBRARY\_PATH:/usr/local/lib/}.
+
 If successful, the user can now use LLVM libraries when linking C++ projects.
 
 \subsection{Building AutoPIE}
@@ -381,6 +393,18 @@ The user can run the evaluation dataset by navigating to a subdirectory of
 an approach and launching \icode{evaluate.sh}. 
 
 For example: \icode{cd autopie/NaiveReduction \&\& make \&\& ./evaluate.sh}.
+
+When trying to run any component, the user might encounter an error while 
+loading shared libraries. 
+This error might stem from the fact that the installation script has not 
+ended successfully, and therefore, \icode{/usr/local/lib} does not contain 
+the necessary libraries. 
+However, the more likely option is that the \icode{LD\_LIBRARY\_PATH} variable 
+does not contain the proper path. 
+
+The user can fix that by executing the following command:
+
+\icode{export LD\_LIBRARY\_PATH=\$LD\_LIBRARY\_PATH:/usr/local/lib/}.
 
 \openright
 \end{document}

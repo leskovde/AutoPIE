@@ -1,15 +1,15 @@
 \chapter{Evaluation}\label{chap:evaluation}
 
 Having described the implementation of proposed reduction approaches, we can 
-finally compare them. 
-The goal of the comparison is to show that the slicing-based approach is 
-the most practical minimization algorithm.
+evaluate their performance and compare them. 
+The main goal of the comparison is to confirm or refute our hypothesis that 
+the slicing-based approach is the most practical minimization algorithm.
 
 \section{Metrics}\label{chap:metrics}
 
-There are several points of interest in this comparison. 
-Each presented algorithm contained a description of this time complexity and 
-its minimization properties. 
+There are several interesting measurements to be made in this comparison.
+Presentation of each algorithm in Section~\ref{chap:minimization} contained 
+a description of its time complexity and its minimization properties. 
 Due to this fact, we believe both the level of reduction and the algorithm's 
 efficiency should be measured. 
 In order to capture the performance of each approach, we employed 
@@ -24,10 +24,11 @@ the following metrics.
    more minimality than the Delta debugging approach.
   \item We have noted that some approaches, such as the minimizing Delta 
   debugging algorithm, do not achieve optimal reduction. 
-  However, we can measure the ratio of the generated result compared to 
-  the minimal variant. 
-  The \emph{minimization ratio} will be measured in percentage. 
-  The goal is to achieve $0\%$, which translates to the result being minimal.
+  However, we can measure the distance of the generated result's size from 
+  the minimal variant's size. 
+  The \emph{distance from minimal variant} will be measured in percentage. 
+  The goal is to achieve $0\%$, which translates to the result being 
+  minimal.
   \item{Approaches} can be compared against each other using 
   a \emph{proportion ratio}. 
   This metric is also measured in percentage. 
@@ -57,7 +58,7 @@ The program either throws an exception, produces an unreduced source code as
 its result, or outputs a program that does not result in the desired runtime 
 error.
 
-\section{Dataset}
+\section{Benchmarks}
 
 Each implemented approach works with three major input parts:
 \begin{itemize}
@@ -71,13 +72,17 @@ For example, the implementation of the naive algorithm can cut the search
 short if it exceeds a given amount of variants. 
 These inputs will be referred to as minor arguments.
 
-Our dataset consists of 30 simple programs. 
-Data for each program includes its source code written in C or C++, 
-the target location, its execution arguments, and each approach's minor 
-arguments. 
-The dataset is made up of three equally-sized parts. 
+Our set of benchmarks consists of 30 simple programs. 
+We created these programs ourselves to suit the capabilities of AutoPIE 
+specifically. 
+Using existing benchmarks is not viable due to the exponential time 
+complexity of the naive algorithm.
+The configuration for each program includes its source code written in C or 
+C++, the target location, its execution arguments, and each approach's 
+minor arguments. 
+The set of benchmarks is made up of three equally-sized parts. 
 Those parts differ based on the techniques used in their entries' source code. 
-The first ten data entries represent non-structured programs. 
+The first ten elements represent non-structured programs. 
 These entries contain source code exclusively in their \icode{main} function. 
 Generally, they do not follow any specific programming paradigms and 
 represent the simplest input type. 
@@ -91,12 +96,12 @@ Their code contains classes, inheritance, and polymorphism.
 Furthermore, the code is almost exclusively written in C++. 
 However, advanced features of the language, such as templates, are omitted.
 
-All three parts of the dataset are similar in terms of size. 
+All three parts of the benchmark set are similar in terms of size. 
 The source code for each program ranges from 30 to 100 lines. 
 Moreover, the source code is contained in a single file. 
 Therefore, the programs do not use any other include headers outside of 
 system headers and standard libraries. 
-Runtime errors in the dataset are caused mainly by invaliding an assertion. 
+Runtime errors in the benchmarks are caused mainly by invaliding an assertion. 
 However, segmentation faults make up a large number of errors as well. 
 We have also limited each program to cause only a single runtime error 
 initially.
@@ -107,8 +112,8 @@ We tested a total of three approaches.
 These include the naive approach with its heuristics, the minimizing Delta 
 debugging approach, and the slicer-based approach 
 with argument injection. 
-The dataset was executed on a 6C/12T AMD Ryzen 5 5600X processor with 8GB of 
-memory. 
+All experiments were executed on a 6C/12T AMD Ryzen 5 5600X processor with 
+8GB of memory. 
 Specifically, the chip was clocked at 4.85GHz for single-threaded tasks and 
 4.5GHz for multi-threaded workloads. 
 The naive approach ran parallelized on 12 threads, while other approaches 
@@ -117,26 +122,30 @@ The project was compiled using Clang 11.0.0 with high optimizations
 (\icode{-O2}) and ran on Ubuntu 20.04.2.0 LTS.
 
 Table~\ref{tab:results} contains the results of all executed benchmarks. 
-Each row represents a single entry from the dataset. 
+Each row represents a single entry from the set of benchmarks. 
 The entry has been used three times: in the naive approach, the Delta 
 debugging algorithm, and the slicing-based approach. 
 Those 30 rows thus represent a matrix of all executed runs and their results. 
 Metrics introduced in Section~\ref{chap:metrics} are denoted as follows:
 \begin{itemize}
-  \item The \emph{minimization ratio} is represented by the $\mathcal{R}_m$ 
-  column. 
+  \item The \emph{minimization ratio} is represented by the column labeled 
+  with the symbol $\mathcal{R}_m$. 
   Values are in percentages.
   \item The binary \emph{minimality} metric does not have its column. 
-  However, it can be derived from the $\mathcal{R}_m$ column by looking for 
-  rows in which the value of $\mathcal{R}_m$ is zero.
-  \item The \emph{proportion ratio} is represented by the $\mathcal{R}_p$ 
-  column. 
+  However, it can be derived from the column labeled with the symbol
+  $\mathcal{R}_m$ by looking for rows in which the value of 
+  $\mathcal{R}_m$ is zero.
+  \item The \emph{proportion ratio} is represented by the column labeled 
+  with the symbol $\mathcal{R}_p$. 
   Values are in percentages and correspond to the ratio of input and output 
   sizes in bytes.
-  \item Run's \emph{execution time} can be found in the $\Delta_t$ column. 
+  \item Run's \emph{execution time} can be found in the column labeled with 
+  the symbol $\Delta_t$. 
   Time is measured in the most relevant unit based on the run's duration.
-  \item The \emph{processed variants count} is in the $\mathcal{I}_a$ column. 
-  It can be directly compared to the $\mathcal{I}_e$ column. 
+  \item The \emph{processed variants count} is in the column labeled with 
+  the symbol $\mathcal{I}_a$. 
+  It can be directly compared to the column labeled with the symbol 
+  $\mathcal{I}_e$. 
   $\mathcal{I}_e$ represents the expected number of processed variants - 
   the worst-case scenario.
 \end{itemize}
@@ -182,15 +191,16 @@ Metrics introduced in Section~\ref{chap:metrics} are denoted as follows:
 \end{table}
 
 The table's test numbering is systematic. 
-The first ten tests correspond to the unstructured portion of the dataset. 
+The first ten rows in the table correspond to the unstructured portion of 
+the benchmark. 
 They are meant to make the most effective use of every proposed approach. 
-These test programs are written exclusively in C. Tests 11 to 20 represent 
-the structured part of the dataset. 
-These programs definite several functions and call them inside 
+These test programs are written exclusively in C. 
+Tests 11 to 20 represent the structured part of the benchmark. 
+These programs define several functions and call them inside 
 the \icode{main} function. 
 This portion consists of both C and C++ programs.
-The ten remaining tests numbered 21 to 30 correspond to the OOP part of 
-the dataset. 
+The ten remaining rows numbered 21 to 30 correspond to the OOP part of 
+the benchmark. 
 These tests are almost solely written in C++, and they test the reduction 
 of classes, structures, and their respective members.
 The numbering is not sorted by any means.
@@ -207,8 +217,8 @@ The 445-byte large output mainly consists of comments leftover from the input.
 
 The \emph{minimization ratio} is determined based on a handcrafted minimal 
 program variant. 
-We checked the optimal solution for each element in the dataset and compared 
-the output to that solution. 
+We checked the optimal solution for each element in the set of benchmarks and 
+compared the output to that solution. 
 Although it was just stated that the optimal reference variant is minimal, 
 it is not entirely true. 
 This project does not employ advanced techniques such as argument removal 
@@ -247,7 +257,8 @@ While the proposed algorithms might work with any project in the domain
 described in Section~\ref{chap:minimization}, the implementation cuts corners 
 and further narrows down the supported input. 
 The following paragraphs describe the challenges we faced and how they have 
-impacted the capabilities of the proposed approaches.
+impacted the capabilities of our prototype implementation of the proposed 
+approaches.
 
 \paragraph{Input reading at runtime.}
 A problem that immediately comes to mind is getting user input from 
@@ -256,7 +267,7 @@ Generally, we could simulate the input in two ways.
 First, we could ask the user for a list of all entered values during 
 the user's run. 
 The list would then be provided to the program during validation. 
-The second option is always to assume the direst outcome. 
+The second option is always to assume the worst possible outcome. 
 Places in the code that expect an input would be supplied with 
 the worst-case input. 
 However, it should be noted that the latter approach does not consistently 
@@ -300,7 +311,8 @@ at the input as a set of multiple files, we can assume that a correct
 implementation can handle multiple input files without any issues. 
 However, we have decided against supporting the following: header file 
 reduction and multiple source file reduction. 
-Instead, our implementation can only handle a single input file.
+Instead, our current prototype implementation can only handle a single input
+file.
 The file must not be header, although it can contain includes for header 
 files. 
 Those header files will not be reduced. 
@@ -313,8 +325,9 @@ Section~\ref{chap:validationimplementation} describes how generated reduced
 program variants are validated. 
 The validation compiles the project, and any complicated project would 
 require a custom compilation command. 
-In order to simplify the matter, we only support single-file projects that 
-can be trivially compiled into an executable binary.
+In order to simplify the matter, in the current prototype we only support 
+single-file projects that can be trivially compiled into an executable 
+binary.
 
 \paragraph{Slicer inaccuracy.}
 As was already mentioned, the used slicer implementations have their 
