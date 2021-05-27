@@ -16,8 +16,6 @@
 using namespace llvm;
 using namespace Common;
 
-// TODO(Denis): Change all int instances to something consistent (int32_fast etc.).
-
 /**
  * Generates a minimal program variant by naively removing statements.
  * 
