@@ -84,7 +84,7 @@
 
 % Study programme and specialization
 \def\StudyProgramme{Computer Science}
-\def\StudyBranch{System Programming}
+\def\StudyBranch{Programming and Software Systems}
 
 % An optional dedication: you can thank whomever you wish (your supervisor,
 % consultant, a person who lent the software, etc.)
@@ -162,10 +162,6 @@ the running time of the algorithm.
 %%% In mathematical theses, it could be better to move the list of tables to the beginning of the thesis.
 \listoftables
 
-%%% Abbreviations used in the thesis, if any, including their explanation
-%%% In mathematical theses, it could be better to move the list of abbreviations to the beginning of the thesis.
-\chapwithtoc{List of Abbreviations}
-
 %%% Attachments to the bachelor thesis, if any. Each attachment must be
 %%% referred to at least once from the text of the thesis. Attachments
 %%% are numbered.
@@ -180,7 +176,11 @@ the running time of the algorithm.
 \appendix
 \chapter{Attachments}
 
-\section{Content of the attachment}
+\section{Content of the attachment}\label{chap:tree}
+
+The attached implementation has the following tree structure of files and 
+directories.
+
 \dirtree{%
 .1 Attachment{.zip}.
 .2 AutoPie.
@@ -220,14 +220,16 @@ the running time of the algorithm.
 .3 buildLLVM{.sh} \DTcomment{Setup script for building LLVM.}.
 }
 
+\bigskip
+
 The attachment is also available through an online repository. 
 The repository can be found at \url{https://github.com/leskovde/AutoPIE}.
 
-\section{User Documentation}
+\section{User Documentation}\label{chap:userdoc}
 
 \subsection{System requirements}
 
-The target system has to build AutoPIE, LLVM, Clang, and LLDB as well. 
+The user has to build AutoPIE, LLVM, Clang, and LLDB on the target system. 
 Building the LLVM project utilizes a large number of system resources.  
 In order to build the project correctly, the system must meet the following 
 requirements:

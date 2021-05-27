@@ -73,6 +73,9 @@ Docker is another dependency of this project.
 It is required to run slicing implementations as well as support the entire 
 minimization process on Windows.
 
+Technologies and their system requirements are described in more detail 
+in Attachment~\ref{chap:userdoc}.
+
 \section{Design}
 
 Since this project compares several techniques, some of which are composed in 
@@ -93,6 +96,9 @@ For example, the user can launch the minimizing Delta debugging algorithm as
 a C++ console application. 
 However, if he decides to execute the slicing-based approach, he will need 
 to launch it as a Python script.
+
+This design choice of implementing multiple components is directly reflected 
+by the project's tree structure seen in Attachment~\ref{chap:tree}.
 
 \begin{figure}[h]\centering
 \includegraphics[scale=0.85]{components}
