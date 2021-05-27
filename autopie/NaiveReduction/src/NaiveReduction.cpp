@@ -22,8 +22,8 @@ using namespace Common;
  * Generates a minimal program variant by naively removing statements.
  * 
  * Call:\n
- * > NaiveReduction.exe [file with error] [line with error] [error description message] [reduction ratio] <source path 0> [... <source path N>] --
- * e.g. NaiveReduction.exe --loc-line=17 --error-message="segmentation fault" --ratio=0.5 example.cpp --
+ * > NaiveReduction.exe [line with error] [error description message] [reduction ratio] [runtime arguments] <source path> --
+ * e.g. NaiveReduction.exe --loc-line=17 --error-message="segmentation fault" --arguments="arg1 arg2" --ratio=0.5 example.cpp --
  */
 int main(int argc, const char** argv)
 {
@@ -53,6 +53,8 @@ int main(int argc, const char** argv)
 	auto context = GlobalContext(parsedInput, *op.getSourcePathList().begin(), epochCount);
 	clang::tooling::ClangTool tool(op.getCompilations(), context.parsedInput.errorLocation.filePath);
 
+	// Include paths are not always recognized, especially for standard/system includes.
+	// This Adjuster helps with that.
 	auto includes = clang::tooling::getInsertArgumentAdjuster("-I/usr/local/lib/clang/11.0.0/include/");
 	tool.appendArgumentsAdjuster(includes);
 
@@ -80,6 +82,7 @@ int main(int argc, const char** argv)
 
 	context.language = inputLanguage;
 
+	// Check whether the given line is in the file and pretty print it to the standard output.
 	if (!CheckLocationValidity(parsedInput.errorLocation.filePath, parsedInput.errorLocation.lineNumber))
 	{
 		errs() << "The specified error location is invalid!\nSource path: " << parsedInput.errorLocation.filePath

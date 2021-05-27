@@ -20,6 +20,11 @@ using namespace clang;
 using namespace ast_matchers;
 using namespace llvm;
 
+/**
+ * A class for processing and storing data of a DeclRef ASTMatcher.\n
+ * The matcher's results - all declaration references - are processed and only variables are extracted.\n
+ * The names of those variables are kept in a public container.
+ */
 class DeclRefHandler final : public MatchFinder::MatchCallback
 {
 public:
@@ -40,11 +45,13 @@ public:
 			const auto range = GetPrintableRange(GetPrintableRange(expr->getSourceRange(), *result.SourceManager),
 			                                     *result.SourceManager);
 
+			// If somehow the reference stretches across multiple lines, handle them accordingly.
 			for (auto i = result.SourceManager->getSpellingLineNumber(range.getBegin());
 			     i <= result.SourceManager->getSpellingLineNumber(range.getEnd()); i++)
 			{
 				if (i == LineNumber)
 				{
+					// Save the name of the variable - the instance.
 					declRefNames.push_back(expr->getNameInfo().getAsString());
 				}
 			}
@@ -56,8 +63,8 @@ public:
  * Extracts variables on a given line in a given file.
  *
  * Call:\n
- * > VariableExtractor.exe [file with error] [line with error] <source path> --
- * e.g. VariableExtractor.exe --loc-line=17 example.cpp --
+ * > VariableExtractor.exe [line with error] [output path] <source path> --
+ * e.g. VariableExtractor.exe --loc-line=17 -o="variables.txt" example.cpp --
  */
 int main(int argc, const char** argv)
 {
@@ -72,6 +79,8 @@ int main(int argc, const char** argv)
 
 	tooling::ClangTool tool(op.getCompilations(), op.getSourcePathList()[0]);
 
+	// Include paths are not always recognized, especially for standard/system includes.
+	// This Adjuster helps with that.
 	auto includes = tooling::getInsertArgumentAdjuster("-I/usr/local/lib/clang/11.0.0/include/");
 	tool.appendArgumentsAdjuster(includes);
 
@@ -97,6 +106,7 @@ int main(int argc, const char** argv)
 
 	assert(inputLanguage != clang::Language::Unknown);
 
+	// Check whether the given line is in the file and pretty print it to the standard output.
 	if (!CheckLocationValidity(op.getSourcePathList()[0], LineNumber))
 	{
 		errs() << "The specified error location is invalid!\nSource path: " << op.getSourcePathList()[0]
@@ -105,6 +115,8 @@ int main(int argc, const char** argv)
 
 	DeclRefHandler varHandler;
 	MatchFinder finder;
+
+	// This ASTMatchers expression matches all declaration references in the given file.
 	finder.addMatcher(declRefExpr(isExpansionInMainFile()).bind("declRefs"), &varHandler);
 
 	Out::Verb() << "Matching variables...\n";

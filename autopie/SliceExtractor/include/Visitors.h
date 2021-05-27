@@ -10,21 +10,48 @@ namespace SliceExtractor
 	class SliceExtractorASTVisitor;
 	using SliceExtractorASTVisitorRef = std::unique_ptr<SliceExtractorASTVisitor>;
 
+	/**
+	 * A visitor for extracting additional line numbers.\n
+	 * Some statements stretch over several lines - for example, loops.\n
+	 * The used slicers don't always get all locations correctly and we have to scan for additional lines.\n
+	 */
 	class SliceExtractorASTVisitor final : public clang::RecursiveASTVisitor<SliceExtractorASTVisitor>
 	{
 		clang::ASTContext& astContext_;
 
+		/**
+		 * Checks whether a given declaration node is the program's main function.
+		 *
+		 * @param decl The given AST Decl node to be checked.
+		 * @return True if the node corresponds to `main` and its body, false otherwise.
+		 */
 		bool IsMain(clang::Decl* decl) const
 		{
 			return llvm::isa<clang::FunctionDecl>(decl) && llvm::cast<clang::FunctionDecl>(decl)->isMain();
 		}
 
+		/**
+		 * Scans the lines provided by the slicer in order to figure out whether a two points of the code
+		 * are in the original slice.
+		 *
+		 * @param startingLine The first value to be checked.
+		 * @param endingLine The second value to be checked.
+		 * @return True if either of the two points are in the given slice, false otherwise.
+		 */
 		[[nodiscard]] bool IsInSlice(const int startingLine, const int endingLine) const
 		{
 			return std::find(originalLines.begin(), originalLines.end(), startingLine) != originalLines.end() ||
 				std::find(originalLines.begin(), originalLines.end(), endingLine) != originalLines.end();
 		}
 
+		/**
+		 * Scans the lines provided by the slicer in order to figure out whether a range in the code
+		 * is in the original slice.
+		 *
+		 * @param bodyStartingLine The first value of the range.
+		 * @param bodyEndingLine The second value of the range.
+		 * @return True if any line in the original slice is in the specified range, false otherwise.
+		 */
 		[[nodiscard]] bool HasSlicePartsInsideItsBody(const int bodyStartingLine, const int bodyEndingLine) const
 		{
 			for (auto line : originalLines)
@@ -50,12 +77,16 @@ namespace SliceExtractor
 		{
 		}
 
+		/**
+		 * Processes a declaration node.\n
+		 * Extracts its locations and if any part of the declaration corresponds to the slice,
+		 * its line numbers are collected.
+		 */
 		bool VisitDecl(clang::Decl* decl)
 		{
-			// Skip included files.
+			// There are multiple ways of checking header files.
+			// In this case, we ignore all but the supplied file.
 			if (!astContext_.getSourceManager().isInMainFile(decl->getBeginLoc()))
-				//const auto loc = clang::FullSourceLoc(decl->getBeginLoc(), astContext_.getSourceManager());
-				//if (loc.isValid() && loc.isInSystemHeader())
 			{
 				return true;
 			}
@@ -111,12 +142,18 @@ namespace SliceExtractor
 			return true;
 		}
 
+		/**
+		 * Processes statement nodes.\n
+		 * Checks for their location and if the location corresponds to any line in the slice,
+		 * it collects all of the statement's line numbers.\n
+		 * Additionally, if the statement is in the slice and it is a declaration reference to
+		 * a declaration not in the slice (const variable, etc.), the declaration is added to the slice.
+		 */
 		bool VisitStmt(clang::Stmt* stmt)
 		{
-			// Skip included files.
+			// There are multiple ways of checking header files.
+			// In this case, we ignore all but the supplied file.
 			if (!astContext_.getSourceManager().isInMainFile(stmt->getBeginLoc()))
-				//const auto loc = clang::FullSourceLoc(decl->getBeginLoc(), astContext_.getSourceManager());
-				//if (loc.isValid() && loc.isInSystemHeader())
 			{
 				return true;
 			}

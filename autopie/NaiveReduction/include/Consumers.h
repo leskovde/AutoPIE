@@ -16,11 +16,12 @@
 
 namespace Naive
 {
-	inline std::mutex streamMutex;
+	inline std::mutex streamMutex; ///< Locks the output stream in order for messages to appear correctly.
 
 	/**
-	 * Unifies other consumers and uses them to describe the variant generation logic.\n
-	 * Single `HandleTranslationUnit` generates all source code variants.
+	 * Unifies other consumers and uses them to describe the naive variant-generating logic.\n
+	 * Single `HandleTranslationUnit` generates all source code variants and performs the validation.\n
+	 * Note that the validation is done in partitions - bins.
 	 */
 	class VariantGeneratingConsumer final : public clang::ASTConsumer
 	{
@@ -39,7 +40,15 @@ namespace Naive
 		{
 		}
 
-		void GenerateVariantsForABin(clang::ASTContext& context, const std::vector<std::vector<bool>>& bitMasks) const
+		/**
+		 * Generates all source code variants for each bit mask in a container of bit masks.\n
+		 * The source code is saved to the temporary directory under the name of the current iteration.\n
+		 * Adjusted line numbers are extracted while generating and saved in a map for future use.
+		 *
+		 * @param context ASTContext of the current traversal.
+		 * @param bitMasks A container of bit masks to be iterated, for which variants will be generated.
+		 */
+		void GenerateVariantsForABin(clang::ASTContext& context, const std::vector<BitMask>& bitMasks) const
 		{
 			auto variantsCount = 0;
 			for (auto& bitMask : bitMasks)
@@ -47,13 +56,17 @@ namespace Naive
 				variantsCount++;
 				globalContext_.stats.totalIterations++;
 
-				if (variantsCount % 50 == 0)
+				// Print the progress.
+				if (variantsCount % 100 == 0)
 				{
 					Out::All() << "Done " << variantsCount << " variants.\n";
 				}
 
-				Out::Verb() << "DEBUG: Processing valid bitmask " << Stringify(bitMask) << "\n";
+				Out::Verb() << "Processing valid bitmask " << Stringify(bitMask) << "\n";
 
+				// If we have done something incorrectly - wrong Rewriter buffer overrides,
+				// null nodes dereferences, ..., LibTooling will thrown an appropriate error.
+				// The error shouldn't stop us from generating other variants, though.
 				try
 				{
 					auto fileName = TempFolder + std::to_string(variantsCount) + "_" + GetFileName(
@@ -74,6 +87,21 @@ namespace Naive
 			Out::All() << "Finished. Done " << variantsCount << " variants.\n";
 		}
 
+		/**
+		 * A worker function for parallel runs.\n
+		 * Given a starting bit mask and a number of iterations, the function iterates over all
+		 * upcoming bit masks (by incrementing) and checks their validity using bit mask heuristics.
+		 *
+		 * @param startingPoint The number representing the starting bit mask - it will be converted
+		 * into a bit mask later.
+		 * @param numberOfVariants The number of iterations - new bit masks to be checked.
+		 * @param numberOfCodeUnits The size of the bit mask.
+		 * @param dependencies A copy of the dependency graph.
+		 * A copy allows us to avoid locking the graph when inserting cache entries.
+		 * @param id The number of the thread used for printing the progress.
+		 * @return All processed bit masks separated into bins - a map of bit mask containers accessible
+		 * by a given size ratio.
+		 */
 		[[nodiscard]] EpochRanges GetValidBitMasksInRange(const Unsigned startingPoint, const Unsigned numberOfVariants,
 		                                                  const int numberOfCodeUnits, DependencyGraph dependencies,
 		                                                  const int id) const
@@ -122,6 +150,14 @@ namespace Naive
 			return bins;
 		}
 
+		/**
+		 * Launches worker threads to validate all possible bit masks.\n
+		 * Creates ranges for the workers and assigns them to each thread.\n
+		 * Merges all results.
+		 *
+		 * @param numberOfCodeUnits The size of each bit mask.
+		 * @param dependencies The dependency graph for heuristics.
+		 */
 		void PartitionVariantsIntoBins(const int numberOfCodeUnits, DependencyGraph& dependencies) const
 		{
 			Out::All() << "Binning variants...\n";
@@ -192,6 +228,7 @@ namespace Naive
 
 			auto results = std::vector<EpochRanges>();
 
+			// Collect the results and wait for all workers.
 			for (auto& future : futures)
 			{
 				results.push_back(future.get());
@@ -213,8 +250,7 @@ namespace Naive
 		 * Each bit in the bitmask represents a node based on the traversal order.
 		 * Setting a bit to true translates to the corresponding node being present in the output.
 		 * Setting a bit to false results in the deletion of the corresponding node.\n
-		 * Lastly, all possible bitmask variants are generated and the variant printing consumer is called
-		 * for each bitmask variant.
+		 * Lastly, all possible bitmask variants are generated, converted to source code, and validated.
 		 *
 		 * @param context The AST context.
 		 */
@@ -242,6 +278,7 @@ namespace Naive
 				return;
 			}
 
+			// Process in epochs, generating only a portion of all variants.
 			for (auto i = 0; i < globalContext_.deepeningContext.epochCount; i++)
 			{
 				auto& bitMasks = globalContext_.deepeningContext.bitMasks.lower_bound(

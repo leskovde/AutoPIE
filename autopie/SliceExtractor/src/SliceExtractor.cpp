@@ -22,8 +22,8 @@ using namespace llvm;
  * Extracts a slice from source code based on a given list of lines.
  *
  * Call:\n
- * > SliceExtractor.exe [file with error] [line with error] <source path> --
- * e.g. SliceExtractor.exe --loc-line=17 --slice-file="slice.txt" example.cpp --
+ * > SliceExtractor.exe [line with error] [slice file] [output (without an extension)] <source path> --
+ * e.g. SliceExtractor.exe --loc-line=17 --slice-file="slice.txt" -o="result" example.cpp --
  */
 int main(int argc, const char** argv)
 {
@@ -38,6 +38,8 @@ int main(int argc, const char** argv)
 
 	tooling::ClangTool tool(op.getCompilations(), op.getSourcePathList()[0]);
 
+	// Include paths are not always recognized, especially for standard/system includes.
+	// This Adjuster helps with that.
 	auto includes = tooling::getInsertArgumentAdjuster("-I/usr/local/lib/clang/11.0.0/include/");
 	tool.appendArgumentsAdjuster(includes);
 
@@ -63,6 +65,7 @@ int main(int argc, const char** argv)
 
 	assert(inputLanguage != clang::Language::Unknown);
 
+	// Check whether the given line is in the file and pretty print it to the standard output.
 	if (!CheckLocationValidity(op.getSourcePathList()[0], LineNumber))
 	{
 		errs() << "The specified error location is invalid!\nSource path: " << op.getSourcePathList()[0]
@@ -95,6 +98,9 @@ int main(int argc, const char** argv)
 
 	int adjustedErrorLine = LineNumber;
 
+	// Go over the original lines and keep only those that contain a part of the slice or its necessary parts.
+	// For example, keep all includes.
+	// The error's line number is adjusted accordingly to the number of removed lines.
 	if (ifs && ofs)
 	{
 		Out::Verb() << "Source code after slice extraction:\n";

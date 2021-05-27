@@ -22,8 +22,8 @@ using namespace Common;
  * Generates a locally minimal program variant by running Delta debugging.
  * 
  * Call:\n
- * > DeltaReduction.exe [file with error] [line with error] [error description message] <source path 0> [... <source path N>] --
- * e.g. DeltaReduction.exe --loc-file="example.cpp" --loc-line=17 --error-message="segmentation fault" example.cpp --
+ * > DeltaReduction.exe [line with error] [error description message] [runtime arguments] <source path> --
+ * e.g. DeltaReduction.exe --loc-line=17 --error-message="segmentation fault" --arguments="arg1 arg2" example.cpp --
  */
 int main(int argc, const char** argv)
 {
@@ -52,6 +52,8 @@ int main(int argc, const char** argv)
 	auto context = GlobalContext(parsedInput, *op.getSourcePathList().begin(), epochCount);
 	clang::tooling::ClangTool tool(op.getCompilations(), context.parsedInput.errorLocation.filePath);
 
+	// Include paths are not always recognized, especially for standard/system includes.
+	// This Adjuster helps with that.
 	auto includes = clang::tooling::getInsertArgumentAdjuster("-I/usr/local/lib/clang/11.0.0/include/");
 	tool.appendArgumentsAdjuster(includes);
 
@@ -79,6 +81,7 @@ int main(int argc, const char** argv)
 
 	context.language = inputLanguage;
 
+	// Check whether the given line is in the file and pretty print it to the standard output.
 	if (!CheckLocationValidity(parsedInput.errorLocation.filePath, parsedInput.errorLocation.lineNumber))
 	{
 		errs() << "The specified error location is invalid!\nSource path: " << parsedInput.errorLocation.filePath
@@ -88,6 +91,8 @@ int main(int argc, const char** argv)
 	LLDBSentry sentry;
 
 	auto iteration = 0;
+	// End the search after a given number of iterations.
+	// No point in repeating the mistakes of the naive search...
 	const auto cutOffLimit = 0xffff;
 
 	auto partitionCount = 2;
@@ -96,11 +101,13 @@ int main(int argc, const char** argv)
 	auto done = false;
 	auto first = true;
 
+	// Iterate until convergence (or until patience runs out) and call the iteration handler.
+	// Collect the results of the iteration and determine the next step.
 	while (!done && iteration < cutOffLimit)
 	{
 		iteration++;
 
-		if (iteration % 10 == 0)
+		if (iteration % 20 == 0)
 		{
 			Out::All() << "Done " << iteration << " DD iterations.\n";
 		}
@@ -119,13 +126,15 @@ int main(int argc, const char** argv)
 			errs() << "The tool returned a non-standard value: " << result << "\n";
 		}
 
+		// Save some statistics concerning the worst-case running time.
 		if (first)
 		{
-			auto k = context.deltaContext.latestCodeUnitCount;
+			double k = context.deltaContext.latestCodeUnitCount;
 			context.stats.expectedIterations = k * k + 3 * k;
 			first = false;
 		}
 
+		// Process the iteration result and decide the next step for the algorithm.
 		switch (iterationResult)
 		{
 		case DeltaIterationResults::FailingPartition:
@@ -160,20 +169,23 @@ int main(int argc, const char** argv)
 
 	Out::All() << "Finished. Done " << iteration << " DD iterations.\n";
 
+	// Save the result no matter the outcome.
+	const auto newFileName = TempFolder + std::string("autoPieOut") + LanguageToExtension(context.language);
+
+	Out::All() << "Found the locally minimal error-inducing source file: " << currentTestCase << "\n";
+	Out::All() << "Changing the file path to '" << newFileName << "'.\n";
+
+	std::filesystem::rename(currentTestCase, newFileName);
+
+	// Print the results and the statistics of the search no matter the outcome.
+	PrintResult(newFileName);
+
+	context.stats.Finalize(newFileName);
+	DisplayStats(context.stats);
+
+	// Decide to tell the user whether the outcome was successful or not.
 	if (currentTestCase != context.parsedInput.errorLocation.filePath)
 	{
-		const auto newFileName = TempFolder + std::string("autoPieOut") + LanguageToExtension(context.language);
-
-		Out::All() << "Found the locally minimal error-inducing source file: " << currentTestCase << "\n";
-		Out::All() << "Changing the file path to '" << newFileName << "'.\n";
-
-		std::filesystem::rename(currentTestCase, newFileName);
-
-		PrintResult(newFileName);
-
-		context.stats.Finalize(newFileName);
-		DisplayStats(context.stats);
-
 		return EXIT_SUCCESS;
 	}
 

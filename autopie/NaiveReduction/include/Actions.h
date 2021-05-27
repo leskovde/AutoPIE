@@ -18,7 +18,7 @@ namespace Naive
 
 	/**
 	 * Specifies the frontend action for generating source file variants.\n
-	 * Currently creates a unifying consumer.
+	 * Currently creates the unifying consumer.
 	 */
 	class VariantGeneratingAction final : public clang::ASTFrontendAction
 	{

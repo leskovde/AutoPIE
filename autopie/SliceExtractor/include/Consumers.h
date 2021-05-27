@@ -10,6 +10,10 @@
 
 namespace SliceExtractor
 {
+	/**
+	 * Dispatches the line-collecting visitor.\n
+	 * The concatenates its results to the given line container and removes any duplicates.
+	 */
 	class SliceExtractorASTConsumer final : public clang::ASTConsumer
 	{
 		SliceExtractorASTVisitorRef sliceVisitor_{};
@@ -20,6 +24,12 @@ namespace SliceExtractor
 			sliceVisitor_ = std::make_unique<SliceExtractorASTVisitor>(ci, lines);
 		}
 
+		/**
+		 * Dispatches the `SliceExtractorASTVisitorRef` instance onto the given file.\n
+		 * Upon ending the traversal, the function collects the visitor's data and appends
+		 * it to the existing referenced container of lines.\n
+		 * Any duplicates are removed.
+		 */
 		void HandleTranslationUnit(clang::ASTContext& context) override
 		{
 			sliceVisitor_->TraverseDecl(context.getTranslationUnitDecl());
