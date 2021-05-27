@@ -264,7 +264,7 @@ void Increment(BitMask& bitMask)
  * @param bitMask The bit mask to be modified.
  * @param number The unsigned integers whose bits will be copied.
  */
-void InitializeBitMask(BitMask& bitMask, Unsigned number)
+void InitializeBitMask(BitMask& bitMask, size_t number)
 {
 	for (auto i = bitMask.size(); number != 0; i--)
 	{

@@ -102,7 +102,7 @@ namespace Naive
 		 * @return All processed bit masks separated into bins - a map of bit mask containers accessible
 		 * by a given size ratio.
 		 */
-		[[nodiscard]] EpochRanges GetValidBitMasksInRange(const Unsigned startingPoint, const Unsigned numberOfVariants,
+		[[nodiscard]] EpochRanges GetValidBitMasksInRange(const size_t startingPoint, const size_t numberOfVariants,
 		                                                  const int numberOfCodeUnits, DependencyGraph dependencies,
 		                                                  const int id) const
 		{
@@ -129,7 +129,7 @@ namespace Naive
 			InitializeBitMask(bitMask, startingPoint);
 
 			// Iterate over the given range and assign valid bit masks into bins.
-			for (Unsigned i = 0; i < numberOfVariants; i++)
+			for (size_t i = 0; i < numberOfVariants; i++)
 			{
 				Increment(bitMask);
 
@@ -162,7 +162,7 @@ namespace Naive
 		{
 			Out::All() << "Binning variants...\n";
 
-			const auto totalNumberOfVariants = static_cast<Unsigned>(1) << numberOfCodeUnits;
+			const auto totalNumberOfVariants = static_cast<size_t>(1) << numberOfCodeUnits;
 
 			if (totalNumberOfVariants == 0)
 			{
@@ -193,7 +193,7 @@ namespace Naive
 
 			// The thread count must be specified in code, since it must have the const qualifier.
 			const auto threadCount = 12;
-			Unsigned ranges[threadCount];
+			size_t ranges[threadCount];
 
 			// Determine the number of variants for each thread.
 			for (auto& range : ranges)
@@ -201,7 +201,7 @@ namespace Naive
 				range = (totalNumberOfVariants - 1) / threadCount;
 			}
 
-			for (Unsigned i = 0; i < (totalNumberOfVariants - 1) % threadCount; i++)
+			for (size_t i = 0; i < (totalNumberOfVariants - 1) % threadCount; i++)
 			{
 				ranges[i]++;
 			}
@@ -212,7 +212,7 @@ namespace Naive
 			for (auto i = 0; i < threadCount; i++)
 			{
 				const auto numberOfVariants = ranges[i];
-				Unsigned startingPoint = 0;
+				size_t startingPoint = 0;
 
 				// Determine the starting point of each thread by summing up the previous counts.
 				if (i > 0)

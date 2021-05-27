@@ -43,7 +43,6 @@ struct Statistics;
 class DependencyGraph;
 
 using BitMask = std::vector<bool>;
-using Unsigned = unsigned long long;
 using EpochRanges = std::map<double, std::vector<BitMask>>;
 
 //===----------------------------------------------------------------------===//
@@ -158,7 +157,7 @@ bool IsFull(BitMask& bitMask);
 
 void Increment(BitMask& bitMask);
 
-void InitializeBitMask(BitMask& bitMask, Unsigned number);
+void InitializeBitMask(BitMask& bitMask, size_t number);
 
 void MergeVectorMaps(EpochRanges& from, EpochRanges& to);
 
