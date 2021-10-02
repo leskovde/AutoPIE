@@ -38,10 +38,6 @@
   \shorthandoff{-}
   \frame[c]{\maketitle}
 
-\begin{frame}{Outline}
-    \tableofcontents[]
-\end{frame}
-
 \section{Problem description}
 
     \begin{frame}{Problem description}
@@ -80,6 +76,26 @@
 
 \section{Employed approaches}
 
+    \begin{frame}{Solution: AutoPIE}
+      \framesubtitle{Automated Problem-Investigating Execution}
+      A tool for automated reduction of erroneous source code.\\
+      \bigskip
+      Main components:
+      \begin{itemize}
+          \item Naive minimization algorithm with heuristics.\\
+          \item Minimizing Delta debugging ($dd_{min}$) algorithm.\\
+          \item Static slicer - use of an existing implementation called DG\footnote[frame]{%
+          DG's GitHub repository can be found at \url{https://github.com/mchalupa/dg}}.\\
+          \item Dynamic slicer - use of an existing implementation called Giri\footnote[frame]{%
+          Giri's repository can be found at \url{https://github.com/liuml07/giri}}.\\
+      \end{itemize}
+      
+      \bigskip
+
+      AutoPIE uses external libraries (Clang LibTooling) as well as the aforementioned slicer implementations.\\
+      
+    \end{frame}
+
     \begin{frame}{Comparing different approaches}
       Existing techniques can be employed to achieve the optimal results.\\
       \begin{itemize}
@@ -94,7 +110,8 @@
       A combination of the existing techniques helps eliminate the shortcomings of each individual one.\\
       \bigskip
       
-      The highlighted techniques were implemented and benchmarked.
+      The highlighted techniques were implemented\footnote[frame]{%
+          AutoPIE's implementation is available on GitHub: \url{https://github.com/leskovde/AutoPIE}} and benchmarked.
     \end{frame}
 
 
@@ -182,8 +199,12 @@
     \begin{frame}{Summary}
       We have presented the following.\\
       \begin{itemize}
-          \item Exponential algorithms are required for optimal program minimization.\\
+          \item The AutoPIE tool automatically reduces size of programs while preserving runtime errors.
+          \begin{itemize}
+              \item The premise of easier debugging.
+          \end{itemize}
           \item We can reduce the search space by employing existing techniques.\\
+          \item Exponential algorithms are required for optimal program minimization.\\
           \item Polynomial algorithms help remove dead code, thus reducing the input size.\\
           \item We determine the correctness of a variant at runtime.\\
           \item Our hypothesis is valid on a sample of small programs.\\
